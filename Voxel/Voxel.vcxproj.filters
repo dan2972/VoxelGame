@@ -30,17 +30,32 @@
     <ClCompile Include="shader.cpp">
       <Filter>Source Files\graphics</Filter>
     </ClCompile>
+    <ClCompile Include="resource_manager.cpp">
+      <Filter>Source Files\graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>Source Files\graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader.h">
       <Filter>Header Files\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="resource_manager.h">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.h">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Header Files\graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="defaultShader.frag">
+    <None Include="default_shader.frag">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="defaultShader.vert">
+    <None Include="default_shader.vert">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

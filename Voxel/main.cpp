@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #include <iostream>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -55,11 +57,11 @@ void render(float delta) {
 int main(int argc, char* argv[]) {
     initScreen();
 
-    long lastTime = SDL_GetTicks64();
+    Uint64 lastTime = SDL_GetTicks64();
     double amountOfTicks = TICKS_PER_SECOND;
     double tps = 1.0 / amountOfTicks;
     double delta = 0;
-    long timer = SDL_GetTicks64();
+    Uint64 timer = SDL_GetTicks64();
     int frames = 0;
 
     SDL_Event event;
@@ -79,7 +81,7 @@ int main(int argc, char* argv[]) {
             update();
             delta--;
         }
-        render(delta / 1000.0f);
+        render(static_cast<float>(delta / 1000.0f));
         ++frames;
         
         if (SDL_GetTicks64() - timer > 1000) {
