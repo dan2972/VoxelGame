@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <SDL/SDL.h>
+#include "renderer.h"
+#include "shader.h"
 
 int WIDTH = 960;
 int HEIGHT = 540;
@@ -11,6 +13,8 @@ unsigned TICKS_PER_SECOND = 40;
 unsigned FPS = 0;
 SDL_Window* window = nullptr;
 SDL_GLContext mainContext;
+
+Renderer renderer;
 
 void initScreen() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -45,17 +49,30 @@ void update() {
 
 void render(float delta) {
     //glViewport(0, 0, WIDTH, HEIGHT);
-
-
-
     glClearColor(0.47f, 0.655f, 1.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    
+    renderer.startMesh(0);
+    unsigned int v1 = renderer.addVertexToMesh(0, { -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f });
+    unsigned int v2 = renderer.addVertexToMesh(0, { 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f });
+    unsigned int v3 = renderer.addVertexToMesh(0, { 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f });
+    renderer.addTriangleToMesh(0, { v1, v2, v3 });
+    unsigned int v4 = renderer.addVertexToMesh(0, { -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f });
+    renderer.addTriangleToMesh(0, { v1, v3, v4 });
+    renderer.endMesh(0);
+
+    renderer.renderMesh(0);
 
     SDL_GL_SwapWindow(window);
 }
 
 int main(int argc, char* argv[]) {
     initScreen();
+
+    Shader shader;
+    shader.Compile("default_shader.vert", "default_shader.frag");
+
+    renderer.createMesh({ 3, 3 });
 
     Uint64 lastTime = SDL_GetTicks64();
     double amountOfTicks = TICKS_PER_SECOND;
@@ -81,6 +98,7 @@ int main(int argc, char* argv[]) {
             update();
             delta--;
         }
+        shader.Use();
         render(static_cast<float>(delta / 1000.0f));
         ++frames;
         
