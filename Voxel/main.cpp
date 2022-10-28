@@ -4,7 +4,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <SDL/SDL.h>
-#include "renderer.h"
+#include "mesh.h"
 #include "shader.h"
 
 int WIDTH = 960;
@@ -13,8 +13,6 @@ unsigned TICKS_PER_SECOND = 40;
 unsigned FPS = 0;
 SDL_Window* window = nullptr;
 SDL_GLContext mainContext;
-
-Renderer renderer;
 
 void initScreen() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -47,21 +45,21 @@ void update() {
 
 }
 
-void render(float delta) {
+void render(float delta, Mesh& mesh) {
     //glViewport(0, 0, WIDTH, HEIGHT);
     glClearColor(0.47f, 0.655f, 1.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     
-    renderer.startMesh(0);
-    unsigned int v1 = renderer.addVertexToMesh(0, { -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f });
-    unsigned int v2 = renderer.addVertexToMesh(0, { 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f });
-    unsigned int v3 = renderer.addVertexToMesh(0, { 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f });
-    renderer.addTriangleToMesh(0, { v1, v2, v3 });
-    unsigned int v4 = renderer.addVertexToMesh(0, { -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f });
-    renderer.addTriangleToMesh(0, { v1, v3, v4 });
-    renderer.endMesh(0);
+    mesh.start();
+    unsigned int v1 = mesh.addVertex({ -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f });
+    unsigned int v2 = mesh.addVertex({ 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f });
+    unsigned int v3 = mesh.addVertex({ 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f });
+    mesh.addTriangle({ v1, v2, v3 });
+    unsigned int v4 = mesh.addVertex({ -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f });
+    mesh.addTriangle({ v1, v3, v4 });
+    mesh.end();
 
-    renderer.renderMesh(0);
+    mesh.render();
 
     SDL_GL_SwapWindow(window);
 }
@@ -72,11 +70,11 @@ int main(int argc, char* argv[]) {
     Shader shader;
     shader.Compile("default_shader.vert", "default_shader.frag");
 
-    renderer.createMesh({ 3, 3 });
+    Mesh mesh({ 3, 3 });
 
     Uint64 lastTime = SDL_GetTicks64();
     double amountOfTicks = TICKS_PER_SECOND;
-    double tps = 1.0 / amountOfTicks;
+    double tps = 1000.0 / amountOfTicks;
     double delta = 0;
     Uint64 timer = SDL_GetTicks64();
     int frames = 0;
@@ -99,7 +97,7 @@ int main(int argc, char* argv[]) {
             delta--;
         }
         shader.Use();
-        render(static_cast<float>(delta / 1000.0f));
+        render(static_cast<float>(delta), mesh);
         ++frames;
         
         if (SDL_GetTicks64() - timer > 1000) {
