@@ -39,24 +39,59 @@ void initScreen() {
     //SDL_GL_LoadLibrary(NULL);
 
     //SDL_GL_SetSwapInterval(0);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void update() {
 
 }
 
-void render(float delta, Mesh& mesh) {
+void render(float delta, Mesh& mesh, Shader& shader) {
     //glViewport(0, 0, WIDTH, HEIGHT);
     glClearColor(0.47f, 0.655f, 1.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+    glm::mat4 model = glm::f32mat2(0.5f);
+
+    model = glm::rotate(model, (float)SDL_GetTicks64() / 1000.0f * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+
+    shader.Use();
+    shader.SetMatrix4("projection", proj);
+    shader.SetMatrix4("view", view);
+    shader.SetMatrix4("model", model);
     
     mesh.start();
-    unsigned int v1 = mesh.addVertex({ -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f });
-    unsigned int v2 = mesh.addVertex({ 0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f });
-    unsigned int v3 = mesh.addVertex({ 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f });
+    unsigned int v1 = mesh.addVertex({ -1.0f, -1.0f, 1.0f,  1.0f, 0.0f, 0.0f });
+    unsigned int v2 = mesh.addVertex({ 1.0f, -1.0f, 1.0f,   0.0f, 1.0f, 0.0f });
+    unsigned int v3 = mesh.addVertex({ 1.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f });
+    unsigned int v4 = mesh.addVertex({ -1.0f, 1.0f, 1.0f,   0.0f, 1.0f, 1.0f });
+    unsigned int v5 = mesh.addVertex({ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f });
+    unsigned int v6 = mesh.addVertex({ 1.0f, -1.0f, -1.0f,  0.0f, 1.0f, 0.0f });
+    unsigned int v7 = mesh.addVertex({ 1.0f, 1.0f, -1.0f,   0.0f, 0.0f, 1.0f });
+    unsigned int v8 = mesh.addVertex({ -1.0f, 1.0f, -1.0f,  0.0f, 1.0f, 1.0f });
+    //front
     mesh.addTriangle({ v1, v2, v3 });
-    unsigned int v4 = mesh.addVertex({ -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f });
     mesh.addTriangle({ v1, v3, v4 });
+    //left
+    mesh.addTriangle({ v5, v1, v4 });
+    mesh.addTriangle({ v5, v4, v8 });
+    //right
+    mesh.addTriangle({ v2, v6, v7 });
+    mesh.addTriangle({ v2, v7, v3 });
+    //back
+    mesh.addTriangle({ v6, v5, v8 });
+    mesh.addTriangle({ v6, v8, v7 });
+    //up
+    mesh.addTriangle({ v4, v3, v7 });
+    mesh.addTriangle({ v4, v7, v8 });
+    //down
+    mesh.addTriangle({ v5, v6, v2 });
+    mesh.addTriangle({ v5, v2, v1 });
     mesh.end();
 
     mesh.render();
@@ -96,8 +131,7 @@ int main(int argc, char* argv[]) {
             update();
             delta--;
         }
-        shader.Use();
-        render(static_cast<float>(delta), mesh);
+        render(static_cast<float>(delta), mesh, shader);
         ++frames;
         
         if (SDL_GetTicks64() - timer > 1000) {
