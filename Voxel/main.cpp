@@ -6,6 +6,7 @@
 #include <SDL/SDL.h>
 #include "mesh.h"
 #include "shader.h"
+#include "camera.h"
 
 int WIDTH = 960;
 int HEIGHT = 540;
@@ -13,6 +14,8 @@ unsigned TICKS_PER_SECOND = 40;
 unsigned FPS = 0;
 SDL_Window* window = nullptr;
 SDL_GLContext mainContext;
+
+Camera camera;
 
 void initScreen() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -51,12 +54,11 @@ void render(float delta, Mesh& mesh, Shader& shader) {
     glClearColor(0.47f, 0.655f, 1.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+    glm::mat4 proj = glm::perspective(glm::radians(camera.getZoom()), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
 
-    glm::mat4 view = glm::mat4(1.0f);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    glm::mat4 view = camera.getViewMatrix();
 
-    glm::mat4 model = glm::f32mat2(0.5f);
+    glm::mat4 model = glm::f32mat2(1);
 
     model = glm::rotate(model, (float)SDL_GetTicks64() / 1000.0f * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
@@ -66,14 +68,14 @@ void render(float delta, Mesh& mesh, Shader& shader) {
     shader.SetMatrix4("model", model);
     
     mesh.start();
-    unsigned int v1 = mesh.addVertex({ -1.0f, -1.0f, 1.0f,  1.0f, 0.0f, 0.0f });
-    unsigned int v2 = mesh.addVertex({ 1.0f, -1.0f, 1.0f,   0.0f, 1.0f, 0.0f });
-    unsigned int v3 = mesh.addVertex({ 1.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f });
-    unsigned int v4 = mesh.addVertex({ -1.0f, 1.0f, 1.0f,   0.0f, 1.0f, 1.0f });
-    unsigned int v5 = mesh.addVertex({ -1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f });
-    unsigned int v6 = mesh.addVertex({ 1.0f, -1.0f, -1.0f,  0.0f, 1.0f, 0.0f });
-    unsigned int v7 = mesh.addVertex({ 1.0f, 1.0f, -1.0f,   0.0f, 0.0f, 1.0f });
-    unsigned int v8 = mesh.addVertex({ -1.0f, 1.0f, -1.0f,  0.0f, 1.0f, 1.0f });
+    unsigned int v1 = mesh.addVertex({ -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 0.0f });
+    unsigned int v2 = mesh.addVertex({ 0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f });
+    unsigned int v3 = mesh.addVertex({ 0.5f, 0.5f, 0.5f,    0.0f, 0.0f, 1.0f });
+    unsigned int v4 = mesh.addVertex({ -0.5f, 0.5f, 0.5f,   0.0f, 1.0f, 1.0f });
+    unsigned int v5 = mesh.addVertex({ -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f });
+    unsigned int v6 = mesh.addVertex({ 0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f });
+    unsigned int v7 = mesh.addVertex({ 0.5f, 0.5f, -0.5f,   0.0f, 0.0f, 1.0f });
+    unsigned int v8 = mesh.addVertex({ -0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 1.0f });
     //front
     mesh.addTriangle({ v1, v2, v3 });
     mesh.addTriangle({ v1, v3, v4 });
@@ -114,16 +116,50 @@ int main(int argc, char* argv[]) {
     Uint64 timer = SDL_GetTicks64();
     int frames = 0;
 
+    SDL_SetRelativeMouseMode(SDL_TRUE); // trap the mouse to the window
+
     SDL_Event event;
     bool quit = false;
     while (!quit) {
         double now = SDL_GetTicks64();
         delta += (now - lastTime) / tps;
+        double deltaTime = (now - lastTime) / 1000.0f;
         lastTime = now;
+
+        const Uint8* keyState = SDL_GetKeyboardState(nullptr);
+        if (keyState[SDL_SCANCODE_W]) {
+            camera.ProcessKeyboard(Camera::Forward, deltaTime);
+        }
+        if (keyState[SDL_SCANCODE_A]) {
+            camera.ProcessKeyboard(Camera::Left, deltaTime);
+        }
+        if (keyState[SDL_SCANCODE_S]) {
+            camera.ProcessKeyboard(Camera::Backward, deltaTime);
+        }
+        if (keyState[SDL_SCANCODE_D]) {
+            camera.ProcessKeyboard(Camera::Right, deltaTime);
+        }
+        if (keyState[SDL_SCANCODE_SPACE]) {
+            camera.ProcessKeyboard(Camera::Up, deltaTime);
+        }
+        if (keyState[SDL_SCANCODE_LSHIFT]) {
+            camera.ProcessKeyboard(Camera::Down, deltaTime);
+        }
 
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 quit = true;
+            }
+            else if (event.type == SDL_MOUSEMOTION) {
+                camera.processMouseMovement(event.motion.xrel, -event.motion.yrel);
+            }
+            else if (event.type == SDL_KEYDOWN) {
+                switch (event.key.keysym.sym) {
+                case SDLK_ESCAPE:
+                    SDL_SetRelativeMouseMode(SDL_FALSE);
+                    break;
+                }
+
             }
         }
 
