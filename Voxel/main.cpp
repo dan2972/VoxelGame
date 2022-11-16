@@ -59,11 +59,8 @@ void init() {
     InputManager::mapControl(InputManager::MoveUp, SDL_SCANCODE_SPACE);
     InputManager::mapControl(InputManager::MoveDown, SDL_SCANCODE_LSHIFT);
 
+    chunk.removeBlock(3, 3, 3);
     chunk.placeBlock(0, 0, 0, Grass);
-    chunk.placeBlock(1, 0, 0, Grass);
-    chunk.placeBlock(0, 0, 1, Grass);
-    //chunk.placeBlock(2, 0, 0, Grass);
-    //chunk.placeBlock(1, 1, 1, Grass);
 }
 
 void update() {

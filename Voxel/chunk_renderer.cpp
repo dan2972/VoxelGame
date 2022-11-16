@@ -4,12 +4,26 @@ ChunkRenderer::ChunkRenderer(const Chunk& chunk) {
 	m_chunk = &chunk;
 }
 
+bool shouldRender(const Chunk& chunk, unsigned x, unsigned y, unsigned z) {
+	if (x == 0 || y == 0 || z == 0 || x == Chunk::CHUNK_SIZE - 1 || y == Chunk::CHUNK_SIZE - 1 || z == Chunk::CHUNK_SIZE - 1)
+		return true;
+	if (chunk.getBlockAt(x - 1, y, z) == Air ||
+		chunk.getBlockAt(x + 1, y, z) == Air ||
+		chunk.getBlockAt(x, y - 1, z) == Air ||
+		chunk.getBlockAt(x, y + 1, z) == Air ||
+		chunk.getBlockAt(x, y, z - 1) == Air ||
+		chunk.getBlockAt(x, y, z + 1) == Air)
+		return true;
+	return false;
+}
+
 void ChunkRenderer::generateMesh(Mesh& mesh) {
 	mesh.start();
 	for (unsigned y = 0; y < Chunk::CHUNK_SIZE; ++y) {
 		for (unsigned z = 0; z < Chunk::CHUNK_SIZE; ++z) {
 			for (unsigned x = 0; x < Chunk::CHUNK_SIZE; ++x) {
-				if (m_chunk->getBlockAt(x, y, z) != Air) {
+
+				if (m_chunk->getBlockAt(x, y, z) != Air && shouldRender(*m_chunk, x, y, z)) {
 					unsigned int v1 = mesh.addVertex({ x-0.5f, y-0.5f, z+0.5f,  1.0f, 0.0f, 0.0f });
 					unsigned int v2 = mesh.addVertex({ x+0.5f, y-0.5f, z+0.5f,   0.0f, 1.0f, 0.0f });
 					unsigned int v3 = mesh.addVertex({ x+0.5f, y+0.5f, z+0.5f,    0.0f, 0.0f, 1.0f });
