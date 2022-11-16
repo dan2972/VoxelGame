@@ -7,6 +7,9 @@
 #include "mesh.h"
 #include "shader.h"
 #include "camera.h"
+#include "input_manager.h"
+#include "chunk.h"
+#include "chunk_renderer.h"
 
 int WIDTH = 960;
 int HEIGHT = 540;
@@ -16,6 +19,9 @@ SDL_Window* window = nullptr;
 SDL_GLContext mainContext;
 
 Camera camera;
+
+Chunk chunk;
+ChunkRenderer chunkRenderer(chunk);
 
 void initScreen() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -45,6 +51,21 @@ void initScreen() {
     glEnable(GL_DEPTH_TEST);
 }
 
+void init() {
+    InputManager::mapControl(InputManager::MoveForward, SDL_SCANCODE_W);
+    InputManager::mapControl(InputManager::MoveLeft, SDL_SCANCODE_A);
+    InputManager::mapControl(InputManager::MoveBackward, SDL_SCANCODE_S);
+    InputManager::mapControl(InputManager::MoveRight, SDL_SCANCODE_D);
+    InputManager::mapControl(InputManager::MoveUp, SDL_SCANCODE_SPACE);
+    InputManager::mapControl(InputManager::MoveDown, SDL_SCANCODE_LSHIFT);
+
+    chunk.placeBlock(0, 0, 0, Grass);
+    chunk.placeBlock(1, 0, 0, Grass);
+    chunk.placeBlock(0, 0, 1, Grass);
+    //chunk.placeBlock(2, 0, 0, Grass);
+    //chunk.placeBlock(1, 1, 1, Grass);
+}
+
 void update() {
 
 }
@@ -60,41 +81,12 @@ void render(float delta, Mesh& mesh, Shader& shader) {
 
     glm::mat4 model = glm::f32mat2(1);
 
-    model = glm::rotate(model, (float)SDL_GetTicks64() / 1000.0f * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+    //model = glm::rotate(model, (float)SDL_GetTicks64() / 1000.0f * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
     shader.Use();
     shader.SetMatrix4("projection", proj);
     shader.SetMatrix4("view", view);
     shader.SetMatrix4("model", model);
-    
-    mesh.start();
-    unsigned int v1 = mesh.addVertex({ -0.5f, -0.5f, 0.5f,  1.0f, 0.0f, 0.0f });
-    unsigned int v2 = mesh.addVertex({ 0.5f, -0.5f, 0.5f,   0.0f, 1.0f, 0.0f });
-    unsigned int v3 = mesh.addVertex({ 0.5f, 0.5f, 0.5f,    0.0f, 0.0f, 1.0f });
-    unsigned int v4 = mesh.addVertex({ -0.5f, 0.5f, 0.5f,   0.0f, 1.0f, 1.0f });
-    unsigned int v5 = mesh.addVertex({ -0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f });
-    unsigned int v6 = mesh.addVertex({ 0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f });
-    unsigned int v7 = mesh.addVertex({ 0.5f, 0.5f, -0.5f,   0.0f, 0.0f, 1.0f });
-    unsigned int v8 = mesh.addVertex({ -0.5f, 0.5f, -0.5f,  0.0f, 1.0f, 1.0f });
-    //front
-    mesh.addTriangle({ v1, v2, v3 });
-    mesh.addTriangle({ v1, v3, v4 });
-    //left
-    mesh.addTriangle({ v5, v1, v4 });
-    mesh.addTriangle({ v5, v4, v8 });
-    //right
-    mesh.addTriangle({ v2, v6, v7 });
-    mesh.addTriangle({ v2, v7, v3 });
-    //back
-    mesh.addTriangle({ v6, v5, v8 });
-    mesh.addTriangle({ v6, v8, v7 });
-    //up
-    mesh.addTriangle({ v4, v3, v7 });
-    mesh.addTriangle({ v4, v7, v8 });
-    //down
-    mesh.addTriangle({ v5, v6, v2 });
-    mesh.addTriangle({ v5, v2, v1 });
-    mesh.end();
 
     mesh.render();
 
@@ -103,11 +95,14 @@ void render(float delta, Mesh& mesh, Shader& shader) {
 
 int main(int argc, char* argv[]) {
     initScreen();
+    init();
 
     Shader shader;
     shader.Compile("default_shader.vert", "default_shader.frag");
 
     Mesh mesh({ 3, 3 });
+
+    chunkRenderer.generateMesh(mesh);
 
     Uint64 lastTime = SDL_GetTicks64();
     double amountOfTicks = TICKS_PER_SECOND;
@@ -126,23 +121,23 @@ int main(int argc, char* argv[]) {
         double deltaTime = (now - lastTime) / 1000.0f;
         lastTime = now;
 
-        const Uint8* keyState = SDL_GetKeyboardState(nullptr);
-        if (keyState[SDL_SCANCODE_W]) {
+        InputManager::update();
+        if (InputManager::isKeyDown(InputManager::MoveForward)) {
             camera.ProcessKeyboard(Camera::Forward, deltaTime);
         }
-        if (keyState[SDL_SCANCODE_A]) {
+        if (InputManager::isKeyDown(InputManager::MoveLeft)) {
             camera.ProcessKeyboard(Camera::Left, deltaTime);
         }
-        if (keyState[SDL_SCANCODE_S]) {
+        if (InputManager::isKeyDown(InputManager::MoveBackward)) {
             camera.ProcessKeyboard(Camera::Backward, deltaTime);
         }
-        if (keyState[SDL_SCANCODE_D]) {
+        if (InputManager::isKeyDown(InputManager::MoveRight)) {
             camera.ProcessKeyboard(Camera::Right, deltaTime);
         }
-        if (keyState[SDL_SCANCODE_SPACE]) {
+        if (InputManager::isKeyDown(InputManager::MoveUp)) {
             camera.ProcessKeyboard(Camera::Up, deltaTime);
         }
-        if (keyState[SDL_SCANCODE_LSHIFT]) {
+        if (InputManager::isKeyDown(InputManager::MoveDown)) {
             camera.ProcessKeyboard(Camera::Down, deltaTime);
         }
 

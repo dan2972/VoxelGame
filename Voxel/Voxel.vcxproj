@@ -133,7 +133,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
+    <ClCompile Include="chunk.cpp" />
+    <ClCompile Include="chunk_renderer.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="input_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="renderer.cpp" />
@@ -143,6 +146,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
+    <ClInclude Include="chunk.h" />
+    <ClInclude Include="chunk_renderer.h" />
+    <ClInclude Include="input_manager.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="resource_manager.h" />
