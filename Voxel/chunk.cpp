@@ -1,7 +1,16 @@
 #include "chunk.h"
+#include <random>
 
 Chunk::Chunk() {
-	m_chunk.fill(Grass);
+	//m_chunk.fill(Grass);
+	std::random_device dev;
+	std::mt19937 rng(dev());
+	std::uniform_int_distribution<std::mt19937::result_type> dist6(0, 1);
+	for (unsigned i = 0; i < m_chunk.size(); ++i) {
+		if (dist6(rng)) {
+			m_chunk[i] = Grass;
+		}
+	}
 }
 
 BlockType Chunk::getBlockAt(unsigned x, unsigned y, unsigned z) const {
