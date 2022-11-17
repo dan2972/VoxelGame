@@ -49,6 +49,8 @@ void initScreen() {
 
     //SDL_GL_SetSwapInterval(0);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 }
 
 void init() {
@@ -59,8 +61,8 @@ void init() {
     InputManager::mapControl(InputManager::MoveUp, SDL_SCANCODE_SPACE);
     InputManager::mapControl(InputManager::MoveDown, SDL_SCANCODE_LSHIFT);
 
-    chunk.removeBlock(3, 3, 3);
-    chunk.placeBlock(0, 0, 0, Grass);
+    //chunk.removeBlock(3, 3, 3);
+    //chunk.placeBlock(0, 0, 0, Grass);
 }
 
 void update() {

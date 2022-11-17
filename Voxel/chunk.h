@@ -8,7 +8,7 @@ enum BlockType {
 class Chunk
 {
 public:
-	static const unsigned CHUNK_SIZE = 8;
+	static const unsigned CHUNK_SIZE = 11;
 	Chunk();
 
 	BlockType getBlockAt(unsigned x, unsigned y, unsigned z) const;
@@ -16,6 +16,6 @@ public:
 	void removeBlock(unsigned x, unsigned y, unsigned z);
 
 private:
-	std::array<BlockType, CHUNK_SIZE* CHUNK_SIZE* CHUNK_SIZE> m_chunk{Air};
+	std::array<BlockType, CHUNK_SIZE* CHUNK_SIZE* CHUNK_SIZE> m_chunk{};
 };
 
