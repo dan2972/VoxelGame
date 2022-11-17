@@ -10,7 +10,7 @@ float Camera::getZoom() {
 
 void Camera::ProcessKeyboard(CameraMovement direction, float deltaTime) {
     float velocity = m_movementSpeed * deltaTime;
-    glm::vec3 forward = m_front * velocity;
+    glm::vec3 forward = glm::normalize(glm::vec3{ m_front.x, 0, m_front.z }) * velocity;
     if (direction == Forward) {
         m_position.x += forward.x;
         m_position.z += forward.z;

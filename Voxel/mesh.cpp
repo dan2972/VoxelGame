@@ -3,14 +3,14 @@
 #include <glad/glad.h>
 #include <iostream>
 
-static const unsigned MAX_VERTICES = 60000;
+static const unsigned MAX_VERTICES = 50000;
 
 Mesh::Mesh(const std::vector<unsigned>& format) {
 	int vertexSize = 0;
 	for (unsigned i : format)
 		vertexSize += i;
 	m_vbo = new float[MAX_VERTICES * vertexSize];
-	m_ibo = new unsigned[MAX_VERTICES];
+	m_ibo = new unsigned[MAX_VERTICES * 3];
 	glGenVertexArrays(1, &m_vaoID);
 	glGenBuffers(1, &m_vboID);
 	glGenBuffers(1, &m_iboID);
@@ -18,7 +18,7 @@ Mesh::Mesh(const std::vector<unsigned>& format) {
 	glBindVertexArray(m_vaoID);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_vboID);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * MAX_VERTICES, nullptr, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * MAX_VERTICES * vertexSize, nullptr, GL_DYNAMIC_DRAW);
 
 	unsigned sum = 0;
 	for (int i = 0; i < format.size(); ++i) {

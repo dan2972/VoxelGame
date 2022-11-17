@@ -8,7 +8,7 @@ enum BlockType {
 class Chunk
 {
 public:
-	static const unsigned CHUNK_SIZE = 11;
+	static const unsigned CHUNK_SIZE = 16;
 	Chunk();
 
 	BlockType getBlockAt(unsigned x, unsigned y, unsigned z) const;

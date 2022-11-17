@@ -37,10 +37,10 @@ void ChunkRenderer::generateMesh(Mesh& mesh) {
 				if (m_chunk->getBlockAt(x, y, z) != Air) {
 
 					if (shouldRenderFront(*m_chunk, x, y, z)) {
-						unsigned int v1 = mesh.addVertex({ x - 0.5f, y - 0.5f, z + 0.5f,  1.0f, 0.0f, 0.0f });
-						unsigned int v2 = mesh.addVertex({ x + 0.5f, y - 0.5f, z + 0.5f,   0.0f, 1.0f, 0.0f });
-						unsigned int v3 = mesh.addVertex({ x + 0.5f, y + 0.5f, z + 0.5f,    0.0f, 0.0f, 1.0f });
-						unsigned int v4 = mesh.addVertex({ x - 0.5f, y + 0.5f, z + 0.5f,   0.0f, 1.0f, 1.0f });
+						unsigned int v1 = mesh.addVertex({ x - 0.5f, y - 0.5f, z + 0.5f, 1.0f, 0.0f, 0.0f });
+						unsigned int v2 = mesh.addVertex({ x + 0.5f, y - 0.5f, z + 0.5f, 0.0f, 1.0f, 0.0f });
+						unsigned int v3 = mesh.addVertex({ x + 0.5f, y + 0.5f, z + 0.5f, 0.0f, 0.0f, 1.0f });
+						unsigned int v4 = mesh.addVertex({ x - 0.5f, y + 0.5f, z + 0.5f, 0.0f, 1.0f, 1.0f });
 
 						//front
 						mesh.addTriangle({ v1, v2, v3 });
@@ -49,19 +49,19 @@ void ChunkRenderer::generateMesh(Mesh& mesh) {
 
 					if (shouldRenderBack(*m_chunk, x, y, z)) {
 						unsigned int v5 = mesh.addVertex({ x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 0.0f, 0.0f });
-						unsigned int v6 = mesh.addVertex({ x + 0.5f, y - 0.5f, z - 0.5f,  0.0f, 1.0f, 0.0f });
-						unsigned int v7 = mesh.addVertex({ x + 0.5f, y + 0.5f, z - 0.5f,   0.0f, 0.0f, 1.0f });
-						unsigned int v8 = mesh.addVertex({ x - 0.5f, y + 0.5f, z - 0.5f,  0.0f, 1.0f, 1.0f });
+						unsigned int v6 = mesh.addVertex({ x + 0.5f, y - 0.5f, z - 0.5f, 0.0f, 1.0f, 0.0f });
+						unsigned int v7 = mesh.addVertex({ x + 0.5f, y + 0.5f, z - 0.5f, 0.0f, 0.0f, 1.0f });
+						unsigned int v8 = mesh.addVertex({ x - 0.5f, y + 0.5f, z - 0.5f, 0.0f, 1.0f, 1.0f });
 						// back
 						mesh.addTriangle({ v6, v5, v8 });
 						mesh.addTriangle({ v6, v8, v7 });
 					}
 
 					if (shouldRenderLeft(*m_chunk, x, y, z)) {
-						unsigned int v1 = mesh.addVertex({ x - 0.5f, y - 0.5f, z + 0.5f,  1.0f, 0.0f, 0.0f });
-						unsigned int v4 = mesh.addVertex({ x - 0.5f, y + 0.5f, z + 0.5f,   0.0f, 1.0f, 1.0f });
-						unsigned int v5 = mesh.addVertex({ x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 0.0f, 0.0f });
-						unsigned int v8 = mesh.addVertex({ x - 0.5f, y + 0.5f, z - 0.5f,  0.0f, 1.0f, 1.0f });
+						unsigned int v1 = mesh.addVertex({ x - 0.5f, y - 0.5f, z + 0.5f, 1.0f, 0.0f, 0.0f });
+						unsigned int v4 = mesh.addVertex({ x - 0.5f, y + 0.5f, z + 0.5f, 0.0f, 1.0f, 0.0f });
+						unsigned int v5 = mesh.addVertex({ x - 0.5f, y - 0.5f, z - 0.5f, 0.0f, 0.0f, 1.0f });
+						unsigned int v8 = mesh.addVertex({ x - 0.5f, y + 0.5f, z - 0.5f, 0.0f, 1.0f, 1.0f });
 
 						//left
 						mesh.addTriangle({ v5, v1, v4 });
@@ -69,10 +69,10 @@ void ChunkRenderer::generateMesh(Mesh& mesh) {
 					}
 					
 					if (shouldRenderRight(*m_chunk, x, y, z)) {
-						unsigned int v2 = mesh.addVertex({ x + 0.5f, y - 0.5f, z + 0.5f,   0.0f, 1.0f, 0.0f });
-						unsigned int v3 = mesh.addVertex({ x + 0.5f, y + 0.5f, z + 0.5f,    0.0f, 0.0f, 1.0f });
-						unsigned int v6 = mesh.addVertex({ x + 0.5f, y - 0.5f, z - 0.5f,  0.0f, 1.0f, 0.0f });
-						unsigned int v7 = mesh.addVertex({ x + 0.5f, y + 0.5f, z - 0.5f,   0.0f, 0.0f, 1.0f });
+						unsigned int v2 = mesh.addVertex({ x + 0.5f, y - 0.5f, z + 0.5f, 1.0f, 0.0f, 0.0f });
+						unsigned int v3 = mesh.addVertex({ x + 0.5f, y + 0.5f, z + 0.5f, 0.0f, 1.0f, 0.0f });
+						unsigned int v6 = mesh.addVertex({ x + 0.5f, y - 0.5f, z - 0.5f, 0.0f, 0.0f, 1.0f });
+						unsigned int v7 = mesh.addVertex({ x + 0.5f, y + 0.5f, z - 0.5f, 0.0f, 1.0f, 1.0f });
 
 						//right
 						mesh.addTriangle({ v2, v6, v7 });
@@ -80,20 +80,20 @@ void ChunkRenderer::generateMesh(Mesh& mesh) {
 					}
 
 					if (shouldRenderUp(*m_chunk, x, y, z)) {
-						unsigned int v3 = mesh.addVertex({ x + 0.5f, y + 0.5f, z + 0.5f,    0.0f, 0.0f, 1.0f });
-						unsigned int v4 = mesh.addVertex({ x - 0.5f, y + 0.5f, z + 0.5f,   0.0f, 1.0f, 1.0f });
-						unsigned int v7 = mesh.addVertex({ x + 0.5f, y + 0.5f, z - 0.5f,   0.0f, 0.0f, 1.0f });
-						unsigned int v8 = mesh.addVertex({ x - 0.5f, y + 0.5f, z - 0.5f,  0.0f, 1.0f, 1.0f });
+						unsigned int v3 = mesh.addVertex({ x + 0.5f, y + 0.5f, z + 0.5f, 1.0f, 0.0f, 0.0f });
+						unsigned int v4 = mesh.addVertex({ x - 0.5f, y + 0.5f, z + 0.5f, 0.0f, 1.0f, 0.0f });
+						unsigned int v7 = mesh.addVertex({ x + 0.5f, y + 0.5f, z - 0.5f, 0.0f, 0.0f, 1.0f });
+						unsigned int v8 = mesh.addVertex({ x - 0.5f, y + 0.5f, z - 0.5f, 0.0f, 1.0f, 1.0f });
 						//up
 						mesh.addTriangle({ v4, v3, v7 });
 						mesh.addTriangle({ v4, v7, v8 });
 					}
 
 					if (shouldRenderDown(*m_chunk, x, y, z)) {
-						unsigned int v1 = mesh.addVertex({ x - 0.5f, y - 0.5f, z + 0.5f,  1.0f, 0.0f, 0.0f });
-						unsigned int v2 = mesh.addVertex({ x + 0.5f, y - 0.5f, z + 0.5f,   0.0f, 1.0f, 0.0f });
-						unsigned int v5 = mesh.addVertex({ x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 0.0f, 0.0f });
-						unsigned int v6 = mesh.addVertex({ x + 0.5f, y - 0.5f, z - 0.5f,  0.0f, 1.0f, 0.0f });
+						unsigned int v1 = mesh.addVertex({ x - 0.5f, y - 0.5f, z + 0.5f, 1.0f, 0.0f, 0.0f });
+						unsigned int v2 = mesh.addVertex({ x + 0.5f, y - 0.5f, z + 0.5f, 0.0f, 1.0f, 0.0f });
+						unsigned int v5 = mesh.addVertex({ x - 0.5f, y - 0.5f, z - 0.5f, 0.0f, 0.0f, 1.0f });
+						unsigned int v6 = mesh.addVertex({ x + 0.5f, y - 0.5f, z - 0.5f, 0.0f, 1.0f, 1.0f });
 						//down
 						mesh.addTriangle({ v5, v6, v2 });
 						mesh.addTriangle({ v5, v2, v1 });
