@@ -69,7 +69,7 @@ void init() {
             chunkMap.addChunk(new Chunk(i, j));
         }
     }
-    ResourceManager::LoadTexture("grass.png", false, "grass");
+    ResourceManager::loadTexture("grass.png", false, "grass");
 }
 
 void update() {
@@ -89,10 +89,10 @@ void render(float delta, Shader& shader) {
 
     //model = glm::rotate(model, (float)SDL_GetTicks64() / 1000.0f * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 
-    shader.Use();
-    shader.SetMatrix4("projection", proj);
-    shader.SetMatrix4("view", view);
-    shader.SetMatrix4("model", model);
+    shader.use();
+    shader.setMatrix4("projection", proj);
+    shader.setMatrix4("view", view);
+    shader.setMatrix4("model", model);
 
     for (int i = 0; i < 8; ++i) {
         for (int j = 0; j < 8; ++j) {
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
     init();
 
     Shader shader;
-    shader.Compile("default_shader.vert", "default_shader.frag");\
+    shader.compile("default_shader.vert", "default_shader.frag");\
 
     Uint64 lastTime = SDL_GetTicks64();
     double amountOfTicks = TICKS_PER_SECOND;
@@ -178,7 +178,7 @@ int main(int argc, char* argv[]) {
             frames = 0;
         }
     }
-    ResourceManager::Clear();
+    ResourceManager::clear();
     SDL_DestroyWindow(window);
     return 0;
 }

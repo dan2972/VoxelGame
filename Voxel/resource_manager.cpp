@@ -11,29 +11,29 @@ std::map<std::string, Texture2D>    ResourceManager::Textures;
 std::map<std::string, Shader>       ResourceManager::Shaders;
 
 
-Shader ResourceManager::LoadShader(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, std::string name)
+Shader ResourceManager::loadShader(const char* vShaderFile, const char* fShaderFile, const char* gShaderFile, std::string name)
 {
     Shaders[name] = loadShaderFromFile(vShaderFile, fShaderFile, gShaderFile);
     return Shaders[name];
 }
 
-Shader ResourceManager::GetShader(std::string name)
+Shader ResourceManager::getShader(std::string name)
 {
     return Shaders[name];
 }
 
-Texture2D ResourceManager::LoadTexture(const char* file, bool alpha, std::string name)
+Texture2D ResourceManager::loadTexture(const char* file, bool alpha, std::string name)
 {
     Textures[name] = loadTextureFromFile(file, alpha);
     return Textures[name];
 }
 
-Texture2D ResourceManager::GetTexture(std::string name)
+Texture2D ResourceManager::getTexture(std::string name)
 {
     return Textures[name];
 }
 
-void ResourceManager::Clear()
+void ResourceManager::clear()
 {
     // (properly) delete all shaders	
     for (auto iter : Shaders)
@@ -83,7 +83,7 @@ Shader ResourceManager::loadShaderFromFile(const char* vShaderFile, const char* 
     const char* gShaderCode = geometryCode.c_str();
     // 2. now create shader object from source code
     Shader shader;
-    shader.Compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
+    shader.compile(vShaderCode, fShaderCode, gShaderFile != nullptr ? gShaderCode : nullptr);
     return shader;
 }
 
@@ -100,7 +100,7 @@ Texture2D ResourceManager::loadTextureFromFile(const char* file, bool alpha)
     int width, height, nrChannels;
     unsigned char* data = stbi_load(file, &width, &height, &nrChannels, 0);
     // now generate texture
-    texture.Generate(width, height, data);
+    texture.generate(width, height, data);
     // and finally free image data
     stbi_image_free(data);
     return texture;

@@ -53,8 +53,8 @@ void ChunkRenderer::generateMesh(const Chunk& chunk, Mesh& mesh) {
 
 				if (chunk.getBlockAt(x, y, z) != Air) {
 
-					Texture2D texture = ResourceManager::GetTexture("grass");
-					texture.Bind();
+					Texture2D texture = ResourceManager::getTexture("grass");
+					texture.bind();
 
 					if (shouldRenderFront(chunk, x, y, z)) {
 						unsigned int v1 = mesh.addVertex({ shiftX + x - 0.5f, y - 0.5f, shiftZ + z + 0.5f, 0.0f, 0.0f });

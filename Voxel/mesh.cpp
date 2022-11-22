@@ -26,14 +26,14 @@ Mesh::Mesh(const std::vector<unsigned>& format) {
 	}
 	for (int i = 0; i < format.size(); ++i) {
 		if (i == 0) {
-			std::cout << "glVertexAttribPointer(" << i << ", " << format[i] << ", GL_FLOAT, GL_FALSE, " << sum << " * sizeof(float), (void*)0)";
+			//std::cout << "glVertexAttribPointer(" << i << ", " << format[i] << ", GL_FLOAT, GL_FALSE, " << sum << " * sizeof(float), (void*)0)";
 			glVertexAttribPointer(i, format[i], GL_FLOAT, GL_FALSE, sum * sizeof(float), (void*)0);
 		}
 		else {
-			std::cout << "glVertexAttribPointer(" << i << ", " << format[i] << ", GL_FLOAT, GL_FALSE, " << sum << " * sizeof(float), (void*)(" << format[i - 1] << " * sizeof(float)))";
+			//std::cout << "glVertexAttribPointer(" << i << ", " << format[i] << ", GL_FLOAT, GL_FALSE, " << sum << " * sizeof(float), (void*)(" << format[i - 1] << " * sizeof(float)))";
 			glVertexAttribPointer(i, format[i], GL_FLOAT, GL_FALSE, sum * sizeof(float), (void*)(format[i - 1] * sizeof(float)));
 		}
-		std::cout << std::endl;
+		//std::cout << std::endl;
 		glEnableVertexAttribArray(i);
 	}
 
