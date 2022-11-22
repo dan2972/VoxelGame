@@ -108,6 +108,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -134,11 +135,13 @@
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
     <ClCompile Include="chunk.cpp" />
+    <ClCompile Include="chunk_map.cpp" />
     <ClCompile Include="chunk_renderer.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="input_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
+    <ClCompile Include="perlin_generator.cpp" />
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="resource_manager.cpp" />
     <ClCompile Include="shader.cpp" />
@@ -147,9 +150,12 @@
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="chunk.h" />
+    <ClInclude Include="chunk_map.h" />
     <ClInclude Include="chunk_renderer.h" />
     <ClInclude Include="input_manager.h" />
     <ClInclude Include="mesh.h" />
+    <ClInclude Include="perlin_generator.h" />
+    <ClInclude Include="perlin_noise.h" />
     <ClInclude Include="renderer.h" />
     <ClInclude Include="resource_manager.h" />
     <ClInclude Include="shader.h" />
@@ -159,6 +165,9 @@
   <ItemGroup>
     <None Include="default_shader.frag" />
     <None Include="default_shader.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="grass.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

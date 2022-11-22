@@ -1,14 +1,15 @@
 #pragma once
 #include <unordered_map>
-#include "chunk_map.h"
+#include <memory>
 #include "chunk.h"
-#include "mesh.h"
-class ChunkRenderer
+class ChunkMap
 {
 public:
-	ChunkRenderer(const ChunkMap& chunkmap);
+	ChunkMap() = default;
 
-    void drawChunk(int chunkX, int chunkZ);
+    void addChunk(Chunk* chunk);
+    Chunk& getChunk(int chunkX, int chunkY) const;
+    BlockType getBlockAt(int x, int y, int z) const;
 private:
     struct ChunkCoord {
         ChunkCoord(int x, int z) : x{ x }, z{ z } {}
@@ -29,9 +30,6 @@ private:
         }
     };
 
-	const ChunkMap* m_chunkMap = nullptr;
-	std::unordered_map<ChunkCoord, std::unique_ptr<Mesh>, HashFunc, EqualsFunc> m_meshMap;
-
-    void generateMesh(const Chunk& chunk, Mesh& mesh);
+	std::unordered_map<ChunkCoord, std::unique_ptr<Chunk>, HashFunc, EqualsFunc> m_chunkMap;
 };
 

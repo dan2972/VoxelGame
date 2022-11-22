@@ -4,12 +4,13 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <SDL/SDL.h>
-#include "mesh.h"
 #include "shader.h"
 #include "camera.h"
 #include "input_manager.h"
-#include "chunk.h"
+#include "chunk_map.h"
 #include "chunk_renderer.h"
+#include "perlin_generator.h"
+#include "resource_manager.h"
 
 int WIDTH = 960;
 int HEIGHT = 540;
@@ -20,8 +21,8 @@ SDL_GLContext mainContext;
 
 Camera camera;
 
-Chunk chunk;
-ChunkRenderer chunkRenderer(chunk);
+ChunkMap chunkMap;
+ChunkRenderer chunkRenderer(chunkMap);
 
 void initScreen() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -61,15 +62,21 @@ void init() {
     InputManager::mapControl(InputManager::MoveUp, SDL_SCANCODE_SPACE);
     InputManager::mapControl(InputManager::MoveDown, SDL_SCANCODE_LSHIFT);
 
-    //chunk.removeBlock(3, 3, 3);
-    //chunk.placeBlock(0, 0, 0, Grass);
+
+    PerlinGenerator::initialize(123);
+    for (int i = 0; i < 8; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            chunkMap.addChunk(new Chunk(i, j));
+        }
+    }
+    ResourceManager::LoadTexture("grass.png", false, "grass");
 }
 
 void update() {
 
 }
 
-void render(float delta, Mesh& mesh, Shader& shader) {
+void render(float delta, Shader& shader) {
     //glViewport(0, 0, WIDTH, HEIGHT);
     glClearColor(0.47f, 0.655f, 1.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -87,7 +94,11 @@ void render(float delta, Mesh& mesh, Shader& shader) {
     shader.SetMatrix4("view", view);
     shader.SetMatrix4("model", model);
 
-    mesh.render();
+    for (int i = 0; i < 8; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            chunkRenderer.drawChunk(i, j);
+        }
+    }
 
     SDL_GL_SwapWindow(window);
 }
@@ -97,11 +108,7 @@ int main(int argc, char* argv[]) {
     init();
 
     Shader shader;
-    shader.Compile("default_shader.vert", "default_shader.frag");
-
-    Mesh mesh({ 3, 3 });
-
-    chunkRenderer.generateMesh(mesh);
+    shader.Compile("default_shader.vert", "default_shader.frag");\
 
     Uint64 lastTime = SDL_GetTicks64();
     double amountOfTicks = TICKS_PER_SECOND;
@@ -161,7 +168,7 @@ int main(int argc, char* argv[]) {
             update();
             delta--;
         }
-        render(static_cast<float>(delta), mesh, shader);
+        render(static_cast<float>(delta), shader);
         ++frames;
         
         if (SDL_GetTicks64() - timer > 1000) {
@@ -171,6 +178,7 @@ int main(int argc, char* argv[]) {
             frames = 0;
         }
     }
+    ResourceManager::Clear();
     SDL_DestroyWindow(window);
     return 0;
 }
