@@ -64,8 +64,8 @@ void init() {
 
 
     PerlinGenerator::initialize(123);
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < 8; ++i) {
+        for (int j = 0; j < 8; ++j) {
             chunkMap.addChunk(new Chunk(i, j));
         }
     }
@@ -82,7 +82,7 @@ void render(float delta, Shader& shader) {
     glClearColor(0.47f, 0.655f, 1.0f, 1.0f);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    glm::mat4 proj = glm::perspective(glm::radians(camera.getZoom()), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+    glm::mat4 proj = glm::perspective(glm::radians(camera.getZoom()), (float)WIDTH / (float)HEIGHT, 0.1f, 500.0f);
 
     glm::mat4 view = camera.getViewMatrix();
 
@@ -95,8 +95,8 @@ void render(float delta, Shader& shader) {
     shader.setMatrix4("view", view);
     shader.setMatrix4("model", model);
 
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < 8; ++i) {
+        for (int j = 0; j < 8; ++j) {
             chunkRenderer.drawChunk(i, j);
         }
     }
