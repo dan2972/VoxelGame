@@ -5,40 +5,42 @@ ChunkRenderer::ChunkRenderer(const ChunkMap& chunkMap) {
 	m_chunkMap = &chunkMap;
 }
 
-bool shouldRenderLeft(const Chunk& chunk, unsigned x, unsigned y, unsigned z) {
-	return x == 0 || chunk.getBlockAt(x - 1, y, z) == Air;
+bool ChunkRenderer::shouldRenderLeft(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+	return m_chunkMap->getBlockAt(worldX - 1, worldY, worldZ) == Air;
 }
 
-bool shouldRenderRight(const Chunk& chunk, unsigned x, unsigned y, unsigned z) {
-	return x == Chunk::CHUNK_SIZE - 1 || chunk.getBlockAt(x + 1, y, z) == Air;
+bool ChunkRenderer::shouldRenderRight(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+	return m_chunkMap->getBlockAt(worldX + 1, worldY, worldZ) == Air;
 }
 
-bool shouldRenderDown(const Chunk& chunk, unsigned x, unsigned y, unsigned z) {
-	return y == 0 || chunk.getBlockAt(x, y - 1, z) == Air;
+bool ChunkRenderer::shouldRenderDown(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+	return worldY == 0 || m_chunkMap->getBlockAt(worldX, worldY - 1, worldZ) == Air;
 }
 
-bool shouldRenderUp(const Chunk& chunk, unsigned x, unsigned y, unsigned z) {
-	return y == Chunk::CHUNK_SIZE - 1 || chunk.getBlockAt(x, y + 1, z) == Air;
+bool ChunkRenderer::shouldRenderUp(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+	return worldY == Chunk::CHUNK_SIZE - 1 || m_chunkMap->getBlockAt(worldX, worldY + 1, worldZ) == Air;
 }
 
-bool shouldRenderBack(const Chunk& chunk, unsigned x, unsigned y, unsigned z) {
-	return z == 0 || chunk.getBlockAt(x, y, z - 1) == Air;
+bool ChunkRenderer::shouldRenderBack(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+	return m_chunkMap->getBlockAt(worldX, worldY, worldZ - 1) == Air;
 }
 
-bool shouldRenderFront(const Chunk& chunk, unsigned x, unsigned y, unsigned z) {
-	return z == Chunk::CHUNK_SIZE - 1 || chunk.getBlockAt(x, y, z + 1) == Air;
+bool ChunkRenderer::shouldRenderFront(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+	return m_chunkMap->getBlockAt(worldX, worldY, worldZ + 1) == Air;
 }
 
 void ChunkRenderer::drawChunk(int chunkX, int chunkZ) {
-	Chunk& chunk = m_chunkMap->getChunk(chunkX, chunkZ);
-	if (m_meshMap.find({ chunkX, chunkZ }) == m_meshMap.end()) {
-		Mesh* mesh = new Mesh{ {3, 2} };
-		m_meshMap.emplace(ChunkCoord{ chunkX, chunkZ }, std::unique_ptr<Mesh>(mesh));
-		generateMesh(chunk, *mesh);
-		mesh->render();
-	}
-	else {
-		m_meshMap.at({ chunkX, chunkZ }).get()->render();
+	Chunk* chunk = m_chunkMap->getChunk(chunkX, chunkZ);
+	if (chunk != nullptr) {
+		if (m_meshMap.find({ chunkX, chunkZ }) == m_meshMap.end()) {
+			Mesh* mesh = new Mesh{ {3, 2} };
+			m_meshMap.emplace(ChunkMap::ChunkCoord{ chunkX, chunkZ }, std::unique_ptr<Mesh>(mesh));
+			generateMesh(*chunk, *mesh);
+			mesh->render();
+		}
+		else {
+			m_meshMap.at({ chunkX, chunkZ }).get()->render();
+		}
 	}
 }
 
@@ -50,13 +52,15 @@ void ChunkRenderer::generateMesh(const Chunk& chunk, Mesh& mesh) {
 
 				int shiftX = chunk.getChunkX() * Chunk::CHUNK_SIZE;
 				int shiftZ = chunk.getChunkZ() * Chunk::CHUNK_SIZE;
+				int worldX = chunk.getChunkX() * Chunk::CHUNK_SIZE + x;
+				int worldZ = chunk.getChunkZ() * Chunk::CHUNK_SIZE + z;
 
 				if (chunk.getBlockAt(x, y, z) != Air) {
 
 					Texture2D texture = ResourceManager::getTexture("grass");
 					texture.bind();
 
-					if (shouldRenderFront(chunk, x, y, z)) {
+					if (shouldRenderFront(chunk, worldX, y, worldZ)) {
 						unsigned int v1 = mesh.addVertex({ shiftX + x - 0.5f, y - 0.5f, shiftZ + z + 0.5f, 0.0f, 0.0f });
 						unsigned int v2 = mesh.addVertex({ shiftX + x + 0.5f, y - 0.5f, shiftZ + z + 0.5f, 1.0f, 0.0f });
 						unsigned int v3 = mesh.addVertex({ shiftX + x + 0.5f, y + 0.5f, shiftZ + z + 0.5f, 1.0f, 1.0f });
@@ -67,7 +71,7 @@ void ChunkRenderer::generateMesh(const Chunk& chunk, Mesh& mesh) {
 						mesh.addTriangle({ v1, v3, v4 });
 					}
 
-					if (shouldRenderBack(chunk, x, y, z)) {
+					if (shouldRenderBack(chunk, worldX, y, worldZ)) {
 						unsigned int v5 = mesh.addVertex({ shiftX + x - 0.5f, y - 0.5f, shiftZ + z - 0.5f, 1.0f, 0.0f });
 						unsigned int v6 = mesh.addVertex({ shiftX + x + 0.5f, y - 0.5f, shiftZ + z - 0.5f, 0.0f, 0.0f });
 						unsigned int v7 = mesh.addVertex({ shiftX + x + 0.5f, y + 0.5f, shiftZ + z - 0.5f, 0.0f, 1.0f });
@@ -77,7 +81,7 @@ void ChunkRenderer::generateMesh(const Chunk& chunk, Mesh& mesh) {
 						mesh.addTriangle({ v6, v8, v7 });
 					}
 
-					if (shouldRenderLeft(chunk, x, y, z)) {
+					if (shouldRenderLeft(chunk, worldX, y, worldZ)) {
 						unsigned int v1 = mesh.addVertex({ shiftX + x - 0.5f, y - 0.5f, shiftZ + z + 0.5f, 1.0f, 0.0f });
 						unsigned int v4 = mesh.addVertex({ shiftX + x - 0.5f, y + 0.5f, shiftZ + z + 0.5f, 1.0f, 1.0f });
 						unsigned int v5 = mesh.addVertex({ shiftX + x - 0.5f, y - 0.5f, shiftZ + z - 0.5f, 0.0f, 0.0f });
@@ -88,7 +92,7 @@ void ChunkRenderer::generateMesh(const Chunk& chunk, Mesh& mesh) {
 						mesh.addTriangle({ v5, v4, v8 });
 					}
 					
-					if (shouldRenderRight(chunk, x, y, z)) {
+					if (shouldRenderRight(chunk, worldX, y, worldZ)) {
 						unsigned int v2 = mesh.addVertex({ shiftX + x + 0.5f, y - 0.5f, shiftZ + z + 0.5f, 0.0f, 0.0f });
 						unsigned int v3 = mesh.addVertex({ shiftX + x + 0.5f, y + 0.5f, shiftZ + z + 0.5f, 0.0f, 1.0f });
 						unsigned int v6 = mesh.addVertex({ shiftX + x + 0.5f, y - 0.5f, shiftZ + z - 0.5f, 1.0f, 0.0f });
@@ -99,7 +103,7 @@ void ChunkRenderer::generateMesh(const Chunk& chunk, Mesh& mesh) {
 						mesh.addTriangle({ v2, v7, v3 });
 					}
 
-					if (shouldRenderUp(chunk, x, y, z)) {
+					if (shouldRenderUp(chunk, worldX, y, worldZ)) {
 						unsigned int v3 = mesh.addVertex({ shiftX + x + 0.5f, y + 0.5f, shiftZ + z + 0.5f, 1.0f, 0.0f });
 						unsigned int v4 = mesh.addVertex({ shiftX + x - 0.5f, y + 0.5f, shiftZ + z + 0.5f, 0.0f, 0.0f });
 						unsigned int v7 = mesh.addVertex({ shiftX + x + 0.5f, y + 0.5f, shiftZ + z - 0.5f, 1.0f, 1.0f });
@@ -109,7 +113,7 @@ void ChunkRenderer::generateMesh(const Chunk& chunk, Mesh& mesh) {
 						mesh.addTriangle({ v4, v7, v8 });
 					}
 
-					if (shouldRenderDown(chunk, x, y, z)) {
+					if (shouldRenderDown(chunk, worldX, y, worldZ)) {
 						unsigned int v1 = mesh.addVertex({ shiftX + x - 0.5f, y - 0.5f, shiftZ + z + 0.5f, 0.0f, 1.0f });
 						unsigned int v2 = mesh.addVertex({ shiftX + x + 0.5f, y - 0.5f, shiftZ + z + 0.5f, 1.0f, 1.0f });
 						unsigned int v5 = mesh.addVertex({ shiftX + x - 0.5f, y - 0.5f, shiftZ + z - 0.5f, 0.0f, 0.0f });

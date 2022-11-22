@@ -7,10 +7,6 @@ class ChunkMap
 public:
 	ChunkMap() = default;
 
-    void addChunk(Chunk* chunk);
-    Chunk& getChunk(int chunkX, int chunkY) const;
-    BlockType getBlockAt(int x, int y, int z) const;
-private:
     struct ChunkCoord {
         ChunkCoord(int x, int z) : x{ x }, z{ z } {}
         int x, z;
@@ -30,6 +26,15 @@ private:
         }
     };
 
+    void addChunk(Chunk* chunk);
+
+    // returns a chunk at the given chunk coordinates
+    // returns a nullptr if the chunk does not exist
+    Chunk* getChunk(int chunkX, int chunkY) const;
+
+    // returns a block type at the given map coordinates
+    BlockType getBlockAt(int x, int y, int z) const;
+private:
 	std::unordered_map<ChunkCoord, std::unique_ptr<Chunk>, HashFunc, EqualsFunc> m_chunkMap;
 };
 
