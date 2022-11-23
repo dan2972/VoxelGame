@@ -30,8 +30,12 @@ Mesh::Mesh(const std::vector<unsigned>& format) {
 			glVertexAttribPointer(i, format[i], GL_FLOAT, GL_FALSE, sum * sizeof(float), (void*)0);
 		}
 		else {
-			//std::cout << "glVertexAttribPointer(" << i << ", " << format[i] << ", GL_FLOAT, GL_FALSE, " << sum << " * sizeof(float), (void*)(" << format[i - 1] << " * sizeof(float)))";
-			glVertexAttribPointer(i, format[i], GL_FLOAT, GL_FALSE, sum * sizeof(float), (void*)(format[i - 1] * sizeof(float)));
+			int s = 0;
+			for (int j = i - 1; j >= 0; --j) {
+				s += format[j];
+			}
+			//std::cout << "glVertexAttribPointer(" << i << ", " << format[i] << ", GL_FLOAT, GL_FALSE, " << sum << " * sizeof(float), (void*)(" << s << " * sizeof(float)))";
+			glVertexAttribPointer(i, format[i], GL_FLOAT, GL_FALSE, sum * sizeof(float), (void*)(s * sizeof(float)));
 		}
 		//std::cout << std::endl;
 		glEnableVertexAttribArray(i);
@@ -52,6 +56,7 @@ Mesh::~Mesh() {
 void Mesh::start() {
 	m_vboCounter = 0;
 	m_iboCounter = 0;
+	glBindVertexArray(m_vaoID);
 }
 
 void Mesh::end() {

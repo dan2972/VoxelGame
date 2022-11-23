@@ -54,6 +54,8 @@ void initScreen() {
     glCullFace(GL_BACK);
 }
 
+unsigned mapsize = 0;
+
 void init() {
     InputManager::mapControl(InputManager::MoveForward, SDL_SCANCODE_W);
     InputManager::mapControl(InputManager::MoveLeft, SDL_SCANCODE_A);
@@ -64,12 +66,12 @@ void init() {
 
 
     PerlinGenerator::initialize(123);
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 8; ++j) {
+    for (int i = 0; i < mapsize; ++i) {
+        for (int j = 0; j < mapsize; ++j) {
             chunkMap.addChunk(new Chunk(i, j));
         }
     }
-    //chunkMap.addChunk(new Chunk(-1, -1));
+    chunkMap.addChunk(new Chunk(-1, -1));
     ResourceManager::loadTexture("grass.png", false, "grass");
 }
 
@@ -95,12 +97,12 @@ void render(float delta, Shader& shader) {
     shader.setMatrix4("view", view);
     shader.setMatrix4("model", model);
 
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 8; ++j) {
+    for (int i = 0; i < mapsize; ++i) {
+        for (int j = 0; j < mapsize; ++j) {
             chunkRenderer.drawChunk(i, j);
         }
     }
-    //chunkRenderer.drawChunk(-1, -1);
+    chunkRenderer.drawChunk(-1, -1);
 
     SDL_GL_SwapWindow(window);
 }

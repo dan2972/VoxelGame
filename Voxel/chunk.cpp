@@ -43,3 +43,23 @@ int Chunk::getChunkX() const {
 int Chunk::getChunkZ() const {
 	return m_chunkZ;
 }
+
+int Chunk::getBlockLight(unsigned x, unsigned y, unsigned z) const
+{
+	return m_lightMap[y * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + x] & 0xF;
+}
+
+int Chunk::getSunLight(unsigned x, unsigned y, unsigned z) const
+{
+	return (m_lightMap[y * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + x] >> 4) & 0xF;
+}
+
+void Chunk::setBlockLight(unsigned x, unsigned y, unsigned z, int val)
+{
+	m_lightMap[y * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + x] = (m_lightMap[y * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + x] & 0xF0) | val;
+}
+
+void Chunk::setSunLight(unsigned x, unsigned y, unsigned z, int val)
+{
+	m_lightMap[y * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + x] = (m_lightMap[y * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + x] & 0xF) | (val << 4);
+}

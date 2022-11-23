@@ -18,8 +18,16 @@ public:
 	int getChunkX() const;
 	int getChunkZ() const;
 
+	int getBlockLight(unsigned x, unsigned y, unsigned z) const;
+	int getSunLight(unsigned x, unsigned y, unsigned z) const;
+	void setBlockLight(unsigned x, unsigned y, unsigned z, int val);
+	void setSunLight(unsigned x, unsigned y, unsigned z, int val);
+
+	bool requestedUpdate = false;
+
 private:
 	std::array<BlockType, CHUNK_SIZE* CHUNK_SIZE* CHUNK_SIZE> m_chunk{};
+	std::array<char, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> m_lightMap{};
 	int m_chunkX, m_chunkZ;
 };
 

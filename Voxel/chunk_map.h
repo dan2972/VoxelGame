@@ -34,6 +34,8 @@ public:
 
     // returns a block type at the given map coordinates
     BlockType getBlockAt(int x, int y, int z) const;
+    int getSunLightAt(int x, int y, int z) const;
+    int getBlockLightAt(int x, int y, int z) const;
 private:
 	std::unordered_map<ChunkCoord, std::unique_ptr<Chunk>, HashFunc, EqualsFunc> m_chunkMap;
 };
