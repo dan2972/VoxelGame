@@ -5,27 +5,27 @@ ChunkRenderer::ChunkRenderer(const ChunkMap& chunkMap) {
 	m_chunkMap = &chunkMap;
 }
 
-bool ChunkRenderer::shouldRenderLeft(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+bool ChunkRenderer::shouldRenderLeft(const Chunk& chunk, int worldX, int worldY, int worldZ) {
 	return m_chunkMap->getBlockAt(worldX - 1, worldY, worldZ) == Air;
 }
 
-bool ChunkRenderer::shouldRenderRight(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+bool ChunkRenderer::shouldRenderRight(const Chunk& chunk, int worldX, int worldY, int worldZ) {
 	return m_chunkMap->getBlockAt(worldX + 1, worldY, worldZ) == Air;
 }
 
-bool ChunkRenderer::shouldRenderDown(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+bool ChunkRenderer::shouldRenderDown(const Chunk& chunk, int worldX, int worldY, int worldZ) {
 	return worldY == 0 || m_chunkMap->getBlockAt(worldX, worldY - 1, worldZ) == Air;
 }
 
-bool ChunkRenderer::shouldRenderUp(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+bool ChunkRenderer::shouldRenderUp(const Chunk& chunk, int worldX, int worldY, int worldZ) {
 	return worldY == Chunk::CHUNK_SIZE - 1 || m_chunkMap->getBlockAt(worldX, worldY + 1, worldZ) == Air;
 }
 
-bool ChunkRenderer::shouldRenderBack(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+bool ChunkRenderer::shouldRenderBack(const Chunk& chunk, int worldX, int worldY, int worldZ) {
 	return m_chunkMap->getBlockAt(worldX, worldY, worldZ - 1) == Air;
 }
 
-bool ChunkRenderer::shouldRenderFront(const Chunk& chunk, unsigned worldX, unsigned worldY, unsigned worldZ) {
+bool ChunkRenderer::shouldRenderFront(const Chunk& chunk, int worldX, int worldY, int worldZ) {
 	return m_chunkMap->getBlockAt(worldX, worldY, worldZ + 1) == Air;
 }
 
@@ -51,9 +51,9 @@ void ChunkRenderer::drawChunk(int chunkX, int chunkZ) {
 
 void ChunkRenderer::generateMesh(const Chunk& chunk, Mesh& mesh) {
 	mesh.start();
-	for (unsigned y = 0; y < Chunk::CHUNK_SIZE; ++y) {
-		for (unsigned z = 0; z < Chunk::CHUNK_SIZE; ++z) {
-			for (unsigned x = 0; x < Chunk::CHUNK_SIZE; ++x) {
+	for (int y = 0; y < Chunk::CHUNK_SIZE; ++y) {
+		for (int z = 0; z < Chunk::CHUNK_SIZE; ++z) {
+			for (int x = 0; x < Chunk::CHUNK_SIZE; ++x) {
 
 				int shiftX = chunk.getChunkX() * Chunk::CHUNK_SIZE;
 				int shiftZ = chunk.getChunkZ() * Chunk::CHUNK_SIZE;
@@ -146,8 +146,8 @@ void ChunkRenderer::generateMesh(const Chunk& chunk, Mesh& mesh) {
 
 void ChunkRenderer::generateLightMap(Chunk& chunk) {
 	for (int y = Chunk::CHUNK_SIZE - 1; y >= 0; --y) {
-		for (unsigned z = 0; z < Chunk::CHUNK_SIZE; ++z) {
-			for (unsigned x = 0; x < Chunk::CHUNK_SIZE; ++x) {
+		for (int z = 0; z < Chunk::CHUNK_SIZE; ++z) {
+			for (int x = 0; x < Chunk::CHUNK_SIZE; ++x) {
 				if (y == Chunk::CHUNK_SIZE - 1 && chunk.getBlockAt(x, y, z) == Air) {
 					chunk.setSunLight(x, y, z, m_sunlightLevel);
 					continue;

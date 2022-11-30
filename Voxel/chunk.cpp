@@ -13,10 +13,10 @@ Chunk::Chunk(int chunkX, int chunkZ) : m_chunkX{ chunkX }, m_chunkZ{ chunkZ } {
 			m_chunk[i] = Grass;
 		}
 	}*/
-	for (unsigned i = 0; i < CHUNK_SIZE; ++i) {
-		for (unsigned j = 0; j < CHUNK_SIZE; ++j) {
+	for (int i = 0; i < CHUNK_SIZE; ++i) {
+		for (int j = 0; j < CHUNK_SIZE; ++j) {
 			float p = 1.0f - PerlinGenerator::getValueAt(chunkX * CHUNK_SIZE + j, chunkZ * CHUNK_SIZE + i, 0.02, 6);
-			for (unsigned y = 0; y < CHUNK_SIZE * p; ++y) {
+			for (int y = 0; y < CHUNK_SIZE * p; ++y) {
 				placeBlock(j, y, i, Grass);
 			}
 		}

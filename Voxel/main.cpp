@@ -54,7 +54,7 @@ void initScreen() {
     glCullFace(GL_BACK);
 }
 
-unsigned mapsize = 0;
+unsigned mapsize = 4;
 
 void init() {
     InputManager::mapControl(InputManager::MoveForward, SDL_SCANCODE_W);

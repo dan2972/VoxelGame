@@ -9,8 +9,8 @@ Mesh::Mesh(const std::vector<unsigned>& format) {
 	int vertexSize = 0;
 	for (unsigned i : format)
 		vertexSize += i;
-	m_vbo = new float[MAX_VERTICES * vertexSize];
-	m_ibo = new unsigned[MAX_VERTICES * 3];
+	//m_vbo = new float[MAX_VERTICES * vertexSize];
+	//m_ibo = new unsigned[MAX_VERTICES * 3];
 	glGenVertexArrays(1, &m_vaoID);
 	glGenBuffers(1, &m_vboID);
 	glGenBuffers(1, &m_iboID);
@@ -49,36 +49,42 @@ Mesh::~Mesh() {
 	glDeleteVertexArrays(1, &m_vaoID);
 	glDeleteBuffers(1, &m_vboID);
 	glDeleteBuffers(1, &m_iboID);
-	delete[] m_vbo;
-	delete[] m_ibo;
+	//delete[] m_vbo;
+	//delete[] m_ibo;
 }
 
 void Mesh::start() {
-	m_vboCounter = 0;
-	m_iboCounter = 0;
+	//m_vboCounter = 0;
+	//m_iboCounter = 0;
 	glBindVertexArray(m_vaoID);
 }
 
 void Mesh::end() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_iboID);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(unsigned) * (m_iboCounter + 1), m_ibo);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(unsigned) * (m_ibo.size()), m_ibo.data());
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_vboID);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * (m_vboCounter + 1), m_vbo);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * (m_vbo.size()), m_vbo.data());
 }
 
 void Mesh::render() {
 	glBindVertexArray(m_vaoID);
-	glDrawElements(GL_TRIANGLES, m_iboCounter + 1, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, m_ibo.size(), GL_UNSIGNED_INT, nullptr);
 }
 
 unsigned Mesh::addVertex(const std::vector<float>& vertex) {
-	for (float value : vertex)
-		m_vbo[m_vboCounter++] = value;
-	return (m_vboCounter + 1) / vertex.size() - 1;
+	for (float value : vertex) {
+		//m_vbo[m_vboCounter++] = value;
+		m_vbo.push_back(value);
+		//++m_vboCounter;
+	}
+	return (m_vbo.size()) / vertex.size() - 1;
 }
 
 void Mesh::addTriangle(const std::vector<unsigned>& vertices) {
-	for (unsigned vertex : vertices)
-		m_ibo[m_iboCounter++] = vertex;
+	for (unsigned vertex : vertices) {
+		//m_ibo[m_iboCounter++] = vertex;
+		m_ibo.push_back(vertex);
+		//++m_iboCounter;
+	}
 }

@@ -15,12 +15,12 @@ private:
 
     void generateMesh(const Chunk& chunk, Mesh& mesh);
     void generateLightMap(Chunk& chunk);
-    bool shouldRenderLeft(const Chunk& chunk, unsigned x, unsigned y, unsigned z);
-    bool shouldRenderRight(const Chunk& chunk, unsigned x, unsigned y, unsigned z);
-    bool shouldRenderFront(const Chunk& chunk, unsigned x, unsigned y, unsigned z);
-    bool shouldRenderBack(const Chunk& chunk, unsigned x, unsigned y, unsigned z);
-    bool shouldRenderUp(const Chunk& chunk, unsigned x, unsigned y, unsigned z);
-    bool shouldRenderDown(const Chunk& chunk, unsigned x, unsigned y, unsigned z);
+    bool shouldRenderLeft(const Chunk& chunk, int x, int y, int z);
+    bool shouldRenderRight(const Chunk& chunk, int x, int y, int z);
+    bool shouldRenderFront(const Chunk& chunk, int x, int y, int z);
+    bool shouldRenderBack(const Chunk& chunk, int x, int y, int z);
+    bool shouldRenderUp(const Chunk& chunk, int x, int y, int z);
+    bool shouldRenderDown(const Chunk& chunk, int x, int y, int z);
 
     unsigned m_sunlightLevel = 15;
 };

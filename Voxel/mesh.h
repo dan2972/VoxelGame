@@ -26,9 +26,9 @@ public:
 	void end();
 private:
 	unsigned m_vaoID, m_vboID, m_iboID;
-	float* m_vbo;
-	unsigned* m_ibo;
-	unsigned m_vboCounter = 0;
-	unsigned m_iboCounter = 0;
+	std::vector<float> m_vbo;
+	std::vector<unsigned> m_ibo;
+	//unsigned m_vboCounter = 0;
+	//unsigned m_iboCounter = 0;
 };
 
