@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "glad",
+    "glfw3",
+    "glm",
+    "opengl",
+    "fmt"
+  ]
+}
