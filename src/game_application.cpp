@@ -1,6 +1,7 @@
 #include "game_application.h"
 #include <chrono>
 #include <fmt/core.h>
+#include <spdlog/spdlog.h>
 
 GameApplication::GameApplication()
     : m_window(GameWindow::DEFAULT_WIDTH, GameWindow::DEFAULT_HEIGHT, "Game Application", 3, 3)
@@ -55,7 +56,7 @@ void GameApplication::run()
             frames = 0;
             ticks = 0;
             
-            fmt::print("FPS: {}, TPS: {}\n", fps, tps);
+            spdlog::info("FPS: {}, TPS: {}", fps, tps);
         }
     }
     cleanup();
@@ -63,6 +64,7 @@ void GameApplication::run()
 
 void GameApplication::load()
 {
+    spdlog::set_level(spdlog::level::debug);
     m_window.setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     m_window.disableVSync();
 }
