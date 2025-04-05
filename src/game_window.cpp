@@ -18,11 +18,6 @@ GameWindow::~GameWindow()
     glfwTerminate();
 }
 
-void GameWindow::swapBuffers()
-{
-    glfwSwapBuffers(m_window);
-}
-
 void GameWindow::setClearColor(float r, float g, float b, float a)
 {
     glClearColor(r, g, b, a);

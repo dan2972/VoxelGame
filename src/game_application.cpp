@@ -3,6 +3,10 @@
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 GameApplication::GameApplication()
     : m_window(GameWindow::DEFAULT_WIDTH, GameWindow::DEFAULT_HEIGHT, "Game Application", 3, 3)
 {
@@ -67,18 +71,58 @@ void GameApplication::load()
     spdlog::set_level(spdlog::level::debug);
     m_window.setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     m_window.disableVSync();
+
+    imguiInit();
 }
 
 void GameApplication::update()
 {
-    // Update game logic
+    
 }
 
 void GameApplication::render()
 {
-    // Render the game
+    imguiNewFrame();
+
+    ImGui::Begin("Hello, world!");
+    ImGui::Text("This is some useful text.");
+    ImGui::End();
+
+    imguiEndFrame();
 }
 
 void GameApplication::cleanup()
 {
+    imguiCleanup();
+}
+
+void GameApplication::imguiInit() {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+    ImGui_ImplGlfw_InitForOpenGL(m_window.getWindow(), true);
+    ImGui_ImplOpenGL3_Init();
+}
+
+void GameApplication::imguiCleanup()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void GameApplication::imguiNewFrame()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void GameApplication::imguiEndFrame()
+{
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

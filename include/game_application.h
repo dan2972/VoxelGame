@@ -18,6 +18,11 @@ private:
     void render();
     void cleanup();
 
+    void imguiInit();
+    void imguiCleanup();
+    void imguiNewFrame();
+    void imguiEndFrame();
+
     GameWindow m_window;
     uint32_t m_targetTPS = 30;
 };

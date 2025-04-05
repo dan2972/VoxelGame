@@ -13,6 +13,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
@@ -23,6 +24,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glm::glm
     fmt::fmt
     spdlog::spdlog
+    imgui::imgui
 )
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

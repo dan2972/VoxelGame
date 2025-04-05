@@ -17,7 +17,7 @@ public:
     GameWindow(int width, int height, const char* title, int glMajorVersion=3, int glMinorVersion=3);
     ~GameWindow();
 
-    void swapBuffers();
+    void swapBuffers() { glfwSwapBuffers(m_window); }
     void pollEvents() { glfwPollEvents(); }
     void setClearColor(float r, float g, float b, float a);
     void setViewport(int x, int y, int width, int height);
@@ -54,6 +54,8 @@ public:
     }
 
     bool isOpen() const;
+
+    GLFWwindow* getWindow() const { return m_window; }
 private:
     void init(int width, int height, const char* title, int glMajorVersion, int glMinorVersion);
 
