@@ -75,6 +75,24 @@ void GameApplication::load()
     m_window.disableVSync();
 
     imguiInit();
+
+    m_resourceManager.loadShader("default", "res/shaders/batch2d.vert", "res/shaders/batch2d.frag");
+    m_resourceManager.loadTexture("default", "res/textures/smile.png");
+
+    std::vector<float> vertices = {
+        0.0f,  0.0f, 0.0f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 1.0f,
+        1.0f,  0.0f, 0.0f,     1.0f, 1.0f, 1.0f, 1.0f,     1.0f, 1.0f,
+        1.0f,  1.0f, 0.0f,     1.0f, 1.0f, 1.0f, 1.0f,     1.0f, 0.0f,
+        0.0f,  1.0f, 0.0f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f,
+    };
+    std::vector<unsigned int> indices = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    std::vector<unsigned int> dims = { 3, 4, 2 };
+
+    m_resourceManager.addMesh("default", vertices, indices, dims);
 }
 
 void GameApplication::update()
@@ -89,6 +107,12 @@ void GameApplication::render()
     ImGui::Begin("Hello, world!");
     ImGui::Text("This is some useful text.");
     ImGui::End();
+
+    auto shader = m_resourceManager.getShader("default");
+    shader->use();
+    shader->setVec2("uResolution", glm::vec2(2, 2));
+    m_resourceManager.getTexture("default")->use();
+    m_resourceManager.getMesh("default")->draw();
 
     imguiEndFrame();
 }

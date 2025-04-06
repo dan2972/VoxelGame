@@ -6,6 +6,7 @@
 
 #include "graphics/shader.h"
 #include "graphics/texture.h"
+#include "graphics/mesh.h"
 
 class ResourceManager
 {
@@ -27,7 +28,13 @@ public:
     gfx::Texture* addTexture(const std::string& name, gfx::Texture&& texture);
     gfx::Texture* getTexture(const std::string& name) const;
     void removeTexture(const std::string& name);
+
+    gfx::Mesh* addMesh(const std::string& name, const std::vector<float>& vertices, const std::vector<unsigned int>& indices, const std::vector<unsigned int>& dims);
+    gfx::Mesh* addMesh(const std::string& name, gfx::Mesh&& mesh);
+    gfx::Mesh* getMesh(const std::string& name) const;
+    void removeMesh(const std::string& name);
 private:
     std::unordered_map<std::string, std::unique_ptr<gfx::Shader>> m_shaders;
     std::unordered_map<std::string, std::unique_ptr<gfx::Texture>> m_textures;
+    std::unordered_map<std::string, std::unique_ptr<gfx::Mesh>> m_meshes;
 };

@@ -94,3 +94,47 @@ void ResourceManager::removeTexture(const std::string& name)
 {
     m_textures.erase(name);
 }
+
+gfx::Mesh *ResourceManager::addMesh(const std::string &name, const std::vector<float> &vertices, const std::vector<unsigned int> &indices, const std::vector<unsigned int> &dims)
+{
+    auto ret = m_meshes.try_emplace(name, std::make_unique<gfx::Mesh>());
+    if (ret.second)
+    {
+        ret.first->second->populate(vertices, indices, dims);
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("Mesh with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::Mesh *ResourceManager::addMesh(const std::string &name, gfx::Mesh &&mesh)
+{
+    auto ret = m_meshes.try_emplace(name, std::make_unique<gfx::Mesh>(std::move(mesh)));
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("Mesh with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::Mesh *ResourceManager::getMesh(const std::string &name) const
+{
+    auto it = m_meshes.find(name);
+    if (it != m_meshes.end())
+    {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+void ResourceManager::removeMesh(const std::string &name)
+{
+    m_meshes.erase(name);
+}
