@@ -14,9 +14,9 @@ namespace gfx
         ~Shader();
 
         Shader(const Shader& other) = delete;
-        Shader(Shader&& other);
+        Shader(Shader&& other) noexcept;
         Shader& operator=(const Shader& other) = delete;
-        Shader& operator=(Shader&& other);
+        Shader& operator=(Shader&& other) noexcept;
 
         void loadFromFile(const std::string& vertPath, const std::string& fragPath, const std::string& geomPath=std::string());
 
