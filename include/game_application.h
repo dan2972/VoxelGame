@@ -1,8 +1,9 @@
 #pragma once
 
-#include "game_window.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "game_window.h"
+#include "resource_manager.h"
 
 class GameApplication
 {
@@ -11,6 +12,8 @@ public:
     ~GameApplication();
 
     void run();
+
+    static ResourceManager& getResourceManager() { return m_resourceManager; }
 
 private:
     void load();
@@ -25,4 +28,6 @@ private:
 
     GameWindow m_window;
     uint32_t m_targetTPS = 30;
+    
+    static ResourceManager m_resourceManager;
 };

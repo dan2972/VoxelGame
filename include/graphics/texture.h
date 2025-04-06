@@ -13,9 +13,9 @@ namespace gfx
         ~Texture();
 
         Texture(const Texture& other) = delete;
-        Texture(Texture&& other);
+        Texture(Texture&& other) noexcept;
         Texture& operator=(const Texture& other) = delete;
-        Texture& operator=(Texture&& other);
+        Texture& operator=(Texture&& other) noexcept;
 
         void loadFromFile(const std::string& path, GLint internalFormat=GL_SRGB_ALPHA);
 

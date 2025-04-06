@@ -7,6 +7,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+ResourceManager GameApplication::m_resourceManager;
+
 GameApplication::GameApplication()
     : m_window(GameWindow::DEFAULT_WIDTH, GameWindow::DEFAULT_HEIGHT, "Game Application", 3, 3)
 {

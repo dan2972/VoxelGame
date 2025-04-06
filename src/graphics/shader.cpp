@@ -36,13 +36,13 @@ namespace gfx
         destroy();
     }
 
-    Shader::Shader(Shader &&other)
+    Shader::Shader(Shader &&other) noexcept
         : m_id(other.m_id), m_uniformLocations(other.m_uniformLocations)
     {
         other.m_id = 0;
     }
 
-    Shader &Shader::operator=(Shader &&other)
+    Shader &Shader::operator=(Shader &&other) noexcept
     {
         if (this != &other)
         {

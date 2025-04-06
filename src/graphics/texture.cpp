@@ -15,7 +15,7 @@ namespace gfx
         destroy();
     }
 
-    Texture &Texture::operator=(Texture &&other)
+    Texture &Texture::operator=(Texture &&other) noexcept
     {
         if (this != &other)
         {
@@ -27,7 +27,7 @@ namespace gfx
         return *this;
     }
 
-    Texture::Texture(Texture &&other)
+    Texture::Texture(Texture &&other) noexcept
         : m_id(other.m_id), m_width(other.m_width), m_height(other.m_height)
     {
         other.m_id = 0;
