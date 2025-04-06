@@ -9,12 +9,12 @@ ResourceManager::~ResourceManager()
 {
 }
 
-gfx::Shader* ResourceManager::addShader(const std::string& name, const std::string& vertPath, const std::string& fragPath, const std::string& geomPath)
+gfx::Shader* ResourceManager::loadShader(const std::string& name, const std::string& vertPath, const std::string& fragPath, const std::string& geomPath)
 {
-    auto ret = m_shaders.try_emplace(name, vertPath, fragPath, geomPath);
+    auto ret = m_shaders.try_emplace(name, std::make_unique<gfx::Shader>(vertPath, fragPath, geomPath));
     if (ret.second)
     {
-        return &ret.first->second;
+        return ret.first->second.get();
     }
     else
     {
@@ -25,10 +25,10 @@ gfx::Shader* ResourceManager::addShader(const std::string& name, const std::stri
 
 gfx::Shader* ResourceManager::addShader(const std::string& name, gfx::Shader&& shader)
 {
-    auto ret = m_shaders.try_emplace(name, std::move(shader));
+    auto ret = m_shaders.try_emplace(name, std::make_unique<gfx::Shader>(std::move(shader)));
     if (ret.second)
     {
-        return &ret.first->second;
+        return ret.first->second.get();
     }
     else
     {
@@ -42,7 +42,7 @@ gfx::Shader* ResourceManager::getShader(const std::string& name) const
     auto it = m_shaders.find(name);
     if (it != m_shaders.end())
     {
-        return const_cast<gfx::Shader*>(&it->second);
+        return it->second.get();
     }
     return nullptr;
 }
@@ -52,12 +52,12 @@ void ResourceManager::removeShader(const std::string& name)
     m_shaders.erase(name);
 }
 
-gfx::Texture* ResourceManager::addTexture(const std::string& name, const std::string& path, GLint internalFormat)
+gfx::Texture* ResourceManager::loadTexture(const std::string& name, const std::string& path, GLint internalFormat)
 {
-    auto ret = m_textures.try_emplace(name, path, internalFormat);
+    auto ret = m_textures.try_emplace(name, std::make_unique<gfx::Texture>(path, internalFormat));
     if (ret.second)
     {
-        return &ret.first->second;
+        return ret.first->second.get();
     }
     else
     {
@@ -68,10 +68,10 @@ gfx::Texture* ResourceManager::addTexture(const std::string& name, const std::st
 
 gfx::Texture* ResourceManager::addTexture(const std::string& name, gfx::Texture&& texture)
 {
-    auto ret = m_textures.try_emplace(name, std::move(texture));
+    auto ret = m_textures.try_emplace(name, std::make_unique<gfx::Texture>(std::move(texture)));
     if (ret.second)
     {
-        return &ret.first->second;
+        return ret.first->second.get();
     }
     else
     {
@@ -85,7 +85,7 @@ gfx::Texture* ResourceManager::getTexture(const std::string& name) const
     auto it = m_textures.find(name);
     if (it != m_textures.end())
     {
-        return const_cast<gfx::Texture*>(&it->second);
+        return it->second.get();
     }
     return nullptr;
 }
