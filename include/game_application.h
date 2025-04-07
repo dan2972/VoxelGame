@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include "game_window.h"
 #include "resource_manager.h"
+#include "graphics/texture_atlas.h"
 
 class GameApplication
 {
@@ -28,6 +29,8 @@ private:
 
     GameWindow m_window;
     uint32_t m_targetTPS = 30;
+    gfx::TextureAtlas<std::string> m_atlas{{.internalFilter = GL_NEAREST}};
+    int m_key = 1;
     
     static ResourceManager m_resourceManager;
 };

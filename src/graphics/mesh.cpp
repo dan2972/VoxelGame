@@ -1,5 +1,6 @@
 #include "graphics/mesh.h"
 #include <numeric>
+#include <spdlog/spdlog.h>
 
 namespace gfx
 {
@@ -171,6 +172,12 @@ namespace gfx
 
     void Mesh::draw(int indexCount) const
     {
+        if (m_vao == 0)
+        {
+            spdlog::warn("Mesh not populated, cannot draw mesh.");
+            return;
+        }
+
         glBindVertexArray(m_vao);
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
     }

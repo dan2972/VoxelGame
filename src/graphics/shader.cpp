@@ -111,6 +111,11 @@ namespace gfx
 
     void Shader::use()
     {
+        if (m_id == 0) {
+            spdlog::warn("Shader not loaded, cannot use shader.");
+            return;
+        }
+        
         glUseProgram(m_id);
     }
 

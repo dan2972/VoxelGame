@@ -119,6 +119,11 @@ namespace gfx
 
     void Texture::use(GLuint textureUnit) const
     {
+        if (m_id == 0)
+        {
+            spdlog::warn("Texture not loaded, cannot use texture.");
+            return;
+        }
         glActiveTexture(textureUnit);
         glBindTexture(GL_TEXTURE_2D, m_id);
     }

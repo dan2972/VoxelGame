@@ -93,6 +93,8 @@ void GameApplication::load()
     std::vector<unsigned int> dims = { 3, 4, 2 };
 
     m_resourceManager.addMesh("default", vertices, indices, dims);
+
+    m_atlas.addImgFromPath("0", "res/textures/grass.png");
 }
 
 void GameApplication::update()
@@ -104,14 +106,19 @@ void GameApplication::render()
 {
     imguiNewFrame();
 
-    ImGui::Begin("Hello, world!");
-    ImGui::Text("This is some useful text.");
+    ImGui::Begin("Debug Info");
+    ImGui::Text("Delta Time: %.3fms", ImGui::GetIO().DeltaTime * 1000.0f);
+    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+    if (ImGui::Button("Button")) {
+        m_atlas.addImgFromPath(std::to_string(m_key++), "res/textures/grass.png");
+    }
     ImGui::End();
 
     auto shader = m_resourceManager.getShader("default");
     shader->use();
-    shader->setVec2("uResolution", glm::vec2(2, 2));
-    m_resourceManager.getTexture("default")->use();
+    shader->setVec2("uResolution", glm::vec2(2, 8/6.0f));
+    // m_resourceManager.getTexture("default")->use();
+    m_atlas.use();
     m_resourceManager.getMesh("default")->draw();
 
     imguiEndFrame();
