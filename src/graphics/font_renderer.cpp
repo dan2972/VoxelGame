@@ -126,17 +126,20 @@ namespace gfx
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         for (wchar_t c : text)
         {
-            if (FT_Load_Char(m_face, c, FT_LOAD_RENDER))
-                continue;
-            
-            if (!m_textureAtlas.has(c)) {
-                if (!setupGlyph(c, m_face->glyph))
+            if (!m_characters.contains(c))
+            {
+                if (FT_Load_Char(m_face, c, FT_LOAD_RENDER))
                     continue;
-                m_characters[c] = {
-                    glm::ivec2(m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows),
-                    glm::ivec2(m_face->glyph->bitmap_left, m_face->glyph->bitmap_top),
-                    static_cast<unsigned int>(m_face->glyph->advance.x >> 6)
-                };
+                
+                if (!m_textureAtlas.has(c)) {
+                    if (!setupGlyph(c, m_face->glyph))
+                        continue;
+                    m_characters[c] = {
+                        glm::ivec2(m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows),
+                        glm::ivec2(m_face->glyph->bitmap_left, m_face->glyph->bitmap_top),
+                        static_cast<unsigned int>(m_face->glyph->advance.x >> 6)
+                    };
+                }
             }
 
             Character& ch = m_characters[c];
