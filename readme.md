@@ -1,11 +1,25 @@
 # Voxel Game Engine
 Another attempt at creating a voxel game inspired by Minecraft
-created using C++ and OpenGL (May switch to vulkan in future rewrite).
+created using C++ and OpenGL.
+
+<details>
+<summary>Table of Contents</summary>
+
+- [Features](#features)
+- [Build](#build)
+
+</details>
+
+## Features
+- Custom OpenGL abstraction
+- Batched Font Rendering
+- Dynamic texture atlas packing/creation (resizes automatically)
+- Separation of logic and rendering timesteps
 
 ## Build
 This project uses VCPKG and CMake.
 
-To build, simply use the defined CMake Preset (vcpkg) and build.
+To build, use the provided CMake Preset (vcpkg).
 
 ```bash
 cmake --preset=vcpkg
@@ -40,4 +54,4 @@ Example `CMakeUserPresets.json` file:
 }
 ```
 
-Alternatively, you can add the variables to the cmake build command.
+Alternatively, you can add the variables to the CMake build command.
