@@ -7,6 +7,7 @@
 #include "graphics/shader.h"
 #include "graphics/texture.h"
 #include "graphics/mesh.h"
+#include "graphics/font_renderer.h"
 
 class ResourceManager
 {
@@ -33,8 +34,15 @@ public:
     gfx::Mesh* addMesh(const std::string& name, gfx::Mesh&& mesh);
     gfx::Mesh* getMesh(const std::string& name) const;
     void removeMesh(const std::string& name);
+
+    gfx::FontRenderer* loadFontRenderer(const std::string& name, const std::string& fontPath, unsigned int fontSize, const gfx::TextureAtlasParams& atlasParams);
+    gfx::FontRenderer* loadFontRenderer(const std::string& name, const std::string& fontPath, unsigned int fontSize);
+    gfx::FontRenderer* addFontRenderer(const std::string& name, gfx::FontRenderer&& fontRenderer);
+    gfx::FontRenderer* getFontRenderer(const std::string& name) const;
+    void removeFontRenderer(const std::string& name);
 private:
     std::unordered_map<std::string, std::unique_ptr<gfx::Shader>> m_shaders;
     std::unordered_map<std::string, std::unique_ptr<gfx::Texture>> m_textures;
     std::unordered_map<std::string, std::unique_ptr<gfx::Mesh>> m_meshes;
+    std::unordered_map<std::string, std::unique_ptr<gfx::FontRenderer>> m_fontRenderers;
 };

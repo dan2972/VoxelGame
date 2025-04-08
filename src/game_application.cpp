@@ -7,10 +7,15 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+
 ResourceManager GameApplication::m_resourceManager;
 
 GameApplication::GameApplication()
-    : m_window(GameWindow::DEFAULT_WIDTH, GameWindow::DEFAULT_HEIGHT, "Game Application", 3, 3)
+    : m_window(m_width, m_height, "Game Application", 3, 3)
 {
 }
 
@@ -20,13 +25,15 @@ GameApplication::~GameApplication()
 
 void GameApplication::run()
 {
-    load();
+    if (!load()) {
+        spdlog::error("Failed to load.");
+        return;
+    }
 
     double delta = 0;
     double deltaTime = 0;
     double timer = 0;
     uint32_t ticks = 0, frames = 0;
-    uint32_t fps, tps;
 
     auto now = std::chrono::system_clock::now();
     auto lastTime = std::chrono::system_clock::now();
@@ -39,6 +46,8 @@ void GameApplication::run()
         delta += elapsed / (1000.0 / m_targetTPS);
         timer += elapsed;
         lastTime = now;
+        m_gameTime.deltaTime = deltaTime;
+        m_gameTime.totalTime += deltaTime;
 
         while(delta >= 1.0)
         {
@@ -49,6 +58,7 @@ void GameApplication::run()
         ++frames;
 
         m_window.clear();
+        m_gameTime.interpFraction = delta;
         render();
 
         m_window.swapBuffers();
@@ -56,45 +66,37 @@ void GameApplication::run()
 
         if (timer >= 1000.0)
         {
-            fps = frames;
-            tps = ticks;
+            m_gameTime.fps = frames;
+            m_gameTime.tps = ticks;
             timer -= 1000.0;
             frames = 0;
             ticks = 0;
-            
-            spdlog::info("FPS: {}, TPS: {}", fps, tps);
         }
     }
     cleanup();
 }
 
-void GameApplication::load()
+bool GameApplication::load()
 {
     spdlog::set_level(spdlog::level::debug);
     m_window.setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     m_window.disableVSync();
-
-    imguiInit();
+    
+    if (!imguiInit()) {
+        spdlog::error("Failed to initialize ImGui.");
+        return false;
+    }
 
     m_resourceManager.loadShader("default", "res/shaders/batch2d.vert", "res/shaders/batch2d.frag");
-    m_resourceManager.loadTexture("default", "res/textures/smile.png");
+    m_resourceManager.loadShader("font", "res/shaders/font_renderer.vert", "res/shaders/font_renderer.frag");
 
-    std::vector<float> vertices = {
-        0.0f,  0.0f, 0.0f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 1.0f,
-        1.0f,  0.0f, 0.0f,     1.0f, 1.0f, 1.0f, 1.0f,     1.0f, 1.0f,
-        1.0f,  1.0f, 0.0f,     1.0f, 1.0f, 1.0f, 1.0f,     1.0f, 0.0f,
-        0.0f,  1.0f, 0.0f,     1.0f, 1.0f, 1.0f, 1.0f,     0.0f, 0.0f,
-    };
-    std::vector<unsigned int> indices = {
-        0, 1, 2,
-        2, 3, 0
-    };
+    auto fontRenderer = m_resourceManager.loadFontRenderer("default", "res/fonts/arial.ttf", 48);
+    fontRenderer->preloadDefaultGlyphs();
+    
+    m_window.enableBlend();
+    m_window.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    std::vector<unsigned int> dims = { 3, 4, 2 };
-
-    m_resourceManager.addMesh("default", vertices, indices, dims);
-
-    m_atlas.addImgFromPath("0", "res/textures/grass.png");
+    return true;
 }
 
 void GameApplication::update()
@@ -107,19 +109,22 @@ void GameApplication::render()
     imguiNewFrame();
 
     ImGui::Begin("Debug Info");
-    ImGui::Text("Delta Time: %.3fms", ImGui::GetIO().DeltaTime * 1000.0f);
-    ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-    if (ImGui::Button("Button")) {
-        m_atlas.addImgFromPath(std::to_string(m_key++), "res/textures/grass.png");
-    }
+    ImGui::Text("Delta Time: %.3fms", m_gameTime.deltaTime * 1000.0f);
+    ImGui::Text("FPS: %i", m_gameTime.fps);
+    ImGui::Text("TPS: %i", m_gameTime.tps);
+    ImGui::Text("Total Time: %.3fs", m_gameTime.totalTime);
     ImGui::End();
 
-    auto shader = m_resourceManager.getShader("default");
-    shader->use();
-    shader->setVec2("uResolution", glm::vec2(2, 8/6.0f));
-    // m_resourceManager.getTexture("default")->use();
-    m_atlas.use();
-    m_resourceManager.getMesh("default")->draw();
+    auto fontRenderer = m_resourceManager.getFontRenderer("default");
+    fontRenderer->beginBatch();
+    fontRenderer->addText("Hello, World!", 100.0f, 100.0f, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    
+    auto fontShader = m_resourceManager.getShader("font");
+    fontShader->use();
+    fontShader->setMat4("uProjection", glm::ortho(0.0f, (float)m_width, (float)m_height, 0.0f));
+    fontShader->setMat4("uView", glm::mat4(1.0f));
+    fontShader->setMat4("uModel", glm::mat4(1.0f));
+    fontRenderer->draw();
 
     imguiEndFrame();
 }
@@ -129,15 +134,24 @@ void GameApplication::cleanup()
     imguiCleanup();
 }
 
-void GameApplication::imguiInit() {
+bool GameApplication::imguiInit() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
-    ImGui_ImplGlfw_InitForOpenGL(m_window.getWindow(), true);
-    ImGui_ImplOpenGL3_Init();
+    if (!ImGui_ImplGlfw_InitForOpenGL(m_window.getWindow(), true)) {
+        spdlog::error("Failed to initialize ImGui GLFW.");
+        return false;
+    }
+
+    if (!ImGui_ImplOpenGL3_Init()) {
+        spdlog::error("Failed to initialize ImGui OpenGL.");
+        return false;
+    }
+
+    return true;
 }
 
 void GameApplication::imguiCleanup()

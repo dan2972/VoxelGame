@@ -32,6 +32,7 @@ public:
     void disableCulling() { glDisable(GL_CULL_FACE); }
     void enableStencilTest() { glEnable(GL_STENCIL_TEST); }
     void disableStencilTest() { glDisable(GL_STENCIL_TEST); }
+    void setBlendFunc(GLenum sfactor, GLenum dfactor) { glBlendFunc(sfactor, dfactor); }
 
     void enableVSync() { glfwSwapInterval(1); }
     void disableVSync() { glfwSwapInterval(0); }

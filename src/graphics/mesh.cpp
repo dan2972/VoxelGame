@@ -10,10 +10,16 @@ namespace gfx
     }
 
     Mesh::Mesh(Mesh&& other) noexcept
-        : m_vao(other.m_vao), m_vbo(other.m_vbo), m_ebo(other.m_ebo),
-        m_vertices(std::move(other.m_vertices)), m_indices(std::move(other.m_indices)),
-        m_vboHint(other.m_vboHint), m_eboHint(other.m_eboHint)
     {
+        destroy();
+        m_vao = other.m_vao;
+        m_vbo = other.m_vbo;
+        m_ebo = other.m_ebo;
+        m_vertices = std::move(other.m_vertices);
+        m_indices = std::move(other.m_indices);
+        m_vboHint = other.m_vboHint;
+        m_eboHint = other.m_eboHint;
+        
         other.m_vao = 0;
         other.m_vbo = 0;
         other.m_ebo = 0;
@@ -23,6 +29,7 @@ namespace gfx
     {
         if (this != &other)
         {
+            destroy();
             m_vao = other.m_vao;
             m_vbo = other.m_vbo;
             m_ebo = other.m_ebo;

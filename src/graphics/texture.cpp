@@ -19,6 +19,7 @@ namespace gfx
     {
         if (this != &other)
         {
+            destroy();
             m_id = other.m_id;
             m_width = other.m_width;
             m_height = other.m_height;
@@ -28,8 +29,13 @@ namespace gfx
     }
 
     Texture::Texture(Texture &&other) noexcept
-        : m_id(other.m_id), m_width(other.m_width), m_height(other.m_height)
     {
+        destroy();
+        m_id = other.m_id;
+        m_width = other.m_width;
+        m_height = other.m_height;
+        other.m_width = 0;
+        other.m_height = 0;
         other.m_id = 0;
     }
 

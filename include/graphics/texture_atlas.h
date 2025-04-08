@@ -11,11 +11,12 @@ namespace gfx
 {
     struct TextureAtlasParams
     {
-        unsigned int width = 16;
-        unsigned int height = 16;
+        unsigned int width = 128;
+        unsigned int height = 128;
         GLuint internalFilter = GL_LINEAR;
         GLuint wrapFilter = GL_CLAMP_TO_EDGE;
         GLuint internalFormat = GL_RGBA;
+        GLuint format = GL_RGBA;
     };
 
     template<typename T>
@@ -25,16 +26,17 @@ namespace gfx
         TextureAtlas(
             unsigned int width = 128,
             unsigned int height = 128,
-            GLuint internalFilter = GL_LINEAR, 
-            GLuint wrapFilter = GL_CLAMP_TO_EDGE, 
-            GLuint internalFormat = GL_RGBA)
-            : m_width(width), m_height(height), m_internalFilter(internalFilter), m_wrapFilter(wrapFilter), m_internalFormat(internalFormat)
+            GLuint internalFilter = GL_LINEAR,
+            GLuint wrapFilter = GL_CLAMP_TO_EDGE,
+            GLuint internalFormat = GL_RGBA,
+            GLuint format = GL_RGBA)
+            : m_width(width), m_height(height), m_internalFilter(internalFilter), m_wrapFilter(wrapFilter), m_internalFormat(internalFormat), m_format(format)
         {
             checkMaxTextureSize();
         }
 
         TextureAtlas(const TextureAtlasParams& params)
-            : m_width(params.width), m_height(params.height), m_internalFilter(params.internalFilter), m_wrapFilter(params.wrapFilter), m_internalFormat(params.internalFormat)
+            : m_width(params.width), m_height(params.height), m_internalFilter(params.internalFilter), m_wrapFilter(params.wrapFilter), m_internalFormat(params.internalFormat), m_format(params.format)
         {
             checkMaxTextureSize();
         }
@@ -47,11 +49,16 @@ namespace gfx
 
         TextureAtlas(TextureAtlas&& other) noexcept
         {
+            destroy();
             m_textureCoords = std::move(other.m_textureCoords);
             m_id = other.m_id;
             m_width = other.m_width;
             m_height = other.m_height;
             m_skyline = std::move(other.m_skyline);
+            m_internalFilter = other.m_internalFilter;
+            m_wrapFilter = other.m_wrapFilter;
+            m_internalFormat = other.m_internalFormat;
+            m_format = other.m_format;
             other.m_id = 0;
             other.m_width = 0;
             other.m_height = 0;
@@ -62,11 +69,16 @@ namespace gfx
         TextureAtlas& operator=(TextureAtlas&& other) noexcept
         {
             if (this != &other) {
+                destroy();
                 m_textureCoords = std::move(other.m_textureCoords);
                 m_id = other.m_id;
                 m_width = other.m_width;
                 m_height = other.m_height;
                 m_skyline = std::move(other.m_skyline);
+                m_internalFilter = other.m_internalFilter;
+                m_wrapFilter = other.m_wrapFilter;
+                m_internalFormat = other.m_internalFormat;
+                m_format = other.m_format;
                 other.m_id = 0;
                 other.m_width = 0;
                 other.m_height = 0;
@@ -104,6 +116,11 @@ namespace gfx
                 init();
             }
 
+            if (data == nullptr) {
+                spdlog::warn("TextureAtlas: Data is null. Cannot add texture.");
+                return { glm::vec2(0), glm::vec2(0) };
+            }
+
             if (m_textureCoords.contains(key)) {
                 spdlog::warn("TextureAtlas: Texture already exists in atlas.");
                 return { glm::vec2(0), glm::vec2(0) };
@@ -126,7 +143,7 @@ namespace gfx
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, m_id);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, bestX, bestY, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, bestX, bestY, width, height, m_format, GL_UNSIGNED_BYTE, data);
 
             glm::vec2 uv_min(static_cast<float>(bestX) / m_width, static_cast<float>(bestY) / m_height);
             glm::vec2 uv_max(static_cast<float>(bestX + width) / m_width, static_cast<float>(bestY + height) / m_height);
@@ -156,7 +173,7 @@ namespace gfx
             glGenTextures(1, &newID);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, newID);
-            glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, newWidth, newHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, newWidth, newHeight, 0, m_format, GL_UNSIGNED_BYTE, nullptr);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_internalFilter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_internalFilter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_wrapFilter);
@@ -222,9 +239,14 @@ namespace gfx
 
         void destroy() {
             m_textureCoords.clear();
-            m_id = 0;
+            if (m_id != 0) {
+                glDeleteTextures(1, &m_id);
+                m_id = 0;
+            }
             m_width = 0;
             m_height = 0;
+            m_initialized = false;
+            m_skyline.clear();
         }
     private:
         static int s_maxAtlasWidth;
@@ -238,6 +260,7 @@ namespace gfx
         GLuint m_internalFilter;
         GLuint m_wrapFilter;
         GLuint m_internalFormat;
+        GLenum m_format;
 
         std::vector<glm::ivec2> m_skyline;
 
@@ -250,7 +273,7 @@ namespace gfx
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, m_id);
             
-            glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width, m_height, 0, m_format, GL_UNSIGNED_BYTE, nullptr);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_internalFilter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_internalFilter);

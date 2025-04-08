@@ -37,8 +37,10 @@ namespace gfx
     }
 
     Shader::Shader(Shader &&other) noexcept
-        : m_id(other.m_id), m_uniformLocations(other.m_uniformLocations)
     {
+        destroy();
+        m_id = other.m_id;
+        m_uniformLocations = std::move(other.m_uniformLocations);
         other.m_id = 0;
     }
 
@@ -46,9 +48,10 @@ namespace gfx
     {
         if (this != &other)
         {
+            destroy();
             m_id = other.m_id;
+            m_uniformLocations = std::move(other.m_uniformLocations);
             other.m_id = 0;
-            m_uniformLocations = other.m_uniformLocations;
         }
         return *this;
     }

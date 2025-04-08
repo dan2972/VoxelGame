@@ -138,3 +138,62 @@ void ResourceManager::removeMesh(const std::string &name)
 {
     m_meshes.erase(name);
 }
+
+gfx::FontRenderer *ResourceManager::loadFontRenderer(const std::string &name, const std::string &fontPath, unsigned int fontSize, const gfx::TextureAtlasParams &atlasParams)
+{
+    auto ret = m_fontRenderers.try_emplace(name, std::make_unique<gfx::FontRenderer>());
+    if (ret.second)
+    {
+        ret.first->second->loadFont(fontPath, fontSize, atlasParams);
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("FontRenderer with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::FontRenderer *ResourceManager::loadFontRenderer(const std::string &name, const std::string &fontPath, unsigned int fontSize)
+{
+    auto ret = m_fontRenderers.try_emplace(name, std::make_unique<gfx::FontRenderer>());
+    if (ret.second)
+    {
+        ret.first->second->loadFont(fontPath, fontSize);
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("FontRenderer with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::FontRenderer *ResourceManager::addFontRenderer(const std::string &name, gfx::FontRenderer &&fontRenderer)
+{
+    auto ret = m_fontRenderers.try_emplace(name, std::make_unique<gfx::FontRenderer>(std::move(fontRenderer)));
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("FontRenderer with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::FontRenderer *ResourceManager::getFontRenderer(const std::string &name) const
+{
+    auto it = m_fontRenderers.find(name);
+    if (it != m_fontRenderers.end())
+    {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+void ResourceManager::removeFontRenderer(const std::string &name)
+{
+    m_fontRenderers.erase(name);
+}
