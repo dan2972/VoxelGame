@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "game_window.h"
+#include "camera.h"
 #include "resource_manager.h"
 #include "graphics/texture_atlas.h"
 #include "graphics/font_renderer.h"
@@ -14,6 +15,8 @@ public:
     ~GameApplication();
 
     void run();
+    bool isFocused() const { return m_focused; }
+    void setFocused(bool focused) { m_focused = focused; }
 
     static ResourceManager& getResourceManager() { return m_resourceManager; }
 
@@ -36,6 +39,10 @@ private:
     
     static ResourceManager m_resourceManager;
 
+    Camera m_camera;
+
+    bool m_focused = true;
+
     struct GameTime
     {
         double deltaTime = 0.0; // Time since last frame in seconds
@@ -45,4 +52,6 @@ private:
         int tps = 0; // Ticks per second
     };
     GameTime m_gameTime;
+
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 };

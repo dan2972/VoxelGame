@@ -123,6 +123,11 @@ namespace gfx
 
     void FontRenderer::addText(const std::wstring &text, float x, float y, float scale, const glm::vec4 &color)
     {
+        addText(text, x, y, 0.0f, scale, color);
+    }
+
+    void FontRenderer::addText(const std::wstring &text, float x, float y, float z, float scale, const glm::vec4 &color)
+    {
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         for (wchar_t c : text)
         {
@@ -152,7 +157,7 @@ namespace gfx
             auto [uvMin, uvMax] = m_textureAtlas.get(c);
 
             float xPos = x + (ch.bearing.x * scale);
-            float yPos = y - (ch.bearing.y * scale);
+            float yPos = y - (ch.size.y - ch.bearing.y) * scale;
 
             float w = ch.size.x * scale;
             float h = ch.size.y * scale;
@@ -162,10 +167,10 @@ namespace gfx
             if (m_curIndex + 6 >= m_indices.size())
                 m_indices.resize(m_curIndex + 6);
             
-            m_vertices[m_curVertex + 0] = { glm::vec3(xPos, yPos + h, 0.0f), color, glm::vec2(uvMin.x, uvMax.y) };
-            m_vertices[m_curVertex + 1] = { glm::vec3(xPos + w, yPos + h, 0.0f), color, uvMax };
-            m_vertices[m_curVertex + 2] = { glm::vec3(xPos + w, yPos, 0.0f), color, glm::vec2(uvMax.x, uvMin.y) };
-            m_vertices[m_curVertex + 3] = { glm::vec3(xPos, yPos, 0.0f), color, uvMin };
+            m_vertices[m_curVertex + 0] = { glm::vec3(xPos, yPos + h, z), color, uvMin };
+            m_vertices[m_curVertex + 1] = { glm::vec3(xPos + w, yPos + h, z), color, glm::vec2(uvMax.x, uvMin.y) };
+            m_vertices[m_curVertex + 2] = { glm::vec3(xPos + w, yPos, z), color, uvMax };
+            m_vertices[m_curVertex + 3] = { glm::vec3(xPos, yPos, z), color, glm::vec2(uvMin.x, uvMax.y) };
 
             m_indices[m_curIndex + 0] = m_curVertex + 0;
             m_indices[m_curIndex + 1] = m_curVertex + 1;
@@ -186,6 +191,12 @@ namespace gfx
     {
         std::wstring wText(text.begin(), text.end());
         addText(wText, x, y, scale, color);
+    }
+
+    void FontRenderer::addText(const std::string &text, float x, float y, float z, float scale, const glm::vec4 &color)
+    {
+        std::wstring wText(text.begin(), text.end());
+        addText(wText, x, y, z, scale, color);
     }
 
     void FontRenderer::clearText()

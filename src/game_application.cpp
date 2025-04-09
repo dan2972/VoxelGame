@@ -61,8 +61,7 @@ void GameApplication::run()
         m_gameTime.interpFraction = delta;
         render();
 
-        m_window.swapBuffers();
-        m_window.pollEvents();
+        m_window.update();
 
         if (timer >= 1000.0)
         {
@@ -81,6 +80,8 @@ bool GameApplication::load()
     spdlog::set_level(spdlog::level::debug);
     m_window.setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     m_window.disableVSync();
+    m_window.setKeyCallback(keyCallback);
+    m_window.setUserPointer(this);
     
     if (!imguiInit()) {
         spdlog::error("Failed to initialize ImGui.");
@@ -95,6 +96,8 @@ bool GameApplication::load()
     
     m_window.enableBlend();
     m_window.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    m_camera.updateResolution(m_width, m_height);
 
     return true;
 }
@@ -113,16 +116,45 @@ void GameApplication::render()
     ImGui::Text("FPS: %i", m_gameTime.fps);
     ImGui::Text("TPS: %i", m_gameTime.tps);
     ImGui::Text("Total Time: %.3fs", m_gameTime.totalTime);
+    ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", m_camera.position.x, m_camera.position.y, m_camera.position.z);
     ImGui::End();
 
     auto fontRenderer = m_resourceManager.getFontRenderer("default");
     fontRenderer->beginBatch();
-    fontRenderer->addText("Hello, World!", 100.0f, 100.0f, 1.0f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    fontRenderer->addText("Hello, World!", -5.0f, 0.0f, -20.0f, 0.1f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+    auto window = m_window.getWindow();
+
+    if (m_focused) {
+        m_camera.rotate(m_window.getMouseDelta().x, -m_window.getMouseDelta().y);
+        m_window.disableCursor();
+
+        float deltaTime = m_gameTime.deltaTime;
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            m_camera.move(CameraMovement::FORWARD, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            m_camera.move(CameraMovement::BACKWARD, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            m_camera.move(CameraMovement::LEFT, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            m_camera.move(CameraMovement::RIGHT, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+            m_camera.move(CameraMovement::UP, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            m_camera.move(CameraMovement::DOWN, deltaTime);
+    } else {
+        m_window.enableCursor();
+    }
     
+    glm::mat4 proj = m_camera.getProjectionMatrix();
+    glm::mat4 view = m_camera.getViewMatrix();
+
     auto fontShader = m_resourceManager.getShader("font");
     fontShader->use();
-    fontShader->setMat4("uProjection", glm::ortho(0.0f, (float)m_width, (float)m_height, 0.0f));
-    fontShader->setMat4("uView", glm::mat4(1.0f));
+    // fontShader->setMat4("uProjection", glm::ortho(0.0f, (float)m_width, 0.0f, (float)m_height));
+    // fontShader->setMat4("uView", glm::mat4(1.0f));
+    fontShader->setMat4("uProjection", proj);
+    fontShader->setMat4("uView", view);
     fontShader->setMat4("uModel", glm::mat4(1.0f));
     fontRenderer->draw();
 
@@ -172,4 +204,19 @@ void GameApplication::imguiEndFrame()
 {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void GameApplication::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (action != GLFW_PRESS) {
+        return;
+    }
+
+    GameApplication* app = static_cast<GameApplication*>(glfwGetWindowUserPointer(window));
+    if (app == nullptr) {
+        return;
+    }
+
+    if (key == GLFW_KEY_ESCAPE) {
+        app->setFocused(!app->isFocused());
+    }
 }

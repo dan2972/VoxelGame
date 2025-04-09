@@ -3,20 +3,29 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-typedef void (*KeyCallback)(GLFWwindow*, int, int, int, int);
-typedef void (*MouseCallback)(GLFWwindow*, double, double);
-typedef void (*FramebufferSizeCallback)(GLFWwindow*, int, int);
-
 class GameWindow
 {
 public:
     static const int DEFAULT_WIDTH = 800;
     static const int DEFAULT_HEIGHT = 600;
 
+    struct MousePosition
+    {
+        double x = 0;
+        double y = 0;
+    };
+
+    struct MouseDelta
+    {
+        double x = 0;
+        double y = 0;
+    };
+
     GameWindow();
     GameWindow(int width, int height, const char* title, int glMajorVersion=3, int glMinorVersion=3);
     ~GameWindow();
 
+    void update();
     void swapBuffers() { glfwSwapBuffers(m_window); }
     void pollEvents() { glfwPollEvents(); }
     void setClearColor(float r, float g, float b, float a);
@@ -40,9 +49,12 @@ public:
     void enableCursor() { glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); }
     void setCursorPosition(double x, double y) { glfwSetCursorPos(m_window, x, y); }
 
-    void setKeyCallback(KeyCallback keyCallback);
-    void setMouseCallback(MouseCallback mouseCallback);
-    void setFramebufferSizeCallback(FramebufferSizeCallback framebufferSizeCallback);
+    void setUserPointer(void* ptr) { glfwSetWindowUserPointer(m_window, ptr); }
+    void* getUserPointer() const { return glfwGetWindowUserPointer(m_window); }
+
+    void setKeyCallback(void(*keyCallBack)(GLFWwindow*, int, int, int, int));
+    void setMouseCallback(void(*mouseCallback)(GLFWwindow*, double, double));
+    void setFramebufferSizeCallback(void(*framebufferSizeCallback)(GLFWwindow*, int, int));
 
     void getFramebufferSize(int& width, int& height) const
     {
@@ -52,6 +64,16 @@ public:
     void getWindowSize(int& width, int& height) const
     {
         glfwGetWindowSize(m_window, &width, &height);
+    }
+
+    const MousePosition& getMousePosition() const
+    {
+        return m_mousePosition;
+    }
+
+    const MouseDelta& getMouseDelta() const
+    {
+        return m_mouseDelta;
     }
 
     bool isOpen() const;
@@ -64,4 +86,8 @@ private:
     int m_width;
     int m_height;
     bool m_isOpen;
+    bool m_firstUpdate = true;
+
+    MousePosition m_mousePosition;
+    MouseDelta m_mouseDelta;
 };

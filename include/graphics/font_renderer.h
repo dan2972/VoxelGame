@@ -29,9 +29,11 @@ namespace gfx
         void preloadDefaultGlyphs();
 
         void beginBatch();
-
+        
         void addText(const std::wstring& text, float x, float y, float scale, const glm::vec4& color);
+        void addText(const std::wstring& text, float x, float y, float z, float scale, const glm::vec4& color);
         void addText(const std::string& text, float x, float y, float scale, const glm::vec4& color);
+        void addText(const std::string& text, float x, float y, float z, float scale, const glm::vec4& color);
 
         void clearText();
 

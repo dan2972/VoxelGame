@@ -18,6 +18,23 @@ GameWindow::~GameWindow()
     glfwTerminate();
 }
 
+void GameWindow::update()
+{
+    if (m_firstUpdate)
+    {
+        glfwGetCursorPos(m_window, &m_mousePosition.x, &m_mousePosition.y);
+        m_firstUpdate = false;
+    }
+    glfwPollEvents();
+    glfwSwapBuffers(m_window);
+    double xpos, ypos;
+    glfwGetCursorPos(m_window, &xpos, &ypos);
+    m_mouseDelta.x = xpos - m_mousePosition.x;
+    m_mouseDelta.y = ypos - m_mousePosition.y;
+    m_mousePosition.x = xpos;
+    m_mousePosition.y = ypos;
+}
+
 void GameWindow::setClearColor(float r, float g, float b, float a)
 {
     glClearColor(r, g, b, a);
@@ -40,17 +57,17 @@ void GameWindow::clear(GLbitfield mask)
     glClear(mask);
 }
 
-void GameWindow::setKeyCallback(KeyCallback keyCallback)
+void GameWindow::setKeyCallback(void (*keyCallBack)(GLFWwindow *, int, int, int, int))
 {
-    glfwSetKeyCallback(m_window, keyCallback);
+    glfwSetKeyCallback(m_window, keyCallBack);
 }
 
-void GameWindow::setMouseCallback(MouseCallback mouseCallback)
+void GameWindow::setMouseCallback(void (*mouseCallback)(GLFWwindow *, double, double))
 {
     glfwSetCursorPosCallback(m_window, mouseCallback);
 }
 
-void GameWindow::setFramebufferSizeCallback(FramebufferSizeCallback framebufferSizeCallback)
+void GameWindow::setFramebufferSizeCallback(void (*framebufferSizeCallback)(GLFWwindow *, int, int))
 {
     glfwSetFramebufferSizeCallback(m_window, framebufferSizeCallback);
 }
