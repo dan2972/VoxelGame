@@ -151,8 +151,6 @@ void GameApplication::render()
 
     auto fontShader = m_resourceManager.getShader("font");
     fontShader->use();
-    // fontShader->setMat4("uProjection", glm::ortho(0.0f, (float)m_width, 0.0f, (float)m_height));
-    // fontShader->setMat4("uView", glm::mat4(1.0f));
     fontShader->setMat4("uProjection", proj);
     fontShader->setMat4("uView", view);
     fontShader->setMat4("uModel", glm::mat4(1.0f));

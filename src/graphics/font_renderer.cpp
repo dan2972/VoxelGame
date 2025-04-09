@@ -172,12 +172,12 @@ namespace gfx
             m_vertices[m_curVertex + 2] = { glm::vec3(xPos + w, yPos, z), color, uvMax };
             m_vertices[m_curVertex + 3] = { glm::vec3(xPos, yPos, z), color, glm::vec2(uvMin.x, uvMax.y) };
 
-            m_indices[m_curIndex + 0] = m_curVertex + 0;
+            m_indices[m_curIndex + 0] = m_curVertex + 2;
             m_indices[m_curIndex + 1] = m_curVertex + 1;
-            m_indices[m_curIndex + 2] = m_curVertex + 2;
-            m_indices[m_curIndex + 3] = m_curVertex + 2;
+            m_indices[m_curIndex + 2] = m_curVertex + 0;
+            m_indices[m_curIndex + 3] = m_curVertex + 0;
             m_indices[m_curIndex + 4] = m_curVertex + 3;
-            m_indices[m_curIndex + 5] = m_curVertex + 0;
+            m_indices[m_curIndex + 5] = m_curVertex + 2;
 
             m_curVertex += 4;
             m_curIndex += 6;
