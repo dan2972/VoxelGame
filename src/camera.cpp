@@ -4,8 +4,8 @@
 const float Camera::DEFAULT_YAW = -90.0f;
 const float Camera::DEFAULT_PITCH = 0.0f;
 const float Camera::DEFAULT_SPEED = 5.0f;
-const float Camera::DEFAULT_SENSITIVITY = 0.1f;
-const float Camera::DEFAULT_ZOOM = 45.0f;
+const float Camera::DEFAULT_SENSITIVITY = 0.05f;
+const float Camera::DEFAULT_ZOOM = 70.0f;
 
 Camera::Camera(const glm::vec3 &position, const glm::vec3 &up, float yaw, float pitch)
     : front(glm::vec3(0.0f, 0.0f, -1.0f)),

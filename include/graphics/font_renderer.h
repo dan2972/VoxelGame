@@ -37,7 +37,7 @@ namespace gfx
 
         void clearText();
 
-        void draw();
+        void draw(bool bindVAO = true);
 
         TextureAtlas<wchar_t>& getTextureAtlas() { return m_textureAtlas; }
 

@@ -81,6 +81,7 @@ bool GameApplication::load()
     m_window.setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     m_window.disableVSync();
     m_window.setKeyCallback(keyCallback);
+    m_window.setFramebufferSizeCallback(framebufferSizeCallback);
     m_window.setUserPointer(this);
     
     if (!imguiInit()) {
@@ -88,14 +89,17 @@ bool GameApplication::load()
         return false;
     }
 
-    m_resourceManager.loadShader("default", "res/shaders/batch2d.vert", "res/shaders/batch2d.frag");
+    m_resourceManager.loadShader("line", "res/shaders/line_renderer.vert", "res/shaders/line_renderer.frag");
     m_resourceManager.loadShader("font", "res/shaders/font_renderer.vert", "res/shaders/font_renderer.frag");
+
+    m_resourceManager.addLineRenderer("default");
 
     auto fontRenderer = m_resourceManager.loadFontRenderer("default", "res/fonts/arial.ttf", 48);
     fontRenderer->preloadDefaultGlyphs();
     
     m_window.enableBlend();
     m_window.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    m_window.enableDepthTest();
 
     m_camera.updateResolution(m_width, m_height);
 
@@ -122,6 +126,26 @@ void GameApplication::render()
     auto fontRenderer = m_resourceManager.getFontRenderer("default");
     fontRenderer->beginBatch();
     fontRenderer->addText("Hello, World!", -5.0f, 0.0f, -20.0f, 0.1f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+    auto lineRenderer = m_resourceManager.getLineRenderer("default");
+    lineRenderer->beginBatch();
+    //back
+    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    lineRenderer->drawLine(glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    lineRenderer->drawLine(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+    //sides
+    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    lineRenderer->drawLine(glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    lineRenderer->drawLine(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    lineRenderer->drawLine(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+    //front
+    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    lineRenderer->drawLine(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    lineRenderer->drawLine(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
     auto window = m_window.getWindow();
 
@@ -155,6 +179,15 @@ void GameApplication::render()
     fontShader->setMat4("uView", view);
     fontShader->setMat4("uModel", glm::mat4(1.0f));
     fontRenderer->draw();
+
+    auto lineShader = m_resourceManager.getShader("line");
+    lineShader->use();
+    lineShader->setMat4("uProjection", proj);
+    lineShader->setMat4("uView", view);
+    lineShader->setMat4("uModel", glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, -10.0f)));
+    lineShader->setFloat("uLineWidth", 2.0f);
+    lineShader->setVec2("uResolution", glm::vec2(m_width, m_height));
+    lineRenderer->draw();
 
     imguiEndFrame();
 }
@@ -217,4 +250,19 @@ void GameApplication::keyCallback(GLFWwindow* window, int key, int scancode, int
     if (key == GLFW_KEY_ESCAPE) {
         app->setFocused(!app->isFocused());
     }
+}
+
+void GameApplication::framebufferSizeCallback(GLFWwindow *window, int width, int height)
+{
+    GameApplication* app = static_cast<GameApplication*>(glfwGetWindowUserPointer(window));
+    if (app == nullptr) {
+        return;
+    }
+
+    spdlog::debug("Framebuffer size changed: {}x{}", width, height);
+
+    app->m_width = width;
+    app->m_height = height;
+    app->m_camera.updateResolution(width, height);
+    app->m_window.setViewport(0, 0, width, height);
 }

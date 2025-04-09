@@ -8,6 +8,7 @@
 #include "graphics/texture.h"
 #include "graphics/mesh.h"
 #include "graphics/font_renderer.h"
+#include "graphics/line_renderer.h"
 
 class ResourceManager
 {
@@ -40,9 +41,15 @@ public:
     gfx::FontRenderer* addFontRenderer(const std::string& name, gfx::FontRenderer&& fontRenderer);
     gfx::FontRenderer* getFontRenderer(const std::string& name) const;
     void removeFontRenderer(const std::string& name);
+
+    gfx::LineRenderer* addLineRenderer(const std::string& name);
+    gfx::LineRenderer* addLineRenderer(const std::string& name, gfx::LineRenderer&& lineRenderer);
+    gfx::LineRenderer* getLineRenderer(const std::string& name) const;
+    void removeLineRenderer(const std::string& name);
 private:
     std::unordered_map<std::string, std::unique_ptr<gfx::Shader>> m_shaders;
     std::unordered_map<std::string, std::unique_ptr<gfx::Texture>> m_textures;
     std::unordered_map<std::string, std::unique_ptr<gfx::Mesh>> m_meshes;
     std::unordered_map<std::string, std::unique_ptr<gfx::FontRenderer>> m_fontRenderers;
+    std::unordered_map<std::string, std::unique_ptr<gfx::LineRenderer>> m_lineRenderers;
 };

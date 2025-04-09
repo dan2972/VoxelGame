@@ -197,3 +197,46 @@ void ResourceManager::removeFontRenderer(const std::string &name)
 {
     m_fontRenderers.erase(name);
 }
+
+gfx::LineRenderer *ResourceManager::addLineRenderer(const std::string &name)
+{
+    auto ret = m_lineRenderers.try_emplace(name, std::make_unique<gfx::LineRenderer>());
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("LineRenderer with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::LineRenderer *ResourceManager::addLineRenderer(const std::string &name, gfx::LineRenderer &&lineRenderer)
+{
+    auto ret = m_lineRenderers.try_emplace(name, std::make_unique<gfx::LineRenderer>(std::move(lineRenderer)));
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("LineRenderer with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::LineRenderer *ResourceManager::getLineRenderer(const std::string &name) const
+{
+    auto it = m_lineRenderers.find(name);
+    if (it != m_lineRenderers.end())
+    {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+void ResourceManager::removeLineRenderer(const std::string &name)
+{
+    m_lineRenderers.erase(name);
+}

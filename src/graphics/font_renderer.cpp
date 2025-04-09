@@ -207,7 +207,7 @@ namespace gfx
         m_curIndex = 0;
     }
 
-    void FontRenderer::draw()
+    void FontRenderer::draw(bool bindVAO)
     {
         if (m_curVertex == 0 || m_curIndex == 0)
             return;
@@ -217,7 +217,7 @@ namespace gfx
         float* verticesFloats = reinterpret_cast<float*>(m_vertices.data());
         size_t verticesSize = m_curVertex * sizeof(Vertex) / sizeof(float);
         auto verticesVec = std::vector<float>(verticesFloats, verticesFloats + verticesSize);
-        m_batchMesh.updateVertexBuffer(verticesVec, verticesSize, false);
+        m_batchMesh.updateVertexBuffer(verticesVec, verticesSize, bindVAO);
         m_batchMesh.updateIndexBuffer(m_indices, m_curIndex, false);
         m_batchMesh.draw(m_curIndex);
     }
