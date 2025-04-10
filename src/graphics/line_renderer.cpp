@@ -61,9 +61,9 @@ namespace gfx
             m_indices.resize(m_curIndex + 6);
 
         m_vertices[m_curVertex + 0] = { start, end, color, 1.0f };
-        m_vertices[m_curVertex + 1] = { end, start, color, -1.0f };
+        m_vertices[m_curVertex + 1] = { start, end, color, -1.0f };
         m_vertices[m_curVertex + 2] = { end, start, color, 1.0f };
-        m_vertices[m_curVertex + 3] = { start, end, color, -1.0f };
+        m_vertices[m_curVertex + 3] = { end, start, color, -1.0f };
 
         m_indices[m_curIndex + 0] = m_curVertex + 0;
         m_indices[m_curIndex + 1] = m_curVertex + 1;
