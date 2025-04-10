@@ -1,4 +1,4 @@
-#include "graphics/shader.h"
+#include "graphics/gfx/shader.h"
 #include <fstream>
 #include <sstream>
 #include <spdlog/spdlog.h>

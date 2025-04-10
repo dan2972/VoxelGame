@@ -4,11 +4,11 @@
 #include <string>
 #include <memory>
 
-#include "graphics/shader.h"
-#include "graphics/texture.h"
-#include "graphics/mesh.h"
-#include "graphics/font_renderer.h"
-#include "graphics/line_renderer.h"
+#include "graphics/gfx/shader.h"
+#include "graphics/gfx/texture.h"
+#include "graphics/gfx/mesh.h"
+#include "graphics/gfx/font_renderer.h"
+#include "graphics/gfx/line_renderer.h"
 
 class ResourceManager
 {

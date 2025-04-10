@@ -1,4 +1,4 @@
-#include "graphics/mesh.h"
+#include "graphics/gfx/mesh.h"
 #include <numeric>
 #include <spdlog/spdlog.h>
 

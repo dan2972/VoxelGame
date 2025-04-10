@@ -1,4 +1,4 @@
-#include "graphics/line_renderer.h"
+#include "graphics/gfx/line_renderer.h"
 
 #include <glad/glad.h>
 

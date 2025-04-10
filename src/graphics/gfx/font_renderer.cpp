@@ -1,4 +1,4 @@
-#include "graphics/font_renderer.h"
+#include "graphics/gfx/font_renderer.h"
 #include <glad/glad.h>
 
 namespace gfx
@@ -67,7 +67,7 @@ namespace gfx
     {
         load(fontPath, fontSize);
         m_textureAtlas = TextureAtlas<wchar_t>(
-            {.internalFilter = GL_NEAREST , .internalFormat = GL_RED, .format = GL_RED}
+            {.internalFilter = GL_NEAREST, .internalFormat = GL_RED, .format = GL_RED}
         );
     }
 

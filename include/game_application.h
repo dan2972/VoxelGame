@@ -5,8 +5,8 @@
 #include "game_window.h"
 #include "camera.h"
 #include "resource_manager.h"
-#include "graphics/texture_atlas.h"
-#include "graphics/font_renderer.h"
+#include "graphics/gfx/texture_atlas.h"
+#include "graphics/gfx/font_renderer.h"
 
 class GameApplication
 {
