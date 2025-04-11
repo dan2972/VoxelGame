@@ -97,17 +97,22 @@ bool GameApplication::load()
 
     m_resourceManager.loadShader("line", "res/shaders/line_renderer.vert", "res/shaders/line_renderer.frag");
     m_resourceManager.loadShader("font", "res/shaders/font_renderer.vert", "res/shaders/font_renderer.frag");
+    m_resourceManager.loadShader("font_billboard", "res/shaders/font_renderer_billboard.vert", "res/shaders/font_renderer.frag");
 
     m_resourceManager.addLineRenderer("default");
 
     auto fontRenderer = m_resourceManager.loadFontRenderer("default", "res/fonts/arial.ttf", 48);
     fontRenderer->preloadDefaultGlyphs();
+    auto fontRendererBB = m_resourceManager.loadFontRenderer("default_billboard", "res/fonts/courier-mon.ttf", 48, true);
+    fontRendererBB->preloadDefaultGlyphs();
     
     m_worldRenderer.loadResources(&m_world, &m_resourceManager);
 
     m_world.addChunk(0, 0, 0);
+    m_world.addChunk(1, 0, 0);
     m_world.setBlock(5, 8, 5, BlockType::Stone);
     m_worldRenderer.buildMesh({0, 0, 0});
+    m_worldRenderer.buildMesh({1, 0, 0});
 
     return true;
 }
@@ -129,6 +134,11 @@ void GameApplication::render()
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", m_camera.position.x, m_camera.position.y, m_camera.position.z);
     if (ImGui::CollapsingHeader("Render Options")) {
         ImGui::Checkbox("Show Chunk Border", &m_worldRenderer.renderOptions.showChunkBorder);
+        if (ImGui::CollapsingHeader("Light Levels")) {
+            ImGui::Checkbox("Show Sun Light Levels", &m_worldRenderer.renderOptions.showSunLightLevels);
+            ImGui::Checkbox("Show Block Light Levels", &m_worldRenderer.renderOptions.showBlockLightLevels);
+            ImGui::SliderFloat("Radius", &m_worldRenderer.renderOptions.showLightLevelRadius, 1.0f, Chunk::CHUNK_SIZE * 2.0f);
+        }
         ImGui::Checkbox("Use AO", &m_worldRenderer.renderOptions.useAO);
         ImGui::Checkbox("Use Smooth Lighting", &m_worldRenderer.renderOptions.useSmoothLighting);
         ImGui::SliderFloat("AO Factor", &m_worldRenderer.renderOptions.aoFactor, 0.0f, 1.0f);
@@ -137,7 +147,17 @@ void GameApplication::render()
 
     auto fontRenderer = m_resourceManager.getFontRenderer("default");
     fontRenderer->beginBatch();
-    fontRenderer->addText("Hello, World!", -5.0f, 0.0f, -20.0f, 0.1f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    fontRenderer->addText("Hello, World!", {0, 0, -10}, 0.1f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
+
+    glm::mat4 proj = m_camera.getProjectionMatrix();
+    glm::mat4 view = m_camera.getViewMatrix();
+
+    auto fontShader = m_resourceManager.getShader("font");
+    fontShader->use();
+    fontShader->setMat4("uProjection", proj);
+    fontShader->setMat4("uView", view);
+    fontShader->setMat4("uModel", glm::mat4(1.0f));
+    fontRenderer->draw();
 
     auto window = m_window.getWindow();
 
@@ -163,16 +183,6 @@ void GameApplication::render()
     }
 
     m_worldRenderer.draw(m_camera);
-    
-    glm::mat4 proj = m_camera.getProjectionMatrix();
-    glm::mat4 view = m_camera.getViewMatrix();
-
-    auto fontShader = m_resourceManager.getShader("font");
-    fontShader->use();
-    fontShader->setMat4("uProjection", proj);
-    fontShader->setMat4("uView", view);
-    fontShader->setMat4("uModel", glm::mat4(1.0f));
-    fontRenderer->draw();
 
     imguiEndFrame();
 }

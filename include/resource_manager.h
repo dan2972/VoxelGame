@@ -36,8 +36,8 @@ public:
     gfx::Mesh* getMesh(const std::string& name) const;
     void removeMesh(const std::string& name);
 
-    gfx::FontRenderer* loadFontRenderer(const std::string& name, const std::string& fontPath, unsigned int fontSize, const gfx::TextureAtlasParams& atlasParams);
-    gfx::FontRenderer* loadFontRenderer(const std::string& name, const std::string& fontPath, unsigned int fontSize);
+    gfx::FontRenderer* loadFontRenderer(const std::string& name, const std::string& fontPath, unsigned int fontSize, const gfx::TextureAtlasParams& atlasParams, bool useBillboard = false);
+    gfx::FontRenderer* loadFontRenderer(const std::string& name, const std::string& fontPath, unsigned int fontSize, bool useBillboard = false);
     gfx::FontRenderer* addFontRenderer(const std::string& name, gfx::FontRenderer&& fontRenderer);
     gfx::FontRenderer* getFontRenderer(const std::string& name) const;
     void removeFontRenderer(const std::string& name);

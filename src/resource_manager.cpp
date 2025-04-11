@@ -142,9 +142,9 @@ void ResourceManager::removeMesh(const std::string &name)
     m_meshes.erase(name);
 }
 
-gfx::FontRenderer *ResourceManager::loadFontRenderer(const std::string &name, const std::string &fontPath, unsigned int fontSize, const gfx::TextureAtlasParams &atlasParams)
+gfx::FontRenderer *ResourceManager::loadFontRenderer(const std::string &name, const std::string &fontPath, unsigned int fontSize, const gfx::TextureAtlasParams &atlasParams, bool useBillboard)
 {
-    auto ret = m_fontRenderers.try_emplace(name, std::make_unique<gfx::FontRenderer>());
+    auto ret = m_fontRenderers.try_emplace(name, std::make_unique<gfx::FontRenderer>(useBillboard));
     if (ret.second)
     {
         ret.first->second->loadFont(fontPath, fontSize, atlasParams);
@@ -157,9 +157,9 @@ gfx::FontRenderer *ResourceManager::loadFontRenderer(const std::string &name, co
     }
 }
 
-gfx::FontRenderer *ResourceManager::loadFontRenderer(const std::string &name, const std::string &fontPath, unsigned int fontSize)
+gfx::FontRenderer *ResourceManager::loadFontRenderer(const std::string &name, const std::string &fontPath, unsigned int fontSize, bool useBillboard)
 {
-    auto ret = m_fontRenderers.try_emplace(name, std::make_unique<gfx::FontRenderer>());
+    auto ret = m_fontRenderers.try_emplace(name, std::make_unique<gfx::FontRenderer>(useBillboard));
     if (ret.second)
     {
         ret.first->second->loadFont(fontPath, fontSize);

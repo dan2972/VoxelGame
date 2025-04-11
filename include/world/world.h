@@ -37,6 +37,8 @@ public:
 
     Chunk* getChunk(int x, int y, int z) const;
     Chunk* getChunk(const glm::ivec3& pos) const;
+
+    std::vector<Chunk*> getChunksInRadius(const glm::ivec3& chunkPos, int radius) const;
 private:
     std::unordered_map<glm::ivec3, std::unique_ptr<Chunk>, glm_ivec3_hash, glm_ivec3_equal> m_chunks;
 };

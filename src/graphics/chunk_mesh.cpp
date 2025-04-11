@@ -31,11 +31,11 @@ void ChunkMesh::buildMesh(const World &world, bool smoothLighting)
         {
             for (int y = 0; y < Chunk::CHUNK_SIZE; ++y)
             {
-                BlockType blockType = world.getBlock({x, y, z});
+                glm::ivec3 position = Chunk::localToGlobalPos({x, y, z}, m_chunk->getPos());
+                BlockType blockType = world.getBlock(position);
                 if (blockType == BlockType::Air)
                     continue;
                 
-                glm::ivec3 position{x, y, z};
                 auto [uvMin, uvMax] = GameApplication::getResourceManager().getTextureAtlas("chunk_atlas")->get(blockTypeToString(blockType));
 
                 std::array<float, 8> textureCoords = 
@@ -54,7 +54,7 @@ void ChunkMesh::buildMesh(const World &world, bool smoothLighting)
                         auto aoValues = getAOValues(position, static_cast<BlockFace>(i), world);
                         auto lightValues = getLightValues(position, static_cast<BlockFace>(i), world, smoothLighting);
                         bool flipQuad = shouldFlipQuad(aoValues);
-                        addFace(position, static_cast<BlockFace>(i), textureCoords, aoValues, lightValues, flipQuad);
+                        addFace({x, y, z}, static_cast<BlockFace>(i), textureCoords, aoValues, lightValues, flipQuad);
                     }
                 }
             }

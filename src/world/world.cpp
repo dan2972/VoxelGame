@@ -22,7 +22,7 @@ void World::setBlock(int x, int y, int z, BlockType type)
 {
     glm::ivec3 pos(x, y, z);
     auto chunkPos = Chunk::globalToChunkPos(pos);
-    auto localPos = Chunk::globalToLocalPos(pos, m_chunks.begin()->first);
+    auto localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
     if (chunk)
     {
@@ -39,7 +39,7 @@ void World::setBlockLight(int x, int y, int z, uint16_t lightLevel)
 {
     glm::ivec3 pos(x, y, z);
     auto chunkPos = Chunk::globalToChunkPos(pos);
-    auto localPos = Chunk::globalToLocalPos(pos, m_chunks.begin()->first);
+    auto localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
     if (chunk)
     {
@@ -56,7 +56,7 @@ void World::setSunLight(int x, int y, int z, uint16_t lightLevel)
 {
     glm::ivec3 pos(x, y, z);
     auto chunkPos = Chunk::globalToChunkPos(pos);
-    auto localPos = Chunk::globalToLocalPos(pos, m_chunks.begin()->first);
+    auto localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
     if (chunk)
     {
@@ -73,7 +73,7 @@ BlockType World::getBlock(int x, int y, int z) const
 {
     glm::ivec3 pos(x, y, z);
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(pos);
-    glm::ivec3 localPos = Chunk::globalToLocalPos(pos, m_chunks.begin()->first);
+    glm::ivec3 localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
     if (chunk)
     {
@@ -91,7 +91,7 @@ uint16_t World::getSunLight(int x, int y, int z) const
 {
     glm::ivec3 pos(x, y, z);
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(pos);
-    glm::ivec3 localPos = Chunk::globalToLocalPos(pos, m_chunks.begin()->first);
+    glm::ivec3 localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
     if (chunk)
     {
@@ -109,7 +109,7 @@ uint16_t World::getBlockLight(int x, int y, int z) const
 {
     glm::ivec3 pos(x, y, z);
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(pos);
-    glm::ivec3 localPos = Chunk::globalToLocalPos(pos, m_chunks.begin()->first);
+    glm::ivec3 localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
     if (chunk)
     {
@@ -127,7 +127,7 @@ uint16_t World::getLightLevel(int x, int y, int z) const
 {
     glm::ivec3 pos(x, y, z);
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(pos);
-    glm::ivec3 localPos = Chunk::globalToLocalPos(pos, m_chunks.begin()->first);
+    glm::ivec3 localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
     if (chunk)
     {
@@ -155,4 +155,26 @@ Chunk* World::getChunk(int x, int y, int z) const
 Chunk* World::getChunk(const glm::ivec3& pos) const
 {
     return getChunk(pos.x, pos.y, pos.z);
+}
+
+std::vector<Chunk *> World::getChunksInRadius(const glm::ivec3 &chunkPos, int radius) const
+{
+    std::vector<Chunk *> chunksInRadius;
+    for (int x = chunkPos.x - radius; x <= chunkPos.x + radius; ++x)
+    {
+        for (int y = chunkPos.y - radius; y <= chunkPos.y + radius; ++y)
+        {
+            for (int z = chunkPos.z - radius; z <= chunkPos.z + radius; ++z)
+            {
+                if (x * x + y * y + z * z > radius * radius)
+                    continue;
+                auto chunk = getChunk(x, y, z);
+                if (chunk)
+                {
+                    chunksInRadius.push_back(chunk);
+                }
+            }
+        }
+    }
+    return chunksInRadius;
 }

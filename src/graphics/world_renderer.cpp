@@ -28,9 +28,10 @@ void WorldRenderer::buildMesh(const glm::ivec3 &chunkPos)
     {
         auto chunkMesh = std::make_unique<ChunkMesh>(chunk);
         chunkMesh->setup();
-        m_chunkMeshes.emplace(chunkPos, std::move(chunkMesh));
+        auto pair = m_chunkMeshes.emplace(chunkPos, std::move(chunkMesh));
+        it = pair.first;
     }
-    m_chunkMeshes.at(chunkPos)->buildMesh(*m_world, renderOptions.useSmoothLighting);
+    it->second->buildMesh(*m_world, renderOptions.useSmoothLighting);
 }
 
 void WorldRenderer::draw(const Camera& camera)
@@ -48,7 +49,7 @@ void WorldRenderer::draw(const Camera& camera)
 
     for (auto& [chunkPos, chunkMesh] : m_chunkMeshes)
     {
-        shader->setVec3("uChunkOffset", glm::vec3(chunkPos.x, chunkPos.y, chunkPos.z));
+        shader->setVec3("uChunkOffset", glm::vec3(chunkPos) * float(Chunk::CHUNK_SIZE));
         chunkMesh->draw();
     }
 
@@ -57,6 +58,9 @@ void WorldRenderer::draw(const Camera& camera)
         auto chunkPos = Chunk::globalToChunkPos(camera.position);
         drawChunkBorder(glm::vec3(chunkPos.x, chunkPos.y, chunkPos.z), camera);
     }
+
+    if (renderOptions.showSunLightLevels || renderOptions.showBlockLightLevels)
+        showLightLevels(camera);
 }
 
 void WorldRenderer::checkPointers() const
@@ -93,4 +97,73 @@ void WorldRenderer::drawChunkBorder(const glm::ivec3 &chunkPos, const Camera &ca
     lineShader->setFloat("uLineWidth", 1.0f);
     lineShader->setVec2("uResolution", camera.resolution);
     lineRenderer->draw();
+}
+
+void WorldRenderer::showLightLevels(const Camera& camera)
+{
+    checkPointers();
+    auto fontRenderer = m_resourceManager->getFontRenderer("default_billboard");
+    auto fontShader = m_resourceManager->getShader("font_billboard");
+
+    fontShader->use();
+    fontShader->setMat4("uProjection", camera.getProjectionMatrix());
+    fontShader->setMat4("uView", camera.getViewMatrix());
+    fontShader->setMat4("uModel", glm::mat4(1.0f));
+    fontRenderer->beginBatch();
+
+    int radius = renderOptions.showLightLevelRadius;
+    glm::vec3 cameraPos = camera.position;
+
+    int chunkRadius = radius / Chunk::CHUNK_SIZE + 1;
+
+    auto chunks = m_world->getChunksInRadius(Chunk::globalToChunkPos(cameraPos), chunkRadius);
+
+    for (Chunk* chunk : chunks) {
+        auto min = cameraPos - glm::vec3(radius, radius, radius);
+        auto max = cameraPos + glm::vec3(radius, radius, radius);
+        
+        // local positions that could be out of bounds
+        auto localMin = glm::ivec3(min) - Chunk::localToGlobalPos({0,0,0}, chunk->getPos());
+        auto localMax = glm::ivec3(max) - Chunk::localToGlobalPos({0,0,0}, chunk->getPos());
+        localMin = glm::clamp(localMin, 0, Chunk::CHUNK_SIZE - 1);
+        localMax = glm::clamp(localMax, 0, Chunk::CHUNK_SIZE - 1);
+        auto localCam = cameraPos - glm::vec3(Chunk::localToGlobalPos({0,0,0}, chunk->getPos()));
+        
+        for (int x = localMin.x; x <= localMax.x; ++x) {
+            for (int z = localMin.z; z <= localMax.z; ++z) {
+                for (int y = localMin.y; y <= localMax.y; ++y) {
+                    glm::vec3 d = glm::vec3(x, y, z) - localCam;
+                    if ((d.x * d.x + d.y * d.y + d.z * d.z) > radius * radius)
+                        continue;
+                    glm::ivec3 pos = {x, y, z};
+
+                    if (x < 0 || x >= Chunk::CHUNK_SIZE || y < 0 || y >= Chunk::CHUNK_SIZE || z < 0 || z >= Chunk::CHUNK_SIZE)
+                        continue;
+
+                    if (chunk->getBlock(pos) != BlockType::Air)
+                        continue;
+                    
+                    auto sunLight = chunk->getSunLight(pos);
+                    auto blockLight = chunk->getBlockLight(pos);
+
+                    float sunColor = static_cast<float>(sunLight) / 15.0f;
+                    float blockColor = static_cast<float>(blockLight) / 15.0f;
+                    glm::vec4 sunTextColor = glm::vec4(1.0f - sunColor, sunColor, 0.2f, 1.0f);
+                    glm::vec4 blockTextColor = glm::vec4(1.0f - blockColor, blockColor, 0.2f, 1.0f);
+                    glm::vec3 textPos = glm::vec3(pos) + glm::vec3(chunk->getPos() * Chunk::CHUNK_SIZE) + glm::vec3(0.5f, 0.5f, 0.5f);
+                    if (renderOptions.showSunLightLevels && renderOptions.showBlockLightLevels) {
+                        fontRenderer->addTextBB(std::to_string(blockLight), {0,0,0}, {textPos.x, textPos.y - 0.1f, textPos.z}, 0.003f, blockTextColor, true);
+                        fontRenderer->addTextBB(std::to_string(sunLight), {0,0,0}, {textPos.x, textPos.y + 0.1f, textPos.z}, 0.003f, sunTextColor, true);
+                    } else {
+                        if (renderOptions.showBlockLightLevels) {
+                            fontRenderer->addTextBB(std::to_string(blockLight), {0,0,0}, textPos, 0.003f, blockTextColor, true);
+                        } else {
+                            fontRenderer->addTextBB(std::to_string(sunLight), {0,0,0}, textPos, 0.003f, sunTextColor, true);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    fontRenderer->draw();
 }

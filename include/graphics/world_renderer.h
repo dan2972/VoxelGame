@@ -16,6 +16,9 @@ struct RenderOptions
     bool useAO = true;
     bool useSmoothLighting = true;
     bool showChunkBorder = false;
+    bool showSunLightLevels = false;
+    bool showBlockLightLevels = false;
+    float showLightLevelRadius = Chunk::CHUNK_SIZE / 2;
     float aoFactor = 0.5f;
 };
 
@@ -44,4 +47,5 @@ private:
 
     void checkPointers() const;
     void drawChunkBorder(const glm::ivec3& chunkPos, const Camera& camera);
+    void showLightLevels(const Camera& camera);
 };

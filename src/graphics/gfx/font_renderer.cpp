@@ -4,16 +4,18 @@
 namespace gfx
 {
     FT_Library FontRenderer::m_ftlib = nullptr;
+    unsigned int FontRenderer::m_instanceCount = 0;
 
     FontRenderer::FontRenderer()
     {
-        if (m_ftlib == nullptr)
-        {
-            if (FT_Init_FreeType(&m_ftlib))
-            {
-                throw std::runtime_error("Failed to initialize FreeType library.");
-            }
-        }
+        initFTLib();
+        ++m_instanceCount;
+    }
+
+    FontRenderer::FontRenderer(bool useBillboard) : m_useBillboard(useBillboard)
+    {
+        initFTLib();
+        ++m_instanceCount;
     }
 
     FontRenderer::~FontRenderer()
@@ -22,15 +24,18 @@ namespace gfx
         {
             FT_Done_Face(m_face);
         }
-        if (m_ftlib)
+        --m_instanceCount;
+        if (m_instanceCount == 0 && m_ftlib)
         {
             FT_Done_FreeType(m_ftlib);
+            spdlog::info("Deinitialized FreeType Library. This should have only been called once.");
         }
     }
     
     FontRenderer::FontRenderer(FontRenderer&& other) noexcept
         : m_fontSize(other.m_fontSize),
           m_vertices(std::move(other.m_vertices)),
+          m_verticesBB(std::move(other.m_verticesBB)),
           m_indices(std::move(other.m_indices)),
           m_curVertex(other.m_curVertex),
           m_curIndex(other.m_curIndex),
@@ -49,6 +54,7 @@ namespace gfx
         {
             m_fontSize = other.m_fontSize;
             m_vertices = std::move(other.m_vertices);
+            m_verticesBB = std::move(other.m_verticesBB);
             m_indices = std::move(other.m_indices);
             m_curVertex = other.m_curVertex;
             m_curIndex = other.m_curIndex;
@@ -114,21 +120,38 @@ namespace gfx
     {
         if (!m_meshInitialized)
         {
-            m_batchMesh.populate({}, {}, { 3, 4, 2 }, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW);
+            if (m_useBillboard)
+                m_batchMesh.populate({}, {}, { 3, 3, 4, 2 }, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW);
+            else
+                m_batchMesh.populate({}, {}, { 3, 4, 2 }, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW);
             m_meshInitialized = true;
         }
         m_curVertex = 0;
         m_curIndex = 0;
     }
 
-    void FontRenderer::addText(const std::wstring &text, float x, float y, float scale, const glm::vec4 &color)
+    void FontRenderer::addText(const std::wstring &text, float x, float y, float scale, const glm::vec4 &color, bool center)
     {
         addText(text, x, y, 0.0f, scale, color);
     }
 
-    void FontRenderer::addText(const std::wstring &text, float x, float y, float z, float scale, const glm::vec4 &color)
+    void FontRenderer::addText(const std::wstring &text, float x, float y, float z, float scale, const glm::vec4 &color, bool center)
     {
+        if (m_useBillboard)
+            return;
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        if (center)
+        {
+            float textWidth = 0.0f;
+            for (wchar_t c : text)
+            {
+                if (m_characters.contains(c))
+                {
+                    textWidth += (m_characters[c].advance) * scale;
+                }
+            }
+            x -= textWidth / 2.0f;
+        }
         for (wchar_t c : text)
         {
             if (!m_characters.contains(c))
@@ -187,21 +210,117 @@ namespace gfx
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     }
 
-    void FontRenderer::addText(const std::string &text, float x, float y, float scale, const glm::vec4 &color)
+    void FontRenderer::addText(const std::wstring &text, const glm::vec3 &pos, float scale, const glm::vec4 &color, bool center)
     {
-        std::wstring wText(text.begin(), text.end());
-        addText(wText, x, y, scale, color);
+        addText(text, pos.x, pos.y, pos.z, scale, color, center);
     }
 
-    void FontRenderer::addText(const std::string &text, float x, float y, float z, float scale, const glm::vec4 &color)
+    void FontRenderer::addText(const std::string &text, float x, float y, float scale, const glm::vec4 &color, bool center)
     {
         std::wstring wText(text.begin(), text.end());
-        addText(wText, x, y, z, scale, color);
+        addText(wText, x, y, scale, color, center);
+    }
+
+    void FontRenderer::addText(const std::string &text, float x, float y, float z, float scale, const glm::vec4 &color, bool center)
+    {
+        std::wstring wText(text.begin(), text.end());
+        addText(wText, x, y, z, scale, color, center);
+    }
+
+    void FontRenderer::addText(const std::string &text, const glm::vec3 &pos, float scale, const glm::vec4 &color, bool center)
+    {
+        std::wstring wText(text.begin(), text.end());
+        addText(wText, pos.x, pos.y, pos.z, scale, color, center);
+    }
+
+    void FontRenderer::addTextBB(const std::wstring& text, const glm::vec3& pos, const glm::vec3& center, float scale, const glm::vec4& color, bool textCentered)
+    {
+        if (!m_useBillboard)
+            return;
+        float x = pos.x;
+        float y = pos.y;
+        float z = pos.z;
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        if (textCentered)
+        {
+            float textWidth = 0.0f;
+            for (wchar_t c : text)
+            {
+                if (m_characters.contains(c))
+                {
+                    textWidth += (m_characters[c].advance) * scale;
+                }
+            }
+            x -= textWidth / 2.0f;
+        }
+        for (wchar_t c : text)
+        {
+            if (!m_characters.contains(c))
+            {
+                if (FT_Load_Char(m_face, c, FT_LOAD_RENDER))
+                    continue;
+                
+                if (!m_textureAtlas.has(c)) {
+                    if (!setupGlyph(c, m_face->glyph))
+                        continue;
+                    m_characters[c] = {
+                        glm::ivec2(m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows),
+                        glm::ivec2(m_face->glyph->bitmap_left, m_face->glyph->bitmap_top),
+                        static_cast<unsigned int>(m_face->glyph->advance.x >> 6)
+                    };
+                }
+            }
+
+            Character& ch = m_characters[c];
+
+            if (!m_textureAtlas.has(c)) { // for cases where the character is not renderable (e.g. space)
+                x += ch.advance * scale;
+                continue;
+            }
+
+            auto [uvMin, uvMax] = m_textureAtlas.get(c);
+
+            float xPos = x + (ch.bearing.x * scale);
+            float yPos = y - (ch.size.y - ch.bearing.y) * scale;
+
+            float w = ch.size.x * scale;
+            float h = ch.size.y * scale;
+
+            if (m_curVertex + 4 >= m_verticesBB.size())
+                m_verticesBB.resize(m_curVertex + 4);
+            if (m_curIndex + 6 >= m_indices.size())
+                m_indices.resize(m_curIndex + 6);
+            
+            m_verticesBB[m_curVertex + 0] = { glm::vec3(xPos, yPos + h, z), center, color, uvMin };
+            m_verticesBB[m_curVertex + 1] = { glm::vec3(xPos, yPos, z), center, color, glm::vec2(uvMin.x, uvMax.y) };
+            m_verticesBB[m_curVertex + 2] = { glm::vec3(xPos + w, yPos, z), center, color, uvMax };
+            m_verticesBB[m_curVertex + 3] = { glm::vec3(xPos + w, yPos + h, z), center, color, glm::vec2(uvMax.x, uvMin.y) };
+
+            m_indices[m_curIndex + 0] = m_curVertex + 0;
+            m_indices[m_curIndex + 1] = m_curVertex + 1;
+            m_indices[m_curIndex + 2] = m_curVertex + 2;
+            m_indices[m_curIndex + 3] = m_curVertex + 0;
+            m_indices[m_curIndex + 4] = m_curVertex + 2;
+            m_indices[m_curIndex + 5] = m_curVertex + 3;
+
+            m_curVertex += 4;
+            m_curIndex += 6;
+
+            x += ch.advance * scale;
+        }
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    }
+
+    void FontRenderer::addTextBB(const std::string& text, const glm::vec3& pos, const glm::vec3& center, float scale, const glm::vec4& color, bool textCentered)
+    {
+        std::wstring wText(text.begin(), text.end());
+        addTextBB(wText, pos, center, scale, color, textCentered);
     }
 
     void FontRenderer::clearText()
     {
         m_vertices.clear();
+        m_verticesBB.clear();
         m_indices.clear();
         m_curVertex = 0;
         m_curIndex = 0;
@@ -214,12 +333,30 @@ namespace gfx
 
         m_textureAtlas.use();
 
-        float* verticesFloats = reinterpret_cast<float*>(m_vertices.data());
-        size_t verticesSize = m_curVertex * sizeof(Vertex) / sizeof(float);
+        float* verticesFloats;
+        size_t verticesSize;
+        if (m_useBillboard) {
+            verticesFloats = reinterpret_cast<float*>(m_verticesBB.data());
+            verticesSize = m_curVertex * sizeof(VertexBB) / sizeof(float);
+        } else {
+            verticesFloats = reinterpret_cast<float*>(m_vertices.data());
+            verticesSize = m_curVertex * sizeof(Vertex) / sizeof(float);
+        }
         auto verticesVec = std::vector<float>(verticesFloats, verticesFloats + verticesSize);
         m_batchMesh.updateVertexBuffer(verticesVec, verticesSize, bindVAO);
         m_batchMesh.updateIndexBuffer(m_indices, m_curIndex, false);
         m_batchMesh.draw(m_curIndex);
+    }
+
+    void FontRenderer::initFTLib()
+    {
+        if (m_ftlib)
+            return;
+        spdlog::info("Initialized FreeType Library. This should have only been called once.");
+        if (FT_Init_FreeType(&m_ftlib))
+        {
+            throw std::runtime_error("Failed to initialize FreeType library.");
+        }
     }
 
     void FontRenderer::load(const std::string &fontPath, unsigned int fontSize)

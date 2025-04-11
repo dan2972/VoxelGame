@@ -15,6 +15,8 @@ public:
 
     void generateTerrain();
 
+    glm::ivec3 getPos() const { return m_position; }
+
     BlockType getBlock(int x, int y, int z) const;
     BlockType getBlock(const glm::ivec3& pos) const;
 
@@ -34,8 +36,8 @@ public:
     glm::ivec3 localToGlobalPos(const glm::ivec3& pos);
     static glm::ivec3 localToGlobalPos(const glm::ivec3& pos, const glm::ivec3& chunkPos);
     static glm::ivec3 globalToChunkPos(const glm::ivec3& globalPos);
-    static glm::ivec3 globalToLocalPos(const glm::ivec3& globalPos, const glm::ivec3& chunkPos);
-    static void globalToLocalPos(const glm::ivec3& globalPos, const glm::ivec3& chunkPos, glm::ivec3& localPosOut, glm::ivec3& chunkPosOut);
+    static glm::ivec3 globalToLocalPos(const glm::ivec3& globalPos);
+    static void globalToLocalPos(const glm::ivec3& globalPos, glm::ivec3& localPosOut, glm::ivec3& chunkPosOut);
 
 private:
     glm::ivec3 m_position{0, 0, 0};
