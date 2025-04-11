@@ -97,17 +97,13 @@ bool GameApplication::load()
 
     m_resourceManager.loadShader("line", "res/shaders/line_renderer.vert", "res/shaders/line_renderer.frag");
     m_resourceManager.loadShader("font", "res/shaders/font_renderer.vert", "res/shaders/font_renderer.frag");
-    m_resourceManager.loadShader("chunk", "res/shaders/terrain_chunk.vert", "res/shaders/terrain_chunk.frag");
-    auto atlas = m_resourceManager.addTextureAtlas("chunk_atlas", {.internalFilter = GL_NEAREST});
-    atlas->addImgFromPath("grass", "res/textures/grass.png");
-    atlas->addImgFromPath("dirt", "res/textures/dirt.png");
-    atlas->addImgFromPath("stone", "res/textures/stone.png");
-    atlas->addImgFromPath("wood_planks", "res/textures/wood_planks.png");
 
     m_resourceManager.addLineRenderer("default");
 
     auto fontRenderer = m_resourceManager.loadFontRenderer("default", "res/fonts/arial.ttf", 48);
     fontRenderer->preloadDefaultGlyphs();
+    
+    m_worldRenderer.loadResources(&m_world, &m_resourceManager);
 
     m_world.addChunk(0, 0, 0);
     m_world.setBlock(5, 8, 5, BlockType::Stone);
@@ -132,6 +128,7 @@ void GameApplication::render()
     ImGui::Text("Total Time: %.3fs", m_gameTime.totalTime);
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", m_camera.position.x, m_camera.position.y, m_camera.position.z);
     if (ImGui::CollapsingHeader("Render Options")) {
+        ImGui::Checkbox("Show Chunk Border", &m_worldRenderer.renderOptions.showChunkBorder);
         ImGui::Checkbox("Use AO", &m_worldRenderer.renderOptions.useAO);
         ImGui::Checkbox("Use Smooth Lighting", &m_worldRenderer.renderOptions.useSmoothLighting);
         ImGui::SliderFloat("AO Factor", &m_worldRenderer.renderOptions.aoFactor, 0.0f, 1.0f);
@@ -141,26 +138,6 @@ void GameApplication::render()
     auto fontRenderer = m_resourceManager.getFontRenderer("default");
     fontRenderer->beginBatch();
     fontRenderer->addText("Hello, World!", -5.0f, 0.0f, -20.0f, 0.1f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-
-    auto lineRenderer = m_resourceManager.getLineRenderer("default");
-    lineRenderer->beginBatch();
-    //back
-    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    lineRenderer->drawLine(glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    lineRenderer->drawLine(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-
-    //sides
-    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    lineRenderer->drawLine(glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    lineRenderer->drawLine(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    lineRenderer->drawLine(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-
-    //front
-    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    lineRenderer->drawLine(glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    lineRenderer->drawLine(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    lineRenderer->drawLine(glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
     auto window = m_window.getWindow();
 
@@ -185,7 +162,7 @@ void GameApplication::render()
         m_window.enableCursor();
     }
 
-    m_worldRenderer.draw(m_camera, m_resourceManager.getShader("chunk"), m_resourceManager.getTextureAtlas("chunk_atlas"));
+    m_worldRenderer.draw(m_camera);
     
     glm::mat4 proj = m_camera.getProjectionMatrix();
     glm::mat4 view = m_camera.getViewMatrix();
@@ -196,15 +173,6 @@ void GameApplication::render()
     fontShader->setMat4("uView", view);
     fontShader->setMat4("uModel", glm::mat4(1.0f));
     fontRenderer->draw();
-
-    auto lineShader = m_resourceManager.getShader("line");
-    lineShader->use();
-    lineShader->setMat4("uProjection", proj);
-    lineShader->setMat4("uView", view);
-    lineShader->setMat4("uModel", glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, -10.0f)));
-    lineShader->setFloat("uLineWidth", 2.0f);
-    lineShader->setVec2("uResolution", glm::vec2(m_width, m_height));
-    lineRenderer->draw();
 
     imguiEndFrame();
 }
@@ -280,6 +248,9 @@ void GameApplication::framebufferSizeCallback(GLFWwindow *window, int width, int
 
     app->m_width = width;
     app->m_height = height;
+    if (width == 0 || height == 0) {
+        return;
+    }
     app->m_camera.updateResolution(width, height);
     app->m_window.setViewport(0, 0, width, height);
 }

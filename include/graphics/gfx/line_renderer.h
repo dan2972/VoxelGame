@@ -19,6 +19,8 @@ namespace gfx
 
         void beginBatch();
         void drawLine(const glm::vec3& start, const glm::vec3& end, const glm::vec4& color);
+        void drawCube(const glm::vec3& position, const glm::vec3& size, const glm::vec4& color);
+        void drawAA2DGrid(const glm::vec3& corner1, const glm::vec3& corner2, const glm::vec4& color, int segments, bool drawBorders=true);
         void draw(bool bindVAO = true);
 
     private:

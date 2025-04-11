@@ -76,6 +76,63 @@ namespace gfx
         m_curIndex += 6;
     }
 
+    void LineRenderer::drawCube(const glm::vec3& position, const glm::vec3& size, const glm::vec4& color)
+    {
+        glm::vec3 halfSize = size * 0.5f;
+        glm::vec3 vertices[8] = {
+            { -halfSize.x, -halfSize.y, -halfSize.z },
+            { halfSize.x, -halfSize.y, -halfSize.z },
+            { halfSize.x, halfSize.y, -halfSize.z },
+            { -halfSize.x, halfSize.y, -halfSize.z },
+            { -halfSize.x, -halfSize.y, halfSize.z },
+            { halfSize.x, -halfSize.y, halfSize.z },
+            { halfSize.x, halfSize.y, halfSize.z },
+            { -halfSize.x, halfSize.y, halfSize.z }
+        };
+
+        for (int i = 0; i < 8; ++i)
+        {
+            vertices[i] += position;
+        }
+
+        drawLine(vertices[0], vertices[1], color);
+        drawLine(vertices[1], vertices[2], color);
+        drawLine(vertices[2], vertices[3], color);
+        drawLine(vertices[3], vertices[0], color);
+        drawLine(vertices[4], vertices[5], color);
+        drawLine(vertices[5], vertices[6], color);
+        drawLine(vertices[6], vertices[7], color);
+        drawLine(vertices[7], vertices[4], color);
+        drawLine(vertices[0], vertices[4], color);
+        drawLine(vertices[1], vertices[5], color);
+        drawLine(vertices[2], vertices[6], color);
+        drawLine(vertices[3], vertices[7], color);
+    }
+
+    // Draw an axis-aligned 2D grid on a plane defined by two corners
+    void LineRenderer::drawAA2DGrid(const glm::vec3& start, const glm::vec3& end, const glm::vec4& color, int segments, bool drawBorders)
+    {
+        glm::vec3 direction = end - start;
+        glm::vec3 step = direction / static_cast<float>(segments);
+        for (int i = 0; i <= segments; ++i)
+        {
+            if (!drawBorders && i == 0 || i == segments)
+                continue;
+            glm::vec3 point = start + step * static_cast<float>(i);
+
+            glm::vec3 absDir = glm::abs(direction);
+            if (absDir.x <= 1e-6f || absDir.z <= 1e-6f) {
+                drawLine({start.x, point.y, start.z}, {end.x, point.y, end.z}, color);
+            }
+            if (absDir.y <= 1e-6f || absDir.z <= 1e-6f) {
+                drawLine({point.x, start.y, start.z}, {point.x, end.y, end.z}, color);
+            }
+            if (absDir.x <= 1e-6f || absDir.y <= 1e-6f) {
+                drawLine({start.x, start.y, point.z}, {end.x, end.y, point.z}, color);
+            }
+        }
+    }
+
     void LineRenderer::draw(bool bindVAO)
     {
         if (m_curVertex == 0)

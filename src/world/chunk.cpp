@@ -144,7 +144,7 @@ glm::ivec3 Chunk::localToGlobalPos(const glm::ivec3 &pos, const glm::ivec3 &chun
     return {x, y, z};
 }
 
-glm::ivec3 Chunk::globalToChunkPos(const glm::ivec3 &globalPos, const glm::ivec3 &chunkPos)
+glm::ivec3 Chunk::globalToChunkPos(const glm::ivec3 &globalPos)
 {
     glm::ivec3 out;
     out.x = globalPos.x >= 0 ? globalPos.x / CHUNK_SIZE : (globalPos.x + 1) / CHUNK_SIZE - 1;
@@ -166,7 +166,7 @@ glm::ivec3 Chunk::globalToLocalPos(const glm::ivec3 &globalPos, const glm::ivec3
 
 void Chunk::globalToLocalPos(const glm::ivec3 &globalPos, const glm::ivec3 &chunkPos, glm::ivec3 &localPosOut, glm::ivec3 &chunkPosOut)
 {
-    chunkPosOut = globalToChunkPos(globalPos, chunkPos);
+    chunkPosOut = globalToChunkPos(globalPos);
     int localX = globalPos.x % CHUNK_SIZE;
     localX = localX < 0 ? CHUNK_SIZE + localX : localX;
     int localY = globalPos.y % CHUNK_SIZE;

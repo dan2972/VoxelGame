@@ -33,7 +33,7 @@ public:
 
     glm::ivec3 localToGlobalPos(const glm::ivec3& pos);
     static glm::ivec3 localToGlobalPos(const glm::ivec3& pos, const glm::ivec3& chunkPos);
-    static glm::ivec3 globalToChunkPos(const glm::ivec3& globalPos, const glm::ivec3& chunkPos);
+    static glm::ivec3 globalToChunkPos(const glm::ivec3& globalPos);
     static glm::ivec3 globalToLocalPos(const glm::ivec3& globalPos, const glm::ivec3& chunkPos);
     static void globalToLocalPos(const glm::ivec3& globalPos, const glm::ivec3& chunkPos, glm::ivec3& localPosOut, glm::ivec3& chunkPosOut);
 
