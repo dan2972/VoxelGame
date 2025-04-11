@@ -46,10 +46,16 @@ public:
     gfx::LineRenderer* addLineRenderer(const std::string& name, gfx::LineRenderer&& lineRenderer);
     gfx::LineRenderer* getLineRenderer(const std::string& name) const;
     void removeLineRenderer(const std::string& name);
+
+    gfx::TextureAtlas<std::string>* addTextureAtlas(const std::string& name, const gfx::TextureAtlasParams& params);
+    gfx::TextureAtlas<std::string>* addTextureAtlas(const std::string& name, gfx::TextureAtlas<std::string>&& atlas);
+    gfx::TextureAtlas<std::string>* getTextureAtlas(const std::string& name) const;
+    void removeTextureAtlas(const std::string& name);
 private:
     std::unordered_map<std::string, std::unique_ptr<gfx::Shader>> m_shaders;
     std::unordered_map<std::string, std::unique_ptr<gfx::Texture>> m_textures;
     std::unordered_map<std::string, std::unique_ptr<gfx::Mesh>> m_meshes;
     std::unordered_map<std::string, std::unique_ptr<gfx::FontRenderer>> m_fontRenderers;
     std::unordered_map<std::string, std::unique_ptr<gfx::LineRenderer>> m_lineRenderers;
+    std::unordered_map<std::string, std::unique_ptr<gfx::TextureAtlas<std::string>>> m_textureAtlases;
 };

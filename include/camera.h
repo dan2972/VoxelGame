@@ -44,8 +44,8 @@ public:
 
     void move(CameraMovement direction, float deltaTime);
     void rotate(float xoffset, float yoffset, bool constrainPitch=true);
-    glm::mat4 getProjectionMatrix();
-    glm::mat4 getViewMatrix();
+    glm::mat4 getProjectionMatrix() const;
+    glm::mat4 getViewMatrix() const;
     void updateResolution(float width, float height);
     glm::vec3 rayDirFromMouse(float mouseX, float mouseY);
 private:

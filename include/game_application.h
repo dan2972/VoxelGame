@@ -7,6 +7,8 @@
 #include "resource_manager.h"
 #include "graphics/gfx/texture_atlas.h"
 #include "graphics/gfx/font_renderer.h"
+#include "world/world.h"
+#include "graphics/world_renderer.h"
 
 class GameApplication
 {
@@ -52,6 +54,9 @@ private:
         int tps = 0; // Ticks per second
     };
     GameTime m_gameTime;
+
+    World m_world;
+    WorldRenderer m_worldRenderer{&m_world};
 
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height);

@@ -44,6 +44,7 @@ gfx::Shader* ResourceManager::getShader(const std::string& name) const
     {
         return it->second.get();
     }
+    spdlog::warn("Shader with name \"{}\" not found.", name);
     return nullptr;
 }
 
@@ -87,6 +88,7 @@ gfx::Texture* ResourceManager::getTexture(const std::string& name) const
     {
         return it->second.get();
     }
+    spdlog::warn("Texture with name \"{}\" not found.", name);
     return nullptr;
 }
 
@@ -131,6 +133,7 @@ gfx::Mesh *ResourceManager::getMesh(const std::string &name) const
     {
         return it->second.get();
     }
+    spdlog::warn("Mesh with name \"{}\" not found.", name);
     return nullptr;
 }
 
@@ -190,6 +193,7 @@ gfx::FontRenderer *ResourceManager::getFontRenderer(const std::string &name) con
     {
         return it->second.get();
     }
+    spdlog::warn("FontRenderer with name \"{}\" not found.", name);
     return nullptr;
 }
 
@@ -233,10 +237,55 @@ gfx::LineRenderer *ResourceManager::getLineRenderer(const std::string &name) con
     {
         return it->second.get();
     }
+    spdlog::warn("LineRenderer with name \"{}\" not found.", name);
     return nullptr;
 }
 
 void ResourceManager::removeLineRenderer(const std::string &name)
 {
     m_lineRenderers.erase(name);
+}
+
+gfx::TextureAtlas<std::string> *ResourceManager::addTextureAtlas(const std::string &name, const gfx::TextureAtlasParams &params)
+{
+    auto ret = m_textureAtlases.try_emplace(name, std::make_unique<gfx::TextureAtlas<std::string>>(params));
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("TextureAtlas with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::TextureAtlas<std::string> *ResourceManager::addTextureAtlas(const std::string &name, gfx::TextureAtlas<std::string> &&atlas)
+{
+    auto ret = m_textureAtlases.try_emplace(name, std::make_unique<gfx::TextureAtlas<std::string>>(std::move(atlas)));
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("TextureAtlas with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::TextureAtlas<std::string> *ResourceManager::getTextureAtlas(const std::string &name) const
+{
+    auto it = m_textureAtlases.find(name);
+    if (it != m_textureAtlases.end())
+    {
+        return it->second.get();
+    }
+    spdlog::warn("TextureAtlas with name \"{}\" not found.", name);
+    return nullptr;
+}
+
+void ResourceManager::removeTextureAtlas(const std::string &name)
+{
+    m_textureAtlases.erase(name);
 }

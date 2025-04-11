@@ -11,7 +11,9 @@ out vec3 vNormal;
 out float vAOValue;
 out float vLightValue;
 
-uniform mat4 uProjView;
+uniform mat4 uProjection;
+uniform mat4 uView;
+uniform mat4 uModel;
 uniform vec3 uChunkOffset;
 
 vec3 getNormalFromIndex(int index) {
@@ -36,7 +38,7 @@ vec3 getNormalFromIndex(int index) {
 
 void main(void)
 {
-    gl_Position = uProjView * vec4(aPosition + uChunkOffset, 1.0);
+    gl_Position = uProjection * uView * uModel * vec4(aPosition + uChunkOffset, 1.0);
     vTexCoord = aTexCoord;
     vNormal = getNormalFromIndex(int(aNormalIndex));
     vAOValue = aAOValue;

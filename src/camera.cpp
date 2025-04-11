@@ -59,12 +59,12 @@ void Camera::rotate(float xoffset, float yoffset, bool constrainPitch)
     updateCameraVectors();
 }
 
-glm::mat4 Camera::getProjectionMatrix()
+glm::mat4 Camera::getProjectionMatrix() const
 {
     return glm::perspective(glm::radians(zoom), (float)resolution.x / resolution.y, 0.1f, 5000.0f);
 }
 
-glm::mat4 Camera::getViewMatrix()
+glm::mat4 Camera::getViewMatrix() const
 {
     return glm::lookAt(position, position + front, up);
 }

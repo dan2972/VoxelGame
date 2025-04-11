@@ -22,5 +22,6 @@ void main()
 
     float light = 0.1 + 0.9 * (vLightValue / 15);
     light = clamp(light, 0.0, 1.0);
-    outputColor = light * ambientOcclusion * (ambient + diff) * texture(uTexture, vTexCoord);
+    float multiplier = light * ambientOcclusion * (ambient + diff);
+    outputColor = vec4(vec3(multiplier), 1.0) * texture(uTexture, vTexCoord);
 }

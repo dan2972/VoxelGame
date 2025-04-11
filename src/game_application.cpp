@@ -83,6 +83,12 @@ bool GameApplication::load()
     m_window.setKeyCallback(keyCallback);
     m_window.setFramebufferSizeCallback(framebufferSizeCallback);
     m_window.setUserPointer(this);
+
+    m_window.enableBlend();
+    m_window.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    m_window.enableDepthTest();
+
+    m_camera.updateResolution(m_width, m_height);
     
     if (!imguiInit()) {
         spdlog::error("Failed to initialize ImGui.");
@@ -91,17 +97,21 @@ bool GameApplication::load()
 
     m_resourceManager.loadShader("line", "res/shaders/line_renderer.vert", "res/shaders/line_renderer.frag");
     m_resourceManager.loadShader("font", "res/shaders/font_renderer.vert", "res/shaders/font_renderer.frag");
+    m_resourceManager.loadShader("chunk", "res/shaders/terrain_chunk.vert", "res/shaders/terrain_chunk.frag");
+    auto atlas = m_resourceManager.addTextureAtlas("chunk_atlas", {.internalFilter = GL_NEAREST});
+    atlas->addImgFromPath("grass", "res/textures/grass.png");
+    atlas->addImgFromPath("dirt", "res/textures/dirt.png");
+    atlas->addImgFromPath("stone", "res/textures/stone.png");
+    atlas->addImgFromPath("wood_planks", "res/textures/wood_planks.png");
 
     m_resourceManager.addLineRenderer("default");
 
     auto fontRenderer = m_resourceManager.loadFontRenderer("default", "res/fonts/arial.ttf", 48);
     fontRenderer->preloadDefaultGlyphs();
-    
-    m_window.enableBlend();
-    m_window.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    m_window.enableDepthTest();
 
-    m_camera.updateResolution(m_width, m_height);
+    m_world.addChunk(0, 0, 0);
+    m_world.setBlock(5, 8, 5, BlockType::Stone);
+    m_worldRenderer.buildMesh({0, 0, 0});
 
     return true;
 }
@@ -121,6 +131,11 @@ void GameApplication::render()
     ImGui::Text("TPS: %i", m_gameTime.tps);
     ImGui::Text("Total Time: %.3fs", m_gameTime.totalTime);
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", m_camera.position.x, m_camera.position.y, m_camera.position.z);
+    if (ImGui::CollapsingHeader("Render Options")) {
+        ImGui::Checkbox("Use AO", &m_worldRenderer.renderOptions.useAO);
+        ImGui::Checkbox("Use Smooth Lighting", &m_worldRenderer.renderOptions.useSmoothLighting);
+        ImGui::SliderFloat("AO Factor", &m_worldRenderer.renderOptions.aoFactor, 0.0f, 1.0f);
+    }
     ImGui::End();
 
     auto fontRenderer = m_resourceManager.getFontRenderer("default");
@@ -169,6 +184,8 @@ void GameApplication::render()
     } else {
         m_window.enableCursor();
     }
+
+    m_worldRenderer.draw(m_camera, m_resourceManager.getShader("chunk"), m_resourceManager.getTextureAtlas("chunk_atlas"));
     
     glm::mat4 proj = m_camera.getProjectionMatrix();
     glm::mat4 view = m_camera.getViewMatrix();
