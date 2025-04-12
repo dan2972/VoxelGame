@@ -1,11 +1,13 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <queue>
 #include <unordered_map>
 #include <memory>
 #include "block_data.h"
 #include "chunk.h"
 #include "utils/glm_hash.h"
+#include "world/chunkQueueNode.h"
 
 class World
 {
@@ -13,8 +15,12 @@ public:
     World();
     ~World() = default;
 
-    void addChunk(int x, int y, int z);
-    void addChunk(const glm::ivec3& position);
+    void update();
+
+    void addChunkRadius(const glm::ivec3& chunkPos, int radius);
+
+    bool addChunk(int x, int y, int z);
+    bool addChunk(const glm::ivec3& position);
 
     void setBlock(int x, int y, int z, BlockType type);
     void setBlock(const glm::ivec3& pos, BlockType type);
@@ -41,4 +47,5 @@ public:
     std::vector<Chunk*> getChunksInRadius(const glm::ivec3& chunkPos, int radius) const;
 private:
     std::unordered_map<glm::ivec3, std::unique_ptr<Chunk>, glm_ivec3_hash, glm_ivec3_equal> m_chunks;
+    std::priority_queue<ChunkQueueNode> m_chunkUpdateQueue;
 };

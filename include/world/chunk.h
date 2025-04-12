@@ -2,12 +2,13 @@
 
 #include <glm/glm.hpp>
 #include <array>
+#include "terrain_generator.h"
 #include "block_data.h"
 
 class Chunk
 {
 public:
-    const static int CHUNK_SIZE = 16;
+    const static int CHUNK_SIZE = 32;
 
     Chunk();
     Chunk(const glm::ivec3& position);
@@ -39,10 +40,16 @@ public:
     static glm::ivec3 globalToLocalPos(const glm::ivec3& globalPos);
     static void globalToLocalPos(const glm::ivec3& globalPos, glm::ivec3& localPosOut, glm::ivec3& chunkPosOut);
 
+    bool isAllAir() const { return m_allAir; }
+    bool isAllSolid() const { return m_allSolid; }
 private:
+    static TerrainGenerator s_terrainGenerator;
     glm::ivec3 m_position{0, 0, 0};
     // organized as x, z, y for cache efficiency in sunlight propagation
     std::array<BlockType, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> m_blocks;
     std::array<uint16_t, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> m_sunLightMap;
     std::array<uint16_t, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> m_blockLightMap;
+
+    bool m_allAir = true;
+    bool m_allSolid = true;
 };

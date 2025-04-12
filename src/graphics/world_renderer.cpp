@@ -1,6 +1,42 @@
 #include "graphics/world_renderer.h"
 #include "game_application.h"
 
+void WorldRenderer::update()
+{
+    // Update chunks in the queue
+    int meshBuildCount = 0;
+    while (!m_chunkUpdateQueue.empty())
+    {
+        auto chunkPos = m_chunkUpdateQueue.top().chunkPos;
+        m_chunkUpdateQueue.pop();
+        if (meshBuildCount < renderOptions.chunkDequeueSize && buildMesh(chunkPos)) {
+            meshBuildCount++;
+        }
+    }
+}
+
+void WorldRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius) 
+{
+    for (int x = -radius; x <= radius; ++x)
+    {
+        for (int y = -radius; y <= radius; ++y)
+        {
+            for (int z = -radius; z <= radius; ++z)
+            {
+                int dx = x - chunkPos.x;
+                int dy = y - chunkPos.y;
+                int dz = z - chunkPos.z;
+                int distance = dx * dx + dy * dy + dz * dz;
+                glm::ivec3 pos = chunkPos + glm::ivec3(x, y, z);
+                if (!m_chunkMeshes.contains(pos))
+                {
+                    m_chunkUpdateQueue.push(ChunkQueueNode{pos, distance});
+                }
+            }
+        }
+    }
+}
+
 void WorldRenderer::loadResources(const World* world, ResourceManager* resourceManager)
 {
     m_world = world;
@@ -16,13 +52,15 @@ void WorldRenderer::loadResources(const World* world, ResourceManager* resourceM
     atlas->addImgFromPath("wood_planks", "res/textures/wood_planks.png");
 }
 
-void WorldRenderer::buildMesh(const glm::ivec3 &chunkPos)
+bool WorldRenderer::buildMesh(const glm::ivec3 &chunkPos)
 {
     checkPointers();
     
     Chunk* chunk = m_world->getChunk(chunkPos);
     if (!chunk)
-        return;
+        return false;
+    if (!checkNeighborChunks(chunkPos))
+        return false;
     auto it = m_chunkMeshes.find(chunkPos);
     if (it == m_chunkMeshes.end())
     {
@@ -32,6 +70,7 @@ void WorldRenderer::buildMesh(const glm::ivec3 &chunkPos)
         it = pair.first;
     }
     it->second->buildMesh(*m_world, renderOptions.useSmoothLighting);
+    return true;
 }
 
 void WorldRenderer::draw(const Camera& camera)
@@ -123,11 +162,12 @@ void WorldRenderer::showLightLevels(const Camera& camera)
         auto max = cameraPos + glm::vec3(radius, radius, radius);
         
         // local positions that could be out of bounds
-        auto localMin = glm::ivec3(min) - Chunk::localToGlobalPos({0,0,0}, chunk->getPos());
-        auto localMax = glm::ivec3(max) - Chunk::localToGlobalPos({0,0,0}, chunk->getPos());
+        auto chunkOrigin = Chunk::localToGlobalPos({0,0,0}, chunk->getPos());
+        auto localMin = glm::ivec3(min) - chunkOrigin;
+        auto localMax = glm::ivec3(max) - chunkOrigin;
         localMin = glm::clamp(localMin, 0, Chunk::CHUNK_SIZE - 1);
         localMax = glm::clamp(localMax, 0, Chunk::CHUNK_SIZE - 1);
-        auto localCam = cameraPos - glm::vec3(Chunk::localToGlobalPos({0,0,0}, chunk->getPos()));
+        auto localCam = cameraPos - glm::vec3(chunkOrigin);
         
         for (int x = localMin.x; x <= localMax.x; ++x) {
             for (int z = localMin.z; z <= localMax.z; ++z) {
@@ -166,4 +206,23 @@ void WorldRenderer::showLightLevels(const Camera& camera)
         }
     }
     fontRenderer->draw();
+}
+
+bool WorldRenderer::checkNeighborChunks(const glm::ivec3& chunkPos, bool checkSelf) const
+{
+    for (int x = -1; x <= 1; ++x)
+    {
+        for (int y = -1; y <= 1; ++y)
+        {
+            for (int z = -1; z <= 1; ++z)
+            {
+                if (x == 0 && y == 0 && z == 0 && !checkSelf)
+                    continue;
+                glm::ivec3 neighborPos = chunkPos + glm::ivec3(x, y, z);
+                if (!m_world->getChunk(neighborPos))
+                    return false;
+            }
+        }
+    }
+    return true;
 }

@@ -13,18 +13,27 @@ void ChunkMesh::setup()
 
 void ChunkMesh::draw()
 {
-    if (!m_chunk)
+    if (!m_chunk || m_chunk->isAllAir() || m_indexCounter == 0)
         return;
     m_mesh.draw();
+}
+
+bool inBounds(const glm::ivec3& pos) {
+    if (pos.x < 0 || pos.x >= Chunk::CHUNK_SIZE || pos.y < 0 || pos.y >= Chunk::CHUNK_SIZE || pos.z < 0 || pos.z >= Chunk::CHUNK_SIZE)
+        return false;
+    return true;
 }
 
 void ChunkMesh::buildMesh(const World &world, bool smoothLighting)
 {
     if (!m_chunk)
         return;
+    if (m_chunk->isAllAir())
+        return;
     m_vertices.clear();
     m_indices.clear();
     m_indexCounter = 0;
+    auto atlas = GameApplication::getResourceManager().getTextureAtlas("chunk_atlas");
     for (int x = 0; x < Chunk::CHUNK_SIZE; ++x)
     {
         for (int z = 0; z < Chunk::CHUNK_SIZE; ++z)
@@ -32,11 +41,11 @@ void ChunkMesh::buildMesh(const World &world, bool smoothLighting)
             for (int y = 0; y < Chunk::CHUNK_SIZE; ++y)
             {
                 glm::ivec3 position = Chunk::localToGlobalPos({x, y, z}, m_chunk->getPos());
-                BlockType blockType = world.getBlock(position);
+                BlockType blockType = m_chunk->getBlock(x, y, z);
                 if (blockType == BlockType::Air)
                     continue;
                 
-                auto [uvMin, uvMax] = GameApplication::getResourceManager().getTextureAtlas("chunk_atlas")->get(blockTypeToString(blockType));
+                auto [uvMin, uvMax] = atlas->get(blockTypeToString(blockType));
 
                 std::array<float, 8> textureCoords = 
                 {
@@ -48,8 +57,15 @@ void ChunkMesh::buildMesh(const World &world, bool smoothLighting)
 
                 for (int i = 0; i < 6; ++i)
                 {
-                    glm::ivec3 dPos = position + static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
-                    if (world.getBlock(dPos) == BlockType::Air)
+                    glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
+                    glm::ivec3 dPos = glm::ivec3{x, y, z} + dir;
+                    BlockType bType;
+                    if (inBounds(dPos)) {
+                        bType = m_chunk->getBlock(dPos);
+                    } else {
+                        bType = world.getBlock(position + dir);
+                    }
+                    if (bType == BlockType::Air)
                     {
                         auto aoValues = getAOValues(position, static_cast<BlockFace>(i), world);
                         auto lightValues = getLightValues(position, static_cast<BlockFace>(i), world, smoothLighting);
@@ -77,10 +93,10 @@ void ChunkMesh::addFace
     auto faceCoords = getFaceCoords(face);
     for (int i = 0, vertIndex = 0, texIndex = 0; i < 4; ++i)
     {
-        // each local position dimension can be packed into 5 bits (0-31)
+        // each local position dimension can be packed into 6 bits (0-63)
         uint32_t vPacked = pos.x + faceCoords[vertIndex++];
-        vPacked = (vPacked << 5) + pos.y + faceCoords[vertIndex++];
-        vPacked = (vPacked << 5) + pos.z + faceCoords[vertIndex++];
+        vPacked = (vPacked << 6) + pos.y + faceCoords[vertIndex++];
+        vPacked = (vPacked << 6) + pos.z + faceCoords[vertIndex++];
         // 3 bits for the normal index (0-7)
         vPacked = (vPacked << 3) + static_cast<uint32_t>(face);
         // 2 bits for the AO value (0-3)

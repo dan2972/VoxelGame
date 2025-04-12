@@ -4,18 +4,55 @@ World::World()
 {
 }
 
-void World::addChunk(int x, int y, int z)
+void World::update()
+{
+    int meshBuildCount = 0;
+    while (!m_chunkUpdateQueue.empty())
+    {
+        auto chunkPos = m_chunkUpdateQueue.top().chunkPos;
+        m_chunkUpdateQueue.pop();
+        if (meshBuildCount < 16 && addChunk(chunkPos)) {
+            meshBuildCount++;
+        }
+    }
+}
+
+void World::addChunkRadius(const glm::ivec3& chunkPos, int radius) 
+{
+    for (int x = -radius; x <= radius; ++x)
+    {
+        for (int y = -radius; y <= radius; ++y)
+        {
+            for (int z = -radius; z <= radius; ++z)
+            {
+                int dx = x - chunkPos.x;
+                int dy = y - chunkPos.y;
+                int dz = z - chunkPos.z;
+                int distance = dx * dx + dy * dy + dz * dz;
+                glm::ivec3 pos = chunkPos + glm::ivec3(x, y, z);
+                if (!m_chunks.contains(pos))
+                {
+                    m_chunkUpdateQueue.push(ChunkQueueNode{pos, distance});
+                }
+            }
+        }
+    }
+}
+
+bool World::addChunk(int x, int y, int z)
 {
     glm::ivec3 pos(x, y, z);
     if (m_chunks.find(pos) == m_chunks.end())
     {
         m_chunks.emplace(pos, std::make_unique<Chunk>(pos));
+        return true;
     }
+    return false;
 }
 
-void World::addChunk(const glm::ivec3& position)
+bool World::addChunk(const glm::ivec3& position)
 {
-    addChunk(position.x, position.y, position.z);
+    return addChunk(position.x, position.y, position.z);
 }
 
 void World::setBlock(int x, int y, int z, BlockType type)
@@ -166,12 +203,17 @@ std::vector<Chunk *> World::getChunksInRadius(const glm::ivec3 &chunkPos, int ra
         {
             for (int z = chunkPos.z - radius; z <= chunkPos.z + radius; ++z)
             {
-                if (x * x + y * y + z * z > radius * radius)
+                int dx = x - chunkPos.x;
+                int dy = y - chunkPos.y;
+                int dz = z - chunkPos.z;
+                if (dx * dx + dy * dy + dz * dz > radius * radius)
                     continue;
                 auto chunk = getChunk(x, y, z);
                 if (chunk)
                 {
                     chunksInRadius.push_back(chunk);
+                }else {
+                    printf("Chunk not found at (%d, %d, %d)\n", x, y, z);
                 }
             }
         }

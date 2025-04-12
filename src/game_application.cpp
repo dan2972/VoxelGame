@@ -78,7 +78,7 @@ void GameApplication::run()
 bool GameApplication::load()
 {
     spdlog::set_level(spdlog::level::debug);
-    m_window.setClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    m_window.setClearColor(0.47f, 0.65f, 1.0f, 1.0f);
     m_window.disableVSync();
     m_window.setKeyCallback(keyCallback);
     m_window.setFramebufferSizeCallback(framebufferSizeCallback);
@@ -87,6 +87,7 @@ bool GameApplication::load()
     m_window.enableBlend();
     m_window.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_window.enableDepthTest();
+    m_window.enableCulling();
 
     m_camera.updateResolution(m_width, m_height);
     
@@ -108,23 +109,25 @@ bool GameApplication::load()
     
     m_worldRenderer.loadResources(&m_world, &s_resourceManager);
 
-    m_world.addChunk(0, 0, 0);
-    m_world.addChunk(1, 0, 0);
-    m_world.setBlock(5, 8, 5, BlockType::Stone);
-    m_worldRenderer.buildMesh({0, 0, 0});
-    m_worldRenderer.buildMesh({1, 0, 0});
+    m_world.addChunkRadius({0, 0, 0}, 5);
 
     return true;
 }
 
 void GameApplication::update()
 {
-    
+    m_world.update();
+    glm::ivec3 camChunkPos = Chunk::globalToChunkPos(m_camera.position);
+    m_world.addChunkRadius(camChunkPos, 6);
 }
 
 void GameApplication::render()
 {
     imguiNewFrame();
+
+    m_worldRenderer.update();
+    glm::ivec3 camChunkPos = Chunk::globalToChunkPos(m_camera.position);
+    m_worldRenderer.queueChunkRadius(camChunkPos, 5);
 
     ImGui::Begin("Debug Info");
     ImGui::Text("Delta Time: %.3fms", m_gameTime.deltaTime * 1000.0f);
@@ -145,20 +148,6 @@ void GameApplication::render()
     }
     ImGui::End();
 
-    auto fontRenderer = s_resourceManager.getFontRenderer("default");
-    fontRenderer->beginBatch();
-    fontRenderer->addText("Hello, World!", {0, 0, -10}, 0.1f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
-
-    glm::mat4 proj = m_camera.getProjectionMatrix();
-    glm::mat4 view = m_camera.getViewMatrix();
-
-    auto fontShader = s_resourceManager.getShader("font");
-    fontShader->use();
-    fontShader->setMat4("uProjection", proj);
-    fontShader->setMat4("uView", view);
-    fontShader->setMat4("uModel", glm::mat4(1.0f));
-    fontRenderer->draw();
-
     auto window = m_window.getWindow();
 
     if (m_focused) {
@@ -178,6 +167,10 @@ void GameApplication::render()
             m_camera.move(CameraMovement::UP, deltaTime);
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
             m_camera.move(CameraMovement::DOWN, deltaTime);
+        if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+            m_camera.movementSpeed = 20.0f;
+        else
+            m_camera.movementSpeed = Camera::DEFAULT_SPEED;
     } else {
         m_window.enableCursor();
     }

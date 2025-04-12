@@ -1,5 +1,6 @@
 #include "world/chunk.h"
 
+TerrainGenerator Chunk::s_terrainGenerator;
 
 Chunk::Chunk()
     : m_position(0, 0, 0)
@@ -19,24 +20,27 @@ void Chunk::generateTerrain()
     {
         for (int z = 0; z < CHUNK_SIZE; ++z)
         {
+            glm::ivec3 globalPos = localToGlobalPos({x, 0, z});
+            float noise = s_terrainGenerator.getNoise(globalPos.x, globalPos.z) * 256;
             for (int y = 0; y < CHUNK_SIZE; ++y)
             {
-                if (y < 5)
-                {
-                    m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Stone;
-                }
-                else if (y < 7)
-                {
-                    m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Dirt;
-                }
-                else if (y == 7)
-                {
-                    m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Grass;
-                }
-                else
+                auto gPos = localToGlobalPos({x, y, z});
+                if (gPos.y < noise) {
+                    int diff = noise - gPos.y;
+                    if (diff < 1) {
+                        m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Grass;
+                    } else if (diff < 3) {
+                        m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Dirt;
+                    } else {
+                        m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Stone;
+                    }
+                    m_allAir = false;
+                } else
                 {
                     m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Air;
+                    m_allSolid = false;
                 }
+                
                 m_sunLightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = 15;
                 m_blockLightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = 0;
             }

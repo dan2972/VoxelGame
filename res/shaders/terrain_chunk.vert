@@ -36,18 +36,18 @@ vec3 getNormalFromIndex(int index) {
 void main(void)
 {
     uint vPacked = floatBitsToUint(aData);
-    uint lightLevel = vPacked & 0xFu;        // 4 bits
+    uint lightLevel = vPacked & 0xFu;
     vPacked >>= 4;
-    uint aoValue = vPacked & 0x3u;            // 2 bits
+    uint aoValue = vPacked & 0x3u;
     vPacked >>= 2;
-    uint normalIndex = vPacked & 0x7u;        // 3 bits
+    uint normalIndex = vPacked & 0x7u;
     vPacked >>= 3;
-    uint posZ = vPacked & 0x1Fu;              // 5 bits
-    vPacked >>= 5;
-    uint posY = vPacked & 0x1Fu;              // 5 bits
-    vPacked >>= 5;
-    uint posX = vPacked & 0x1Fu;              // 5 bits
-    vPacked >>= 5;
+    uint posZ = vPacked & 0x3Fu;
+    vPacked >>= 6;
+    uint posY = vPacked & 0x3Fu;
+    vPacked >>= 6;
+    uint posX = vPacked & 0x3Fu;
+    vPacked >>= 6;
 
     vec3 aPosition = vec3(float(posX), float(posY), float(posZ));
     vAOValue = float(aoValue);
