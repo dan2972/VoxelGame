@@ -12,6 +12,7 @@ created using C++ and OpenGL.
 
 ## Features
 - Custom OpenGL abstraction
+- Infinite chunk-based terrain generation
 - Batched Font Rendering
 - Dynamic texture atlas packing/creation (resizes automatically)
 - Separation of logic and rendering timesteps
@@ -24,12 +25,12 @@ This project uses VCPKG and CMake.
 To build, use the provided CMake Preset (vcpkg).
 
 ```bash
-cmake --preset=vcpkg
+cmake --preset=vcpkg-release
 cmake --build build
 .\build\VoxelGame
 ```
 
-On Windows, you may need to define the CMake
+If using VSCode on Windows, you may need to define the CMake
 variables: `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER`.
 
 The recommended way to do this (especially if using vscode with the CMake extension) 
@@ -43,7 +44,7 @@ Example `CMakeUserPresets.json` file:
     "configurePresets": [
         {
             "name": "default",
-            "inherits": "vcpkg",
+            "inherits": "vcpkg-release",
             "environment": {
                 "VCPKG_ROOT": "C:/vcpkg"
             },
