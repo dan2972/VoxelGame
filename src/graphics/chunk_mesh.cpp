@@ -8,7 +8,7 @@ ChunkMesh::ChunkMesh(const Chunk* chunk)
 
 void ChunkMesh::setup()
 {
-    m_mesh.populate(m_vertices, m_indices, {3, 2, 1, 1, 1}, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW);
+    m_mesh.populate(m_vertices, m_indices, {1, 2}, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW);
 }
 
 void ChunkMesh::draw()
@@ -77,16 +77,20 @@ void ChunkMesh::addFace
     auto faceCoords = getFaceCoords(face);
     for (int i = 0, vertIndex = 0, texIndex = 0; i < 4; ++i)
     {
-        m_vertices.push_back(pos.x + faceCoords[vertIndex++]);
-        m_vertices.push_back(pos.y + faceCoords[vertIndex++]);
-        m_vertices.push_back(pos.z + faceCoords[vertIndex++]);
+        // each local position dimension can be packed into 5 bits (0-31)
+        uint32_t vPacked = pos.x + faceCoords[vertIndex++];
+        vPacked = (vPacked << 5) + pos.y + faceCoords[vertIndex++];
+        vPacked = (vPacked << 5) + pos.z + faceCoords[vertIndex++];
+        // 3 bits for the normal index (0-7)
+        vPacked = (vPacked << 3) + static_cast<uint32_t>(face);
+        // 2 bits for the AO value (0-3)
+        vPacked = (vPacked << 2) + static_cast<uint32_t>(aoValues[i]);
+        // 4 bits for the light level (0-15)
+        vPacked = (vPacked << 4) + static_cast<uint32_t>(lightLevels[i]);
+        m_vertices.push_back(std::bit_cast<float>(vPacked));
 
         m_vertices.push_back(texCoords[texIndex++]);
         m_vertices.push_back(texCoords[texIndex++]);
-
-        m_vertices.push_back(static_cast<float>(face));
-        m_vertices.push_back(aoValues[i]);
-        m_vertices.push_back(lightLevels[i]);
     }
 
     if (flipQuad)
