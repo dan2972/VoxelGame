@@ -16,6 +16,8 @@ created using C++ and OpenGL.
 - Dynamic texture atlas packing/creation (resizes automatically)
 - Separation of logic and rendering timesteps
 
+![voxel_game_terrain_screenshot](https://github.com/user-attachments/assets/81f8ee39-7b4f-46d6-8187-3aadaafbd89e)
+
 ## Build
 This project uses VCPKG and CMake.
 
