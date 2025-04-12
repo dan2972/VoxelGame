@@ -89,8 +89,8 @@ namespace gfx
         bool m_meshInitialized = false;
         bool m_useBillboard = false;
 
-        static FT_Library m_ftlib;
-        static unsigned int m_instanceCount;
+        static FT_Library s_ftlib;
+        static unsigned int s_instanceCount;
         FT_Face m_face = nullptr;
     };
 }

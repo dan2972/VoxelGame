@@ -12,7 +12,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-ResourceManager GameApplication::m_resourceManager;
+ResourceManager GameApplication::s_resourceManager;
 
 GameApplication::GameApplication()
     : m_window(m_width, m_height, "Game Application", 3, 3)
@@ -95,18 +95,18 @@ bool GameApplication::load()
         return false;
     }
 
-    m_resourceManager.loadShader("line", "res/shaders/line_renderer.vert", "res/shaders/line_renderer.frag");
-    m_resourceManager.loadShader("font", "res/shaders/font_renderer.vert", "res/shaders/font_renderer.frag");
-    m_resourceManager.loadShader("font_billboard", "res/shaders/font_renderer_billboard.vert", "res/shaders/font_renderer.frag");
+    s_resourceManager.loadShader("line", "res/shaders/line_renderer.vert", "res/shaders/line_renderer.frag");
+    s_resourceManager.loadShader("font", "res/shaders/font_renderer.vert", "res/shaders/font_renderer.frag");
+    s_resourceManager.loadShader("font_billboard", "res/shaders/font_renderer_billboard.vert", "res/shaders/font_renderer.frag");
 
-    m_resourceManager.addLineRenderer("default");
+    s_resourceManager.addLineRenderer("default");
 
-    auto fontRenderer = m_resourceManager.loadFontRenderer("default", "res/fonts/arial.ttf", 48);
+    auto fontRenderer = s_resourceManager.loadFontRenderer("default", "res/fonts/arial.ttf", 48);
     fontRenderer->preloadDefaultGlyphs();
-    auto fontRendererBB = m_resourceManager.loadFontRenderer("default_billboard", "res/fonts/courier-mon.ttf", 48, true);
+    auto fontRendererBB = s_resourceManager.loadFontRenderer("default_billboard", "res/fonts/courier-mon.ttf", 48, true);
     fontRendererBB->preloadDefaultGlyphs();
     
-    m_worldRenderer.loadResources(&m_world, &m_resourceManager);
+    m_worldRenderer.loadResources(&m_world, &s_resourceManager);
 
     m_world.addChunk(0, 0, 0);
     m_world.addChunk(1, 0, 0);
@@ -145,14 +145,14 @@ void GameApplication::render()
     }
     ImGui::End();
 
-    auto fontRenderer = m_resourceManager.getFontRenderer("default");
+    auto fontRenderer = s_resourceManager.getFontRenderer("default");
     fontRenderer->beginBatch();
     fontRenderer->addText("Hello, World!", {0, 0, -10}, 0.1f, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), true);
 
     glm::mat4 proj = m_camera.getProjectionMatrix();
     glm::mat4 view = m_camera.getViewMatrix();
 
-    auto fontShader = m_resourceManager.getShader("font");
+    auto fontShader = s_resourceManager.getShader("font");
     fontShader->use();
     fontShader->setMat4("uProjection", proj);
     fontShader->setMat4("uView", view);

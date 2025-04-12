@@ -3,19 +3,19 @@
 
 namespace gfx
 {
-    FT_Library FontRenderer::m_ftlib = nullptr;
-    unsigned int FontRenderer::m_instanceCount = 0;
+    FT_Library FontRenderer::s_ftlib = nullptr;
+    unsigned int FontRenderer::s_instanceCount = 0;
 
     FontRenderer::FontRenderer()
     {
         initFTLib();
-        ++m_instanceCount;
+        ++s_instanceCount;
     }
 
     FontRenderer::FontRenderer(bool useBillboard) : m_useBillboard(useBillboard)
     {
         initFTLib();
-        ++m_instanceCount;
+        ++s_instanceCount;
     }
 
     FontRenderer::~FontRenderer()
@@ -24,10 +24,10 @@ namespace gfx
         {
             FT_Done_Face(m_face);
         }
-        --m_instanceCount;
-        if (m_instanceCount == 0 && m_ftlib)
+        --s_instanceCount;
+        if (s_instanceCount == 0 && s_ftlib)
         {
-            FT_Done_FreeType(m_ftlib);
+            FT_Done_FreeType(s_ftlib);
             spdlog::info("Deinitialized FreeType Library. This should have only been called once.");
         }
     }
@@ -350,10 +350,10 @@ namespace gfx
 
     void FontRenderer::initFTLib()
     {
-        if (m_ftlib)
+        if (s_ftlib)
             return;
         spdlog::info("Initialized FreeType Library. This should have only been called once.");
-        if (FT_Init_FreeType(&m_ftlib))
+        if (FT_Init_FreeType(&s_ftlib))
         {
             throw std::runtime_error("Failed to initialize FreeType library.");
         }
@@ -365,7 +365,7 @@ namespace gfx
         {
             FT_Done_Face(m_face);
         }
-        if (FT_New_Face(m_ftlib, fontPath.c_str(), 0, &m_face))
+        if (FT_New_Face(s_ftlib, fontPath.c_str(), 0, &m_face))
         {
             throw std::runtime_error("Failed to load font: " + fontPath);
         }

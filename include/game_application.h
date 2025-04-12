@@ -20,7 +20,7 @@ public:
     bool isFocused() const { return m_focused; }
     void setFocused(bool focused) { m_focused = focused; }
 
-    static ResourceManager& getResourceManager() { return m_resourceManager; }
+    static ResourceManager& getResourceManager() { return s_resourceManager; }
 
 private:
     bool load();
@@ -39,7 +39,7 @@ private:
     GameWindow m_window;
     uint32_t m_targetTPS = 30;
     
-    static ResourceManager m_resourceManager;
+    static ResourceManager s_resourceManager;
 
     Camera m_camera;
 
