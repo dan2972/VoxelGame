@@ -2,8 +2,9 @@
 
 #include <string>
 #include <array>
+#include <cstdint>
 
-enum class BlockType
+enum class BlockType : uint16_t
 {
     Air = 0,
     Grass = 1,

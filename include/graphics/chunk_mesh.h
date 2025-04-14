@@ -10,6 +10,8 @@
 class ChunkMesh
 {
 public:
+    bool waitingGeneration = false;
+
     ChunkMesh() = default;
     ChunkMesh(const Chunk* chunk);
     ~ChunkMesh() = default;
@@ -23,7 +25,11 @@ public:
 
     void draw();
 
+    void clearMesh();
+
     void buildMesh(const World &world, bool smoothLighting=true);
+
+    void submitBuffers();
 
 private:
     const Chunk* m_chunk = nullptr;

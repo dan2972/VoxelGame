@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 #include <array>
+#include <memory>
+#include <cstdint>
 #include "terrain_generator.h"
 #include "block_data.h"
 
@@ -29,10 +31,10 @@ public:
     void setBlock(int x, int y, int z, BlockType type);
     void setBlock(const glm::ivec3& pos, BlockType type);
 
-    void setSunLight(int x, int y, int z, uint16_t lightLevel);
-    void setSunLight(const glm::ivec3& pos, uint16_t lightLevel);
-    void setBlockLight(int x, int y, int z, uint16_t lightLevel);
-    void setBlockLight(const glm::ivec3& pos, uint16_t lightLevel);
+    void setSunLight(int x, int y, int z, uint8_t lightLevel);
+    void setSunLight(const glm::ivec3& pos, uint8_t lightLevel);
+    void setBlockLight(int x, int y, int z, uint8_t lightLevel);
+    void setBlockLight(const glm::ivec3& pos, uint8_t lightLevel);
 
     glm::ivec3 localToGlobalPos(const glm::ivec3& pos);
     static glm::ivec3 localToGlobalPos(const glm::ivec3& pos, const glm::ivec3& chunkPos);
@@ -42,13 +44,14 @@ public:
 
     bool isAllAir() const { return m_allAir; }
     bool isAllSolid() const { return m_allSolid; }
+
+    std::shared_ptr<Chunk> clone() const;
 private:
     static TerrainGenerator s_terrainGenerator;
     glm::ivec3 m_position{0, 0, 0};
     // organized as x, z, y for cache efficiency in sunlight propagation
     std::array<BlockType, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> m_blocks;
-    std::array<uint16_t, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> m_sunLightMap;
-    std::array<uint16_t, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> m_blockLightMap;
+    std::array<uint16_t, CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE> m_lightMap;
 
     bool m_allAir = true;
     bool m_allSolid = true;

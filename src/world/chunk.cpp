@@ -41,8 +41,8 @@ void Chunk::generateTerrain()
                     m_allSolid = false;
                 }
                 
-                m_sunLightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = 15;
-                m_blockLightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = 0;
+                setSunLight(x, y, z, 15);
+                setBlockLight(x, y, z, 0);
             }
         }
     }
@@ -68,7 +68,7 @@ uint16_t Chunk::getSunLight(int x, int y, int z) const
     {
         return 15;
     }
-    return m_sunLightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE];
+    return (m_lightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] >> 12) & 0xF;
 }
 
 uint16_t Chunk::getSunLight(const glm::ivec3 &pos) const
@@ -82,7 +82,7 @@ uint16_t Chunk::getBlockLight(int x, int y, int z) const
     {
         return 0;
     }
-    return m_blockLightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE];
+    return (m_lightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] >> 8) & 0xF;
 }
 
 uint16_t Chunk::getBlockLight(const glm::ivec3 &pos) const
@@ -104,30 +104,34 @@ void Chunk::setBlock(const glm::ivec3 &pos, BlockType type)
     setBlock(pos.x, pos.y, pos.z, type);
 }
 
-void Chunk::setSunLight(int x, int y, int z, uint16_t lightLevel)
+void Chunk::setSunLight(int x, int y, int z, uint8_t lightLevel)
 {
     if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_SIZE || z < 0 || z >= CHUNK_SIZE)
     {
         return;
     }
-    m_sunLightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = lightLevel;
+    uint16_t &light = m_lightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE];
+    light &= ~(0xF << 12);
+    light |= ((lightLevel & 0xF) << 12);
 }
 
-void Chunk::setSunLight(const glm::ivec3 &pos, uint16_t lightLevel)
+void Chunk::setSunLight(const glm::ivec3 &pos, uint8_t lightLevel)
 {
     setSunLight(pos.x, pos.y, pos.z, lightLevel);
 }
 
-void Chunk::setBlockLight(int x, int y, int z, uint16_t lightLevel)
+void Chunk::setBlockLight(int x, int y, int z, uint8_t lightLevel)
 {
     if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_SIZE || z < 0 || z >= CHUNK_SIZE)
     {
         return;
     }
-    m_blockLightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = lightLevel;
+    uint16_t &light = m_lightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE];
+    light &= ~(0xF << 8);
+    light |= ((lightLevel & 0xF) << 8);
 }
 
-void Chunk::setBlockLight(const glm::ivec3 &pos, uint16_t lightLevel)
+void Chunk::setBlockLight(const glm::ivec3 &pos, uint8_t lightLevel)
 {
     setBlockLight(pos.x, pos.y, pos.z, lightLevel);
 }
@@ -178,4 +182,14 @@ void Chunk::globalToLocalPos(const glm::ivec3 &globalPos, glm::ivec3 &localPosOu
     int localZ = globalPos.z % CHUNK_SIZE;
     localZ = localZ < 0 ? CHUNK_SIZE + localZ : localZ;
     localPosOut = {localX, localY, localZ};
+}
+
+std::shared_ptr<Chunk> Chunk::clone() const
+{
+    auto chunk = std::make_shared<Chunk>(m_position);
+    chunk->m_blocks = m_blocks;
+    chunk->m_lightMap = m_lightMap;
+    chunk->m_allAir = m_allAir;
+    chunk->m_allSolid = m_allSolid;
+    return chunk;
 }

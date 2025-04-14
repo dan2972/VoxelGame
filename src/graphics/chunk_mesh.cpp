@@ -24,6 +24,13 @@ bool inBounds(const glm::ivec3& pos) {
     return true;
 }
 
+void ChunkMesh::clearMesh()
+{
+    m_vertices.clear();
+    m_indices.clear();
+    m_indexCounter = 0;
+}
+
 void ChunkMesh::buildMesh(const World &world, bool smoothLighting)
 {
     if (!m_chunk)
@@ -77,6 +84,11 @@ void ChunkMesh::buildMesh(const World &world, bool smoothLighting)
         }
     }
 
+    m_mesh.updateBuffers(m_vertices, m_indices);
+}
+
+void ChunkMesh::submitBuffers()
+{
     m_mesh.updateBuffers(m_vertices, m_indices);
 }
 

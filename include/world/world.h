@@ -4,6 +4,7 @@
 #include <queue>
 #include <unordered_map>
 #include <memory>
+#include <cstdint>
 #include "block_data.h"
 #include "chunk.h"
 #include "utils/glm_hash.h"
@@ -25,10 +26,10 @@ public:
     void setBlock(int x, int y, int z, BlockType type);
     void setBlock(const glm::ivec3& pos, BlockType type);
 
-    void setBlockLight(int x, int y, int z, uint16_t lightLevel);
-    void setBlockLight(const glm::ivec3& pos, uint16_t lightLevel);
-    void setSunLight(int x, int y, int z, uint16_t lightLevel);
-    void setSunLight(const glm::ivec3& pos, uint16_t lightLevel);
+    void setBlockLight(int x, int y, int z, uint8_t lightLevel);
+    void setBlockLight(const glm::ivec3& pos, uint8_t lightLevel);
+    void setSunLight(int x, int y, int z, uint8_t lightLevel);
+    void setSunLight(const glm::ivec3& pos, uint8_t lightLevel);
 
     BlockType getBlock(int x, int y, int z) const;
     BlockType getBlock(const glm::ivec3& pos) const;

@@ -72,7 +72,7 @@ void World::setBlock(const glm::ivec3& pos, BlockType type)
     setBlock(pos.x, pos.y, pos.z, type);
 }
 
-void World::setBlockLight(int x, int y, int z, uint16_t lightLevel)
+void World::setBlockLight(int x, int y, int z, uint8_t lightLevel)
 {
     glm::ivec3 pos(x, y, z);
     auto chunkPos = Chunk::globalToChunkPos(pos);
@@ -84,12 +84,12 @@ void World::setBlockLight(int x, int y, int z, uint16_t lightLevel)
     }
 }
 
-void World::setBlockLight(const glm::ivec3& pos, uint16_t lightLevel)
+void World::setBlockLight(const glm::ivec3& pos, uint8_t lightLevel)
 {
     setBlockLight(pos.x, pos.y, pos.z, lightLevel);
 }
 
-void World::setSunLight(int x, int y, int z, uint16_t lightLevel)
+void World::setSunLight(int x, int y, int z, uint8_t lightLevel)
 {
     glm::ivec3 pos(x, y, z);
     auto chunkPos = Chunk::globalToChunkPos(pos);
@@ -101,7 +101,7 @@ void World::setSunLight(int x, int y, int z, uint16_t lightLevel)
     }
 }
 
-void World::setSunLight(const glm::ivec3& pos, uint16_t lightLevel)
+void World::setSunLight(const glm::ivec3& pos, uint8_t lightLevel)
 {
     setSunLight(pos.x, pos.y, pos.z, lightLevel);
 }
