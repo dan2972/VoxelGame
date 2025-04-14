@@ -1,47 +1,19 @@
 #include "graphics/world_renderer.h"
 #include "game_application.h"
 
+WorldRenderer::WorldRenderer(const ChunkMap* chunkMap, ResourceManager* resourceManager)
+    : m_chunkMap(chunkMap), 
+    m_resourceManager(resourceManager),
+    m_chunkMapRenderer(chunkMap) 
+{}
+
 void WorldRenderer::update()
 {
-    // Update chunks in the queue
-    int meshBuildCount = 0;
-    while (!m_chunkUpdateQueue.empty())
-    {
-        auto chunkPos = m_chunkUpdateQueue.top().chunkPos;
-        m_chunkUpdateQueue.pop();
-        if (meshBuildCount < renderOptions.chunkDequeueSize && buildMesh(chunkPos)) {
-            meshBuildCount++;
-        }
-    }
+    m_chunkMapRenderer.updateBuildQueue(renderOptions.useSmoothLighting);
 }
 
-void WorldRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius) 
+void WorldRenderer::loadResources()
 {
-    for (int x = -radius; x <= radius; ++x)
-    {
-        for (int y = -radius; y <= radius; ++y)
-        {
-            for (int z = -radius; z <= radius; ++z)
-            {
-                int dx = x - chunkPos.x;
-                int dy = y - chunkPos.y;
-                int dz = z - chunkPos.z;
-                int distance = dx * dx + dy * dy + dz * dz;
-                glm::ivec3 pos = chunkPos + glm::ivec3(x, y, z);
-                if (!m_chunkMeshes.contains(pos))
-                {
-                    m_chunkUpdateQueue.push(ChunkQueueNode{pos, distance});
-                }
-            }
-        }
-    }
-}
-
-void WorldRenderer::loadResources(const World* world, ResourceManager* resourceManager)
-{
-    m_world = world;
-    m_resourceManager = resourceManager;
-
     checkPointers();
 
     m_resourceManager->loadShader("chunk", "res/shaders/terrain_chunk.vert", "res/shaders/terrain_chunk.frag");
@@ -50,47 +22,17 @@ void WorldRenderer::loadResources(const World* world, ResourceManager* resourceM
     atlas->addImgFromPath("dirt", "res/textures/dirt.png");
     atlas->addImgFromPath("stone", "res/textures/stone.png");
     atlas->addImgFromPath("wood_planks", "res/textures/wood_planks.png");
-}
 
-bool WorldRenderer::buildMesh(const glm::ivec3 &chunkPos)
-{
-    checkPointers();
-    
-    Chunk* chunk = m_world->getChunk(chunkPos);
-    if (!chunk)
-        return false;
-    if (!checkNeighborChunks(chunkPos))
-        return false;
-    auto it = m_chunkMeshes.find(chunkPos);
-    if (it == m_chunkMeshes.end())
-    {
-        auto chunkMesh = std::make_unique<ChunkMesh>(chunk);
-        chunkMesh->setup();
-        auto pair = m_chunkMeshes.emplace(chunkPos, std::move(chunkMesh));
-        it = pair.first;
-    }
-    it->second->buildMesh(*m_world, renderOptions.useSmoothLighting);
-    return true;
+    m_chunkMapRenderer.setupResources(
+        m_resourceManager->getShader("chunk"),
+        m_resourceManager->getTextureAtlas("chunk_atlas")
+    );
 }
 
 void WorldRenderer::draw(const Camera& camera)
 {
     checkPointers();
-    auto shader = m_resourceManager->getShader("chunk");
-    auto atlas = m_resourceManager->getTextureAtlas("chunk_atlas");
-    atlas->use();
-    shader->use();
-    shader->setMat4("uProjection", camera.getProjectionMatrix());
-    shader->setMat4("uView", camera.getViewMatrix());
-    shader->setMat4("uModel", glm::mat4(1.0f));
-    shader->setBool("uAOEnabled", renderOptions.useAO);
-    shader->setFloat("uAOIntensity", renderOptions.aoFactor);
-
-    for (auto& [chunkPos, chunkMesh] : m_chunkMeshes)
-    {
-        shader->setVec3("uChunkOffset", glm::vec3(chunkPos) * float(Chunk::CHUNK_SIZE));
-        chunkMesh->draw();
-    }
+    m_chunkMapRenderer.draw(camera, renderOptions.useAO, renderOptions.aoFactor);
 
     if (renderOptions.showChunkBorder)
     {
@@ -104,7 +46,7 @@ void WorldRenderer::draw(const Camera& camera)
 
 void WorldRenderer::checkPointers() const
 {
-    if (!m_world)
+    if (!m_chunkMap)
         throw std::runtime_error("WorldRenderer: World pointer is null.");
     if (!m_resourceManager)
         throw std::runtime_error("WorldRenderer: ResourceManager pointer is null.");
@@ -155,7 +97,7 @@ void WorldRenderer::showLightLevels(const Camera& camera)
 
     int chunkRadius = radius / Chunk::CHUNK_SIZE + 1;
 
-    auto chunks = m_world->getChunksInRadius(Chunk::globalToChunkPos(cameraPos), chunkRadius);
+    auto chunks = m_chunkMap->getChunksInRadius(Chunk::globalToChunkPos(cameraPos), chunkRadius);
 
     for (Chunk* chunk : chunks) {
         auto min = cameraPos - glm::vec3(radius, radius, radius);
@@ -206,23 +148,4 @@ void WorldRenderer::showLightLevels(const Camera& camera)
         }
     }
     fontRenderer->draw();
-}
-
-bool WorldRenderer::checkNeighborChunks(const glm::ivec3& chunkPos, bool checkSelf) const
-{
-    for (int x = -1; x <= 1; ++x)
-    {
-        for (int y = -1; y <= 1; ++y)
-        {
-            for (int z = -1; z <= 1; ++z)
-            {
-                if (x == 0 && y == 0 && z == 0 && !checkSelf)
-                    continue;
-                glm::ivec3 neighborPos = chunkPos + glm::ivec3(x, y, z);
-                if (!m_world->getChunk(neighborPos))
-                    return false;
-            }
-        }
-    }
-    return true;
 }

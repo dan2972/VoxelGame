@@ -31,7 +31,7 @@ void ChunkMesh::clearMesh()
     m_indexCounter = 0;
 }
 
-void ChunkMesh::buildMesh(const World &world, bool smoothLighting)
+void ChunkMesh::buildMesh(const ChunkMap &chunkMap, bool smoothLighting)
 {
     if (!m_chunk)
         return;
@@ -70,12 +70,12 @@ void ChunkMesh::buildMesh(const World &world, bool smoothLighting)
                     if (inBounds(dPos)) {
                         bType = m_chunk->getBlock(dPos);
                     } else {
-                        bType = world.getBlock(position + dir);
+                        bType = chunkMap.getBlock(position + dir);
                     }
                     if (bType == BlockType::Air)
                     {
-                        auto aoValues = getAOValues(position, static_cast<BlockFace>(i), world);
-                        auto lightValues = getLightValues(position, static_cast<BlockFace>(i), world, smoothLighting);
+                        auto aoValues = getAOValues(position, static_cast<BlockFace>(i), chunkMap);
+                        auto lightValues = getLightValues(position, static_cast<BlockFace>(i), chunkMap, smoothLighting);
                         bool flipQuad = shouldFlipQuad(aoValues);
                         addFace({x, y, z}, static_cast<BlockFace>(i), textureCoords, aoValues, lightValues, flipQuad);
                     }
@@ -166,7 +166,7 @@ std::array<int, 12> ChunkMesh::getFaceCoords(BlockFace face)
     }
 }
 
-std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace face, const World &world)
+std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkMap &chunkMap)
 {
     std::array<int, 4> aoValues;
     auto faceCoords = getFaceCoords(face);
@@ -180,9 +180,9 @@ std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace 
         };
         glm::ivec3 s1, s2, c;
         getAOBlockPos(corner, face, &s1, &s2, &c);
-        bool side1 = world.getBlock(blockPos + s1) != BlockType::Air;
-        bool side2 = world.getBlock(blockPos + s2) != BlockType::Air;
-        bool cornerBlock = world.getBlock(blockPos + c) != BlockType::Air;
+        bool side1 = chunkMap.getBlock(blockPos + s1) != BlockType::Air;
+        bool side2 = chunkMap.getBlock(blockPos + s2) != BlockType::Air;
+        bool cornerBlock = chunkMap.getBlock(blockPos + c) != BlockType::Air;
         aoValues[i] = vertexAO(side1, side2, cornerBlock);
     }
     return aoValues;
@@ -190,13 +190,13 @@ std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace 
 
 
 
-std::array<float, 4> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, BlockFace face, const World &world, bool smoothLighting)
+std::array<float, 4> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkMap &chunkMap, bool smoothLighting)
 {
     std::array<float, 4> lightValues;
     auto faceCoords = getFaceCoords(face);
 
     glm::ivec3 curLightPos = blockPos + static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(face));
-    unsigned char currentLight = world.getLightLevel(curLightPos);
+    unsigned char currentLight = chunkMap.getLightLevel(curLightPos);
 
     for (int i = 0; i < 4; ++i)
     {
@@ -215,13 +215,13 @@ std::array<float, 4> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, Block
         glm::ivec3 s1, s2, c;
         getAOBlockPos(corner, face, &s1, &s2, &c);
 
-        unsigned char side1 = world.getLightLevel(blockPos + s1);
-        unsigned char side2 = world.getLightLevel(blockPos + s2);
-        unsigned char cornerBlock = world.getLightLevel(blockPos + c);
+        unsigned char side1 = chunkMap.getLightLevel(blockPos + s1);
+        unsigned char side2 = chunkMap.getLightLevel(blockPos + s2);
+        unsigned char cornerBlock = chunkMap.getLightLevel(blockPos + c);
 
-        bool bs1 = world.getBlock(blockPos + s1) == BlockType::Air;
-        bool bs2 = world.getBlock(blockPos + s2) == BlockType::Air;
-        bool bc = world.getBlock(blockPos + c) == BlockType::Air;
+        bool bs1 = chunkMap.getBlock(blockPos + s1) == BlockType::Air;
+        bool bs2 = chunkMap.getBlock(blockPos + s2) == BlockType::Air;
+        bool bc = chunkMap.getBlock(blockPos + c) == BlockType::Air;
 
         float divisor = 1 + (bs1 ? 1 : 0) + (bs2 ? 1 : 0);
         float dividend = currentLight + (bs1 ? side1 : 0) + (bs2 ? side2 : 0);

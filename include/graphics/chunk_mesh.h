@@ -27,7 +27,7 @@ public:
 
     void clearMesh();
 
-    void buildMesh(const World &world, bool smoothLighting=true);
+    void buildMesh(const ChunkMap& chunkMap, bool smoothLighting=true);
 
     void submitBuffers();
 
@@ -48,8 +48,8 @@ private:
     );
 
     std::array<int, 12> getFaceCoords(BlockFace face);
-    std::array<int, 4> getAOValues(const glm::ivec3& blockPos, BlockFace face, const World& world);
-    std::array<float, 4> getLightValues(const glm::ivec3& blockPos, BlockFace face, const World& world, bool smoothLighting=true);
+    std::array<int, 4> getAOValues(const glm::ivec3& blockPos, BlockFace face, const ChunkMap& chunkMap);
+    std::array<float, 4> getLightValues(const glm::ivec3& blockPos, BlockFace face, const ChunkMap& chunkMap, bool smoothLighting=true);
     bool shouldFlipQuad(std::array<int, 4> aoValues);
 
     void getAOBlockPos(const glm::ivec3& cornerPos, BlockFace face, glm::ivec3* outs1, glm::ivec3* outs2, glm::ivec3* outc);

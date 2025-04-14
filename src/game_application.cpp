@@ -107,9 +107,9 @@ bool GameApplication::load()
     auto fontRendererBB = s_resourceManager.loadFontRenderer("default_billboard", "res/fonts/courier-mon.ttf", 48, true);
     fontRendererBB->preloadDefaultGlyphs();
     
-    m_worldRenderer.loadResources(&m_world, &s_resourceManager);
+    m_worldRenderer.loadResources();
 
-    m_world.addChunkRadius({0, 0, 0}, 5);
+    m_world.getChunkMap().addChunkRadius({0, 0, 0}, 5);
 
     return true;
 }
@@ -118,7 +118,7 @@ void GameApplication::update()
 {
     m_world.update();
     glm::ivec3 camChunkPos = Chunk::globalToChunkPos(m_camera.position);
-    m_world.addChunkRadius(camChunkPos, 6);
+    m_world.getChunkMap().addChunkRadius(camChunkPos, 6);
 }
 
 void GameApplication::render()
@@ -127,7 +127,7 @@ void GameApplication::render()
 
     m_worldRenderer.update();
     glm::ivec3 camChunkPos = Chunk::globalToChunkPos(m_camera.position);
-    m_worldRenderer.queueChunkRadius(camChunkPos, 5);
+    m_worldRenderer.getChunkMapRenderer().queueChunkRadius(camChunkPos, 5);
 
     ImGui::Begin("Debug Info");
     ImGui::Text("Delta Time: %.3fms", m_gameTime.deltaTime * 1000.0f);
