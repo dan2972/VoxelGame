@@ -6,6 +6,7 @@
 #include "world/world.h"
 #include "graphics/gfx/mesh.h"
 #include "utils/direction_utils.h"
+#include "world/chunk_snapshot.h"
 
 class ChunkMesh
 {
@@ -13,7 +14,6 @@ public:
     bool waitingGeneration = false;
 
     ChunkMesh() = default;
-    ChunkMesh(const Chunk* chunk);
     ~ChunkMesh() = default;
 
     ChunkMesh(const ChunkMesh&) = delete;
@@ -27,12 +27,11 @@ public:
 
     void clearMesh();
 
-    void buildMesh(const ChunkMap& chunkMap, bool smoothLighting=true);
+    void buildMesh(const ChunkSnapshot& snapshot, bool smoothLighting=true);
 
     void submitBuffers();
 
 private:
-    const Chunk* m_chunk = nullptr;
     gfx::Mesh m_mesh;
     std::vector<float> m_vertices;
     std::vector<unsigned int> m_indices;
@@ -48,8 +47,8 @@ private:
     );
 
     std::array<int, 12> getFaceCoords(BlockFace face);
-    std::array<int, 4> getAOValues(const glm::ivec3& blockPos, BlockFace face, const ChunkMap& chunkMap);
-    std::array<float, 4> getLightValues(const glm::ivec3& blockPos, BlockFace face, const ChunkMap& chunkMap, bool smoothLighting=true);
+    std::array<int, 4> getAOValues(const glm::ivec3& blockPos, BlockFace face, const ChunkSnapshot& snapshot);
+    std::array<float, 4> getLightValues(const glm::ivec3& blockPos, BlockFace face, const ChunkSnapshot& snapshot, bool smoothLighting=true);
     bool shouldFlipQuad(std::array<int, 4> aoValues);
 
     void getAOBlockPos(const glm::ivec3& cornerPos, BlockFace face, glm::ivec3* outs1, glm::ivec3* outs2, glm::ivec3* outc);

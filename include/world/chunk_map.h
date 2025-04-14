@@ -42,11 +42,14 @@ public:
     uint16_t getLightLevel(int x, int y, int z) const;
     uint16_t getLightLevel(const glm::ivec3& pos) const;
 
-    Chunk* getChunk(int x, int y, int z) const;
-    Chunk* getChunk(const glm::ivec3& pos) const;
+    std::shared_ptr<const Chunk> getChunk(int x, int y, int z) const;
+    std::shared_ptr<const Chunk> getChunk(const glm::ivec3& pos) const;
 
-    std::vector<Chunk*> getChunksInRadius(const glm::ivec3& chunkPos, int radius) const;
+    std::vector<std::shared_ptr<const Chunk>> getChunksInRadius(const glm::ivec3& chunkPos, int radius) const;
 private:
-    std::unordered_map<glm::ivec3, std::unique_ptr<Chunk>, glm_ivec3_hash, glm_ivec3_equal> m_chunks;
+    std::unordered_map<glm::ivec3, std::shared_ptr<Chunk>, glm_ivec3_hash, glm_ivec3_equal> m_chunks;
     std::priority_queue<ChunkQueueNode> m_chunkUpdateQueue;
+
+    std::shared_ptr<Chunk> getChunkInternal(const glm::ivec3& pos) const;
+    std::shared_ptr<Chunk> checkCopy2Write(const std::shared_ptr<Chunk>& chunk);
 };

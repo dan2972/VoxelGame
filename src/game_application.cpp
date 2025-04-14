@@ -108,6 +108,7 @@ bool GameApplication::load()
     fontRendererBB->preloadDefaultGlyphs();
     
     m_worldRenderer.loadResources();
+    m_worldRenderer.getChunkMapRenderer().startBuildThread(true);
 
     m_world.getChunkMap().addChunkRadius({0, 0, 0}, 5);
 
@@ -117,17 +118,15 @@ bool GameApplication::load()
 void GameApplication::update()
 {
     m_world.update();
+    m_worldRenderer.update();
     glm::ivec3 camChunkPos = Chunk::globalToChunkPos(m_camera.position);
     m_world.getChunkMap().addChunkRadius(camChunkPos, 6);
+    m_worldRenderer.getChunkMapRenderer().queueChunkRadius(camChunkPos, 5);
 }
 
 void GameApplication::render()
 {
     imguiNewFrame();
-
-    m_worldRenderer.update();
-    glm::ivec3 camChunkPos = Chunk::globalToChunkPos(m_camera.position);
-    m_worldRenderer.getChunkMapRenderer().queueChunkRadius(camChunkPos, 5);
 
     ImGui::Begin("Debug Info");
     ImGui::Text("Delta Time: %.3fms", m_gameTime.deltaTime * 1000.0f);

@@ -1,11 +1,6 @@
 #include "graphics/chunk_mesh.h"
 #include "game_application.h"
 
-ChunkMesh::ChunkMesh(const Chunk* chunk)
-    : m_chunk(chunk)
-{
-}
-
 void ChunkMesh::setup()
 {
     m_mesh.populate(m_vertices, m_indices, {1, 2}, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW);
@@ -13,7 +8,7 @@ void ChunkMesh::setup()
 
 void ChunkMesh::draw()
 {
-    if (!m_chunk || m_chunk->isAllAir() || m_indexCounter == 0)
+    if (m_indexCounter == 0)
         return;
     m_mesh.draw();
 }
@@ -31,11 +26,11 @@ void ChunkMesh::clearMesh()
     m_indexCounter = 0;
 }
 
-void ChunkMesh::buildMesh(const ChunkMap &chunkMap, bool smoothLighting)
+void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, bool smoothLighting)
 {
-    if (!m_chunk)
+    if (!snapshot.isValid())
         return;
-    if (m_chunk->isAllAir())
+    if (snapshot.center()->isAllAir())
         return;
     m_vertices.clear();
     m_indices.clear();
@@ -47,8 +42,8 @@ void ChunkMesh::buildMesh(const ChunkMap &chunkMap, bool smoothLighting)
         {
             for (int y = 0; y < Chunk::CHUNK_SIZE; ++y)
             {
-                glm::ivec3 position = Chunk::localToGlobalPos({x, y, z}, m_chunk->getPos());
-                BlockType blockType = m_chunk->getBlock(x, y, z);
+                glm::ivec3 pos{x, y, z};
+                BlockType blockType = snapshot.getBlockFromLocalPos(pos);
                 if (blockType == BlockType::Air)
                     continue;
                 
@@ -65,26 +60,18 @@ void ChunkMesh::buildMesh(const ChunkMap &chunkMap, bool smoothLighting)
                 for (int i = 0; i < 6; ++i)
                 {
                     glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
-                    glm::ivec3 dPos = glm::ivec3{x, y, z} + dir;
-                    BlockType bType;
-                    if (inBounds(dPos)) {
-                        bType = m_chunk->getBlock(dPos);
-                    } else {
-                        bType = chunkMap.getBlock(position + dir);
-                    }
+                    BlockType bType = snapshot.getBlockFromLocalPos(pos + dir);
                     if (bType == BlockType::Air)
                     {
-                        auto aoValues = getAOValues(position, static_cast<BlockFace>(i), chunkMap);
-                        auto lightValues = getLightValues(position, static_cast<BlockFace>(i), chunkMap, smoothLighting);
+                        auto aoValues = getAOValues(pos, static_cast<BlockFace>(i), snapshot);
+                        auto lightValues = getLightValues(pos, static_cast<BlockFace>(i), snapshot, smoothLighting);
                         bool flipQuad = shouldFlipQuad(aoValues);
-                        addFace({x, y, z}, static_cast<BlockFace>(i), textureCoords, aoValues, lightValues, flipQuad);
+                        addFace(pos, static_cast<BlockFace>(i), textureCoords, aoValues, lightValues, flipQuad);
                     }
                 }
             }
         }
     }
-
-    m_mesh.updateBuffers(m_vertices, m_indices);
 }
 
 void ChunkMesh::submitBuffers()
@@ -166,7 +153,7 @@ std::array<int, 12> ChunkMesh::getFaceCoords(BlockFace face)
     }
 }
 
-std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkMap &chunkMap)
+std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkSnapshot& snapshot)
 {
     std::array<int, 4> aoValues;
     auto faceCoords = getFaceCoords(face);
@@ -180,9 +167,13 @@ std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace 
         };
         glm::ivec3 s1, s2, c;
         getAOBlockPos(corner, face, &s1, &s2, &c);
-        bool side1 = chunkMap.getBlock(blockPos + s1) != BlockType::Air;
-        bool side2 = chunkMap.getBlock(blockPos + s2) != BlockType::Air;
-        bool cornerBlock = chunkMap.getBlock(blockPos + c) != BlockType::Air;
+        BlockType s1B, s2B, cB;
+        s1B = snapshot.getBlockFromLocalPos(blockPos + s1);
+        s2B = snapshot.getBlockFromLocalPos(blockPos + s2);
+        cB = snapshot.getBlockFromLocalPos(blockPos + c);
+        bool side1 = s1B != BlockType::Air;
+        bool side2 = s2B != BlockType::Air;
+        bool cornerBlock = cB != BlockType::Air;
         aoValues[i] = vertexAO(side1, side2, cornerBlock);
     }
     return aoValues;
@@ -190,13 +181,13 @@ std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace 
 
 
 
-std::array<float, 4> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkMap &chunkMap, bool smoothLighting)
+std::array<float, 4> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkSnapshot& snapshot, bool smoothLighting)
 {
     std::array<float, 4> lightValues;
     auto faceCoords = getFaceCoords(face);
 
     glm::ivec3 curLightPos = blockPos + static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(face));
-    unsigned char currentLight = chunkMap.getLightLevel(curLightPos);
+    unsigned char currentLight = snapshot.getLightLevelFromLocalPos(curLightPos);
 
     for (int i = 0; i < 4; ++i)
     {
@@ -215,13 +206,13 @@ std::array<float, 4> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, Block
         glm::ivec3 s1, s2, c;
         getAOBlockPos(corner, face, &s1, &s2, &c);
 
-        unsigned char side1 = chunkMap.getLightLevel(blockPos + s1);
-        unsigned char side2 = chunkMap.getLightLevel(blockPos + s2);
-        unsigned char cornerBlock = chunkMap.getLightLevel(blockPos + c);
+        unsigned char side1 = snapshot.getLightLevelFromLocalPos(blockPos + s1);
+        unsigned char side2 = snapshot.getLightLevelFromLocalPos(blockPos + s2);
+        unsigned char cornerBlock = snapshot.getLightLevelFromLocalPos(blockPos + c);
 
-        bool bs1 = chunkMap.getBlock(blockPos + s1) == BlockType::Air;
-        bool bs2 = chunkMap.getBlock(blockPos + s2) == BlockType::Air;
-        bool bc = chunkMap.getBlock(blockPos + c) == BlockType::Air;
+        bool bs1 = snapshot.getBlockFromLocalPos(blockPos + s1) == BlockType::Air;
+        bool bs2 = snapshot.getBlockFromLocalPos(blockPos + s2) == BlockType::Air;
+        bool bc = snapshot.getBlockFromLocalPos(blockPos + c) == BlockType::Air;
 
         float divisor = 1 + (bs1 ? 1 : 0) + (bs2 ? 1 : 0);
         float dividend = currentLight + (bs1 ? side1 : 0) + (bs2 ? side2 : 0);

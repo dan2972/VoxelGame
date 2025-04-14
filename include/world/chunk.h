@@ -28,6 +28,9 @@ public:
     uint16_t getBlockLight(int x, int y, int z) const;
     uint16_t getBlockLight(const glm::ivec3& pos) const;
 
+    uint16_t getLightLevel(int x, int y, int z) const;
+    uint16_t getLightLevel(const glm::ivec3& pos) const;
+
     void setBlock(int x, int y, int z, BlockType type);
     void setBlock(const glm::ivec3& pos, BlockType type);
 

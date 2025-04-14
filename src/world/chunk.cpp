@@ -90,6 +90,16 @@ uint16_t Chunk::getBlockLight(const glm::ivec3 &pos) const
     return getBlockLight(pos.x, pos.y, pos.z);
 }
 
+uint16_t Chunk::getLightLevel(int x, int y, int z) const
+{
+    return std::max(getBlockLight(x, y, z), getSunLight(x, y, z));
+}
+
+uint16_t Chunk::getLightLevel(const glm::ivec3 &pos) const
+{
+    return getLightLevel(pos.x, pos.y, pos.z);
+}
+
 void Chunk::setBlock(int x, int y, int z, BlockType type)
 {
     if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_SIZE || z < 0 || z >= CHUNK_SIZE)

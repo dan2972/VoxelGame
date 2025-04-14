@@ -60,7 +60,8 @@ void ChunkMap::setBlock(int x, int y, int z, BlockType type)
     glm::ivec3 pos(x, y, z);
     auto chunkPos = Chunk::globalToChunkPos(pos);
     auto localPos = Chunk::globalToLocalPos(pos);
-    auto chunk = getChunk(chunkPos);
+    auto chunk = getChunkInternal(chunkPos);
+    chunk = checkCopy2Write(chunk);
     if (chunk)
     {
         chunk->setBlock(localPos.x, localPos.y, localPos.z, type);
@@ -77,7 +78,8 @@ void ChunkMap::setBlockLight(int x, int y, int z, uint8_t lightLevel)
     glm::ivec3 pos(x, y, z);
     auto chunkPos = Chunk::globalToChunkPos(pos);
     auto localPos = Chunk::globalToLocalPos(pos);
-    auto chunk = getChunk(chunkPos);
+    auto chunk = getChunkInternal(chunkPos);
+    chunk = checkCopy2Write(chunk);
     if (chunk)
     {
         chunk->setBlockLight(localPos.x, localPos.y, localPos.z, lightLevel);
@@ -94,7 +96,8 @@ void ChunkMap::setSunLight(int x, int y, int z, uint8_t lightLevel)
     glm::ivec3 pos(x, y, z);
     auto chunkPos = Chunk::globalToChunkPos(pos);
     auto localPos = Chunk::globalToLocalPos(pos);
-    auto chunk = getChunk(chunkPos);
+    auto chunk = getChunkInternal(chunkPos);
+    chunk = checkCopy2Write(chunk);
     if (chunk)
     {
         chunk->setSunLight(localPos.x, localPos.y, localPos.z, lightLevel);
@@ -178,25 +181,25 @@ uint16_t ChunkMap::getLightLevel(const glm::ivec3& pos) const
     return getLightLevel(pos.x, pos.y, pos.z);
 }
 
-Chunk* ChunkMap::getChunk(int x, int y, int z) const
+std::shared_ptr<const Chunk> ChunkMap::getChunk(int x, int y, int z) const
 {
     glm::ivec3 pos(x, y, z);
     auto it = m_chunks.find(pos);
     if (it != m_chunks.end())
     {
-        return it->second.get();
+        return it->second;
     }
     return nullptr;
 }
 
-Chunk* ChunkMap::getChunk(const glm::ivec3& pos) const
+std::shared_ptr<const Chunk> ChunkMap::getChunk(const glm::ivec3& pos) const
 {
     return getChunk(pos.x, pos.y, pos.z);
 }
 
-std::vector<Chunk *> ChunkMap::getChunksInRadius(const glm::ivec3 &chunkPos, int radius) const
+std::vector<std::shared_ptr<const Chunk>> ChunkMap::getChunksInRadius(const glm::ivec3 &chunkPos, int radius) const
 {
-    std::vector<Chunk *> chunksInRadius;
+    std::vector<std::shared_ptr<const Chunk>> chunksInRadius;
     for (int x = chunkPos.x - radius; x <= chunkPos.x + radius; ++x)
     {
         for (int y = chunkPos.y - radius; y <= chunkPos.y + radius; ++y)
@@ -217,4 +220,25 @@ std::vector<Chunk *> ChunkMap::getChunksInRadius(const glm::ivec3 &chunkPos, int
         }
     }
     return chunksInRadius;
+}
+
+std::shared_ptr<Chunk> ChunkMap::getChunkInternal(const glm::ivec3& pos) const
+{
+    auto it = m_chunks.find(pos);
+    if (it != m_chunks.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<Chunk> ChunkMap::checkCopy2Write(const std::shared_ptr<Chunk>& chunk)
+{
+    if (chunk.use_count() > 1)
+    {
+        auto clone = chunk->clone();
+        m_chunks[chunk->getPos()] = clone;
+        return clone;
+    }
+    return chunk;
 }

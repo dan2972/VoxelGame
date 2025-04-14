@@ -99,7 +99,7 @@ void WorldRenderer::showLightLevels(const Camera& camera)
 
     auto chunks = m_chunkMap->getChunksInRadius(Chunk::globalToChunkPos(cameraPos), chunkRadius);
 
-    for (Chunk* chunk : chunks) {
+    for (auto chunk : chunks) {
         auto min = cameraPos - glm::vec3(radius, radius, radius);
         auto max = cameraPos + glm::vec3(radius, radius, radius);
         

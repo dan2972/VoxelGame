@@ -9,15 +9,20 @@ void ChunkMapRenderer::setupResources(gfx::Shader* chunkShader, gfx::TextureAtla
 void ChunkMapRenderer::updateBuildQueue(bool useSmoothLighting) 
 {
     checkPointers();
-    int meshBuildCount = 0;
-    while (!m_chunkUpdateQueue.empty())
+
+    int meshSubmitCount = 0;
+    while(!m_chunksToSubmit.empty())
     {
-        auto chunkPos = m_chunkUpdateQueue.top().chunkPos;
-        m_chunkUpdateQueue.pop();
-        if (meshBuildCount < 1 && buildMesh(chunkPos, useSmoothLighting)) {
-            meshBuildCount++;
-        }
+        ChunkReadyNode node;
+        m_chunksToSubmit.pop(node);
+        node.chunkMesh->setup();
+        node.chunkMesh->submitBuffers();
+
+        m_chunkMeshes[node.chunkPos] = node.chunkMesh;
+        m_chunksInBuildQueue.erase(node.chunkPos);
+        meshSubmitCount++;
     }
+
 }
 
 void ChunkMapRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius) 
@@ -28,39 +33,20 @@ void ChunkMapRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius)
         {
             for (int z = -radius; z <= radius; ++z)
             {
-                int dx = x - chunkPos.x;
-                int dy = y - chunkPos.y;
-                int dz = z - chunkPos.z;
-                int distance = dx * dx + dy * dy + dz * dz;
                 glm::ivec3 pos = chunkPos + glm::ivec3(x, y, z);
-                if (!m_chunkMeshes.contains(pos))
-                {
-                    m_chunkUpdateQueue.push(ChunkQueueNode{pos, distance});
-                }
+                if (m_chunkMeshes.contains(pos))
+                    continue;
+                if (m_chunksInBuildQueue.contains(pos))
+                    continue;
+                
+                ChunkSnapshot snapshot;
+                if (!ChunkSnapshot::CreateSnapshot(*m_chunkMap, pos, snapshot))
+                    continue;
+                m_chunksInBuildQueue.insert(pos);
+                m_chunksToBuild.push(snapshot);
             }
         }
     }
-}
-
-bool ChunkMapRenderer::buildMesh(const glm::ivec3 &chunkPos, bool useSmoothLighting)
-{
-    checkPointers();
-    
-    Chunk* chunk = m_chunkMap->getChunk(chunkPos);
-    if (!chunk)
-        return false;
-    if (!checkNeighborChunks(chunkPos))
-        return false;
-    auto it = m_chunkMeshes.find(chunkPos);
-    if (it == m_chunkMeshes.end())
-    {
-        auto chunkMesh = std::make_unique<ChunkMesh>(chunk);
-        chunkMesh->setup();
-        auto pair = m_chunkMeshes.emplace(chunkPos, std::move(chunkMesh));
-        it = pair.first;
-    }
-    it->second->buildMesh(*m_chunkMap, useSmoothLighting);
-    return true;
 }
 
 void ChunkMapRenderer::draw(const Camera& camera, bool useAO, float aoFactor)
@@ -79,6 +65,24 @@ void ChunkMapRenderer::draw(const Camera& camera, bool useAO, float aoFactor)
         m_chunkShader->setVec3("uChunkOffset", glm::vec3(chunkPos) * float(Chunk::CHUNK_SIZE));
         chunkMesh->draw();
     }
+}
+
+void ChunkMapRenderer::meshBuildThreadFunc(bool useSmoothLighting) {
+    while (true)
+    {
+        if (m_stopThread)
+            break;
+        ChunkSnapshot snapshot;
+        m_chunksToBuild.pop(snapshot);
+        auto chunkMesh = std::make_shared<ChunkMesh>();
+        chunkMesh->buildMesh(snapshot, useSmoothLighting);
+        m_chunksToSubmit.push({snapshot.center()->getPos(), chunkMesh});
+    }
+}
+
+void ChunkMapRenderer::startBuildThread(bool useSmoothLighting) {
+    m_stopThread = false;
+    std::thread([this, useSmoothLighting]() { meshBuildThreadFunc(useSmoothLighting); }).detach();
 }
 
 bool ChunkMapRenderer::checkNeighborChunks(const glm::ivec3& chunkPos, bool checkSelf) const
