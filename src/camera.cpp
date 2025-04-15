@@ -74,6 +74,14 @@ void Camera::updateResolution(float width, float height)
     resolution = glm::ivec2(width, height);
 }
 
+glm::vec3 Camera::rayDirFromNDC(float x, float y)
+{
+    glm::vec4 clipCoords{x, y, -1.0f, 1.0f};
+    glm::vec4 eyeCoords = toEyeCoords(clipCoords);
+    glm::vec3 worldRay = toWorldCoords(eyeCoords);
+    return worldRay;
+}
+
 glm::vec3 Camera::rayDirFromMouse(float mouseX, float mouseY)
 {
     glm::vec2 normalizedCoords = getNormalizedDeviceCoords(mouseX, mouseY);

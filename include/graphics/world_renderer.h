@@ -27,6 +27,8 @@ public:
 
     void draw(const Camera& camera, GameWindow& window);
 
+    void highlightVoxels(const std::vector<glm::ivec3>& voxels, const Camera &camera, GameWindow& window);
+
     ChunkMapRenderer& getChunkMapRenderer() { return m_chunkMapRenderer; }
 private:
     const ChunkMap* m_chunkMap = nullptr;

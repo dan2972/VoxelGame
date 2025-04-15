@@ -154,3 +154,28 @@ void WorldRenderer::showLightLevels(const Camera& camera)
     }
     fontRenderer->draw();
 }
+
+void WorldRenderer::highlightVoxels(const std::vector<glm::ivec3>& voxels, const Camera &camera, GameWindow& window)
+{
+    checkPointers();
+    auto lineRenderer = m_resourceManager->getLineRenderer("default");
+    auto lineShader = m_resourceManager->getShader("line");
+
+    lineRenderer->beginBatch();
+    for (const auto& voxel : voxels) {
+        glm::vec3 pos = glm::vec3(voxel.x, voxel.y, voxel.z) + glm::vec3(0.5f, 0.5f, 0.5f);
+        lineRenderer->drawCube(pos, glm::vec3(1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    }
+    bool isCulled = window.isEnabled(GL_CULL_FACE);
+    if (isCulled)
+        window.disableCulling();
+    lineShader->use();
+    lineShader->setMat4("uProjection", camera.getProjectionMatrix());
+    lineShader->setMat4("uView", camera.getViewMatrix());
+    lineShader->setMat4("uModel", glm::mat4(1.0f));
+    lineShader->setFloat("uLineWidth", 2.0f);
+    lineShader->setVec2("uResolution", camera.resolution);
+    lineRenderer->draw();
+    if (isCulled)
+        window.enableCulling();
+}

@@ -47,6 +47,7 @@ public:
     glm::mat4 getProjectionMatrix() const;
     glm::mat4 getViewMatrix() const;
     void updateResolution(float width, float height);
+    glm::vec3 rayDirFromNDC(float x, float y);
     glm::vec3 rayDirFromMouse(float mouseX, float mouseY);
 private:
     void updateCameraVectors();

@@ -12,6 +12,8 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
+#include "utils/algorithms.h"
+
 ResourceManager GameApplication::s_resourceManager;
 
 GameApplication::GameApplication()
@@ -175,6 +177,15 @@ void GameApplication::render()
     }
 
     m_worldRenderer.draw(m_camera, m_window);
+
+    auto mousePos = m_window.getMousePosition();
+    auto lookPos = m_camera.rayDirFromNDC(0, 0);
+    auto node = algo::voxelRayHit(m_camera.position, lookPos, [&](const glm::ivec3& pos) {
+        return m_world.getChunkMap().getBlock(pos) != BlockType::Air;
+    }, 20.0f);
+    if (m_world.getChunkMap().getBlock(node.pos) != BlockType::Air) {
+        m_worldRenderer.highlightVoxels({node.pos}, m_camera, m_window);
+    }
 
     imguiEndFrame();
 }
