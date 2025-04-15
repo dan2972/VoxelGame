@@ -88,7 +88,6 @@ bool GameApplication::load()
 
     m_window.enableBlend();
     m_window.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    m_window.enableDepthTest();
     m_window.enableCulling();
 
     m_camera.updateResolution(m_width, m_height);
@@ -101,6 +100,8 @@ bool GameApplication::load()
     s_resourceManager.loadShader("line", "res/shaders/line_renderer.vert", "res/shaders/line_renderer.frag");
     s_resourceManager.loadShader("font", "res/shaders/font_renderer.vert", "res/shaders/font_renderer.frag");
     s_resourceManager.loadShader("font_billboard", "res/shaders/font_renderer_billboard.vert", "res/shaders/font_renderer.frag");
+    s_resourceManager.loadShader("screen_quad", "res/shaders/screen_quad.vert", "res/shaders/screen_quad.frag");
+    s_resourceManager.loadShader("sky_color", "res/shaders/sky_color.vert", "res/shaders/sky_color.frag");
 
     s_resourceManager.addLineRenderer("default");
 
@@ -108,6 +109,10 @@ bool GameApplication::load()
     fontRenderer->preloadDefaultGlyphs();
     auto fontRendererBB = s_resourceManager.loadFontRenderer("default_billboard", "res/fonts/courier-mon.ttf", 48, true);
     fontRendererBB->preloadDefaultGlyphs();
+
+    s_resourceManager.addRenderTarget("game_target", m_width, m_height);
+    s_resourceManager.addScreenQuad("game_quad");
+    s_resourceManager.addScreenQuad("sky_quad");
     
     m_worldRenderer.loadResources();
     m_worldRenderer.getChunkMapRenderer().startBuildThread(true);
@@ -176,8 +181,19 @@ void GameApplication::render()
         m_window.enableCursor();
     }
 
-    m_worldRenderer.draw(m_camera, m_window);
+    auto renderTarget = s_resourceManager.getRenderTarget("game_target");
+    renderTarget->use();
+    m_window.clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    m_window.disableDepthTest();
+    auto skyShader = s_resourceManager.getShader("sky_color");
+    skyShader->use();
+    glm::mat4 viewProj = m_camera.getProjectionMatrix() * m_camera.getViewMatrix();
+    skyShader->setMat4("uInvViewProj", glm::inverse(viewProj));
+    s_resourceManager.getScreenQuad("sky_quad")->draw();
+    m_window.enableDepthTest();
+
+    m_worldRenderer.draw(m_camera, m_window);
     auto mousePos = m_window.getMousePosition();
     auto lookPos = m_camera.rayDirFromNDC(0, 0);
     auto node = algo::voxelRayHit(m_camera.position, lookPos, [&](const glm::ivec3& pos) {
@@ -186,6 +202,17 @@ void GameApplication::render()
     if (m_world.getChunkMap().getBlock(node.pos) != BlockType::Air) {
         m_worldRenderer.highlightVoxels({node.pos}, m_camera, m_window);
     }
+
+    renderTarget->useDefault();
+    m_window.clear(GL_COLOR_BUFFER_BIT);
+    m_window.disableDepthTest();
+
+    renderTarget->getTexture().use();
+    auto screenQuadShader = s_resourceManager.getShader("screen_quad");
+    screenQuadShader->use();
+    screenQuadShader->setVec2("uResolution", glm::vec2(m_width, m_height));
+    screenQuadShader->setBool("uShowCrosshair", m_focused);
+    s_resourceManager.getScreenQuad("game_quad")->draw();
 
     imguiEndFrame();
 }
@@ -266,4 +293,6 @@ void GameApplication::framebufferSizeCallback(GLFWwindow *window, int width, int
     }
     app->m_camera.updateResolution(width, height);
     app->m_window.setViewport(0, 0, width, height);
+    auto renderTarget = s_resourceManager.getRenderTarget("game_target");
+    renderTarget->setup(width, height);
 }

@@ -141,17 +141,17 @@ namespace gfx
         m_id = 0;
     }
 
-    int Texture::getWidth()
+    int Texture::getWidth() const
     {
         return m_width;
     }
 
-    int Texture::getHeight()
+    int Texture::getHeight() const
     {
         return m_height;
     }
 
-    unsigned int Texture::getID()
+    unsigned int Texture::getID() const
     {
         return m_id;
     }

@@ -26,9 +26,9 @@ namespace gfx
 
         void destroy();
         
-        int getWidth();
-        int getHeight();
-        unsigned int getID();
+        int getWidth() const;
+        int getHeight() const;
+        unsigned int getID() const;
 
     private:
         unsigned int m_id = 0;

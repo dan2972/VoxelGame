@@ -11,6 +11,9 @@
 #include "graphics/gfx/mesh.h"
 #include "graphics/gfx/font_renderer.h"
 #include "graphics/gfx/line_renderer.h"
+#include "graphics/gfx/texture_atlas.h"
+#include "graphics/gfx/render_target.h"
+#include "graphics/gfx/screen_quad.h"
 
 class ResourceManager
 {
@@ -49,6 +52,16 @@ public:
     gfx::LineRenderer* getLineRenderer(const std::string& name) const;
     void removeLineRenderer(const std::string& name);
 
+    gfx::RenderTarget* addRenderTarget(const std::string& name, int width, int height, unsigned int internalFormat = GL_DEPTH24_STENCIL8);
+    gfx::RenderTarget* addRenderTarget(const std::string& name, gfx::RenderTarget&& renderTarget);
+    gfx::RenderTarget* getRenderTarget(const std::string& name) const;
+    void removeRenderTarget(const std::string& name);
+
+    gfx::ScreenQuad* addScreenQuad(const std::string& name);
+    gfx::ScreenQuad* addScreenQuad(const std::string& name, gfx::ScreenQuad&& screenQuad);
+    gfx::ScreenQuad* getScreenQuad(const std::string& name) const;
+    void removeScreenQuad(const std::string& name);
+
     template <typename T>
     gfx::TextureAtlas<T>* addTextureAtlas(const std::string& name, const gfx::TextureAtlasParams& params);
     template <typename T>
@@ -63,7 +76,9 @@ private:
     std::unordered_map<std::string, std::unique_ptr<gfx::Mesh>> m_meshes;
     std::unordered_map<std::string, std::unique_ptr<gfx::FontRenderer>> m_fontRenderers;
     std::unordered_map<std::string, std::unique_ptr<gfx::LineRenderer>> m_lineRenderers;
-    // std::unordered_map<std::string, std::unique_ptr<gfx::TextureAtlas<std::string>>> m_textureAtlases;
+    std::unordered_map<std::string, std::unique_ptr<gfx::RenderTarget>> m_renderTargets;
+    std::unordered_map<std::string, std::unique_ptr<gfx::ScreenQuad>> m_screenQuads;
+    
     std::unordered_map<std::type_index, std::any> m_textureAtlasTypeMap;
 
     template<typename T>

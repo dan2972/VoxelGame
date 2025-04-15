@@ -245,3 +245,92 @@ void ResourceManager::removeLineRenderer(const std::string &name)
 {
     m_lineRenderers.erase(name);
 }
+
+gfx::RenderTarget *ResourceManager::addRenderTarget(const std::string &name, int width, int height, unsigned int internalFormat)
+{
+    auto ret = m_renderTargets.try_emplace(name, std::make_unique<gfx::RenderTarget>());
+    if (ret.second)
+    {
+        ret.first->second->setup(width, height, internalFormat);
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("RenderTarget with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::RenderTarget *ResourceManager::addRenderTarget(const std::string &name, gfx::RenderTarget &&renderTarget)
+{
+    auto ret = m_renderTargets.try_emplace(name, std::make_unique<gfx::RenderTarget>(std::move(renderTarget)));
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("RenderTarget with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::RenderTarget *ResourceManager::getRenderTarget(const std::string &name) const
+{
+    auto it = m_renderTargets.find(name);
+    if (it != m_renderTargets.end())
+    {
+        return it->second.get();
+    }
+    spdlog::warn("RenderTarget with name \"{}\" not found.", name);
+    return nullptr;
+}
+
+void ResourceManager::removeRenderTarget(const std::string &name)
+{
+    m_renderTargets.erase(name);
+}
+
+gfx::ScreenQuad *ResourceManager::addScreenQuad(const std::string &name)
+{
+    auto ret = m_screenQuads.try_emplace(name, std::make_unique<gfx::ScreenQuad>());
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("ScreenQuad with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::ScreenQuad *ResourceManager::addScreenQuad(const std::string &name, gfx::ScreenQuad &&screenQuad)
+{
+    auto ret = m_screenQuads.try_emplace(name, std::make_unique<gfx::ScreenQuad>(std::move(screenQuad)));
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("ScreenQuad with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+gfx::ScreenQuad *ResourceManager::getScreenQuad(const std::string &name) const
+{
+    auto it = m_screenQuads.find(name);
+    if (it != m_screenQuads.end())
+    {
+        return it->second.get();
+    }
+    spdlog::warn("ScreenQuad with name \"{}\" not found.", name);
+    return nullptr;
+}
+
+void ResourceManager::removeScreenQuad(const std::string &name)
+{
+    m_screenQuads.erase(name);
+}
