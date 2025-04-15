@@ -29,7 +29,7 @@ void WorldRenderer::loadResources()
     );
 }
 
-void WorldRenderer::draw(const Camera& camera)
+void WorldRenderer::draw(const Camera& camera, GameWindow& window)
 {
     checkPointers();
     m_chunkMapRenderer.draw(camera, renderOptions.useAO, renderOptions.aoFactor);
@@ -37,7 +37,7 @@ void WorldRenderer::draw(const Camera& camera)
     if (renderOptions.showChunkBorder)
     {
         auto chunkPos = Chunk::globalToChunkPos(camera.position);
-        drawChunkBorder(glm::vec3(chunkPos.x, chunkPos.y, chunkPos.z), camera);
+        drawChunkBorder(glm::vec3(chunkPos.x, chunkPos.y, chunkPos.z), camera, window);
     }
 
     if (renderOptions.showSunLightLevels || renderOptions.showBlockLightLevels)
@@ -52,7 +52,7 @@ void WorldRenderer::checkPointers() const
         throw std::runtime_error("WorldRenderer: ResourceManager pointer is null.");
 }
 
-void WorldRenderer::drawChunkBorder(const glm::ivec3 &chunkPos, const Camera &camera)
+void WorldRenderer::drawChunkBorder(const glm::ivec3 &chunkPos, const Camera &camera, GameWindow& window)
 {
     checkPointers();
     auto lineRenderer = m_resourceManager->getLineRenderer("default");
@@ -70,7 +70,10 @@ void WorldRenderer::drawChunkBorder(const glm::ivec3 &chunkPos, const Camera &ca
     lineRenderer->drawAA2DGrid({c1.x, c1.y, c1.z}, {c2.x, c2.y, c1.z}, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), Chunk::CHUNK_SIZE / 4, false);
     lineRenderer->drawAA2DGrid({c1.x, c1.y, c2.z}, {c2.x, c2.y, c2.z}, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), Chunk::CHUNK_SIZE / 4, false);
     lineRenderer->drawCube(pos, glm::vec3(Chunk::CHUNK_SIZE)*0.999f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
+    
+    bool isCulled = window.isEnabled(GL_CULL_FACE);
+    if (isCulled)
+        window.disableCulling();
     lineShader->use();
     lineShader->setMat4("uProjection", camera.getProjectionMatrix());
     lineShader->setMat4("uView", camera.getViewMatrix());
@@ -78,6 +81,8 @@ void WorldRenderer::drawChunkBorder(const glm::ivec3 &chunkPos, const Camera &ca
     lineShader->setFloat("uLineWidth", 1.0f);
     lineShader->setVec2("uResolution", camera.resolution);
     lineRenderer->draw();
+    if (isCulled)
+        window.enableCulling();
 }
 
 void WorldRenderer::showLightLevels(const Camera& camera)

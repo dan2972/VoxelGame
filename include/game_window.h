@@ -33,6 +33,7 @@ public:
     void setViewport(int width, int height);
     void clear(GLbitfield mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    bool isEnabled(GLenum val) const { return glIsEnabled(val); }
     void enableDepthTest() { glEnable(GL_DEPTH_TEST); }
     void disableDepthTest() { glDisable(GL_DEPTH_TEST); }
     void enableBlend() { glEnable(GL_BLEND); }

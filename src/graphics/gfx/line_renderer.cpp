@@ -46,7 +46,7 @@ namespace gfx
     {
         if (!m_meshInitialized)
         {
-            m_mesh.populate({}, {}, {3, 3, 4, 1}, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW);
+            m_mesh.populate({}, {}, {3, 3, 4}, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW);
             m_meshInitialized = true;
         }
         m_curVertex = 0;
@@ -60,17 +60,17 @@ namespace gfx
         if (m_curIndex + 6 >= m_indices.size())
             m_indices.resize(m_curIndex + 6);
 
-        m_vertices[m_curVertex + 0] = { start, end, color, 1.0f };
-        m_vertices[m_curVertex + 1] = { start, end, color, -1.0f };
-        m_vertices[m_curVertex + 2] = { end, start, color, 1.0f };
-        m_vertices[m_curVertex + 3] = { end, start, color, -1.0f };
+        m_vertices[m_curVertex + 0] = { start, end - start, color };
+        m_vertices[m_curVertex + 1] = { end, start - end, color };
+        m_vertices[m_curVertex + 2] = { end, start - end, color };
+        m_vertices[m_curVertex + 3] = { start, end - start, color };
 
         m_indices[m_curIndex + 0] = m_curVertex + 0;
         m_indices[m_curIndex + 1] = m_curVertex + 1;
         m_indices[m_curIndex + 2] = m_curVertex + 2;
         m_indices[m_curIndex + 3] = m_curVertex + 0;
-        m_indices[m_curIndex + 4] = m_curVertex + 2;
-        m_indices[m_curIndex + 5] = m_curVertex + 3;
+        m_indices[m_curIndex + 4] = m_curVertex + 3;
+        m_indices[m_curIndex + 5] = m_curVertex + 1;
 
         m_curVertex += 4;
         m_curIndex += 6;

@@ -27,9 +27,8 @@ namespace gfx
         struct Vertex
         {
             glm::vec3 position;
-            glm::vec3 other;
+            glm::vec3 normal;
             glm::vec4 color;
-            float side;
         };
 
         std::vector<Vertex> m_vertices;

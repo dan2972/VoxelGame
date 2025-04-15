@@ -5,6 +5,7 @@
 #include "world/chunk_map.h"
 #include "graphics/chunk_map_renderer.h"
 #include "graphics/world_render_options.h"
+#include "game_window.h"
 
 class WorldRenderer
 {
@@ -24,7 +25,7 @@ public:
 
     void loadResources();
 
-    void draw(const Camera& camera);
+    void draw(const Camera& camera, GameWindow& window);
 
     ChunkMapRenderer& getChunkMapRenderer() { return m_chunkMapRenderer; }
 private:
@@ -33,6 +34,6 @@ private:
     ChunkMapRenderer m_chunkMapRenderer;
 
     void checkPointers() const;
-    void drawChunkBorder(const glm::ivec3& chunkPos, const Camera& camera);
+    void drawChunkBorder(const glm::ivec3& chunkPos, const Camera& camera, GameWindow& window);
     void showLightLevels(const Camera& camera);
 };

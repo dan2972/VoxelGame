@@ -174,7 +174,7 @@ void GameApplication::render()
         m_window.enableCursor();
     }
 
-    m_worldRenderer.draw(m_camera);
+    m_worldRenderer.draw(m_camera, m_window);
 
     imguiEndFrame();
 }
