@@ -60,6 +60,9 @@ std::shared_ptr<const Chunk> ChunkSnapshot::getChunkFromLocalPos(const glm::ivec
 }
 
 BlockType ChunkSnapshot::getBlockFromLocalPos(const glm::ivec3& localPos) const {
+    if (inCenterBounds(localPos)) {
+        return center()->getBlock(localPos);
+    }
     auto chunk = getChunkFromLocalPos(localPos);
     if (chunk) {
         glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
@@ -69,6 +72,9 @@ BlockType ChunkSnapshot::getBlockFromLocalPos(const glm::ivec3& localPos) const 
 }
 
 uint16_t ChunkSnapshot::getSunLightFromLocalPos(const glm::ivec3& localPos) const {
+    if (inCenterBounds(localPos)) {
+        return center()->getSunLight(localPos);
+    }
     auto chunk = getChunkFromLocalPos(localPos);
     if (chunk) {
         glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
@@ -78,6 +84,9 @@ uint16_t ChunkSnapshot::getSunLightFromLocalPos(const glm::ivec3& localPos) cons
 }
 
 uint16_t ChunkSnapshot::getBlockLightFromLocalPos(const glm::ivec3& localPos) const {
+    if (inCenterBounds(localPos)) {
+        return center()->getBlockLight(localPos);
+    }
     auto chunk = getChunkFromLocalPos(localPos);
     if (chunk) {
         glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
@@ -87,6 +96,9 @@ uint16_t ChunkSnapshot::getBlockLightFromLocalPos(const glm::ivec3& localPos) co
 }
 
 uint16_t ChunkSnapshot::getLightLevelFromLocalPos(const glm::ivec3& localPos) const {
+    if (inCenterBounds(localPos)) {
+        return center()->getLightLevel(localPos);
+    }
     auto chunk = getChunkFromLocalPos(localPos);
     if (chunk) {
         glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
@@ -105,4 +117,10 @@ glm::ivec3 ChunkSnapshot::getRelChunkPosFromLocalPos(const glm::ivec3& localPos)
         localPos.y < 0 ? -1 : (localPos.y >= Chunk::CHUNK_SIZE ? 1 : 0),
         localPos.z < 0 ? -1 : (localPos.z >= Chunk::CHUNK_SIZE ? 1 : 0)
     };
+}
+
+bool ChunkSnapshot::inCenterBounds(const glm::ivec3& localPos) {
+    return localPos.x >= 0 && localPos.x < Chunk::CHUNK_SIZE &&
+           localPos.z >= 0 && localPos.z < Chunk::CHUNK_SIZE &&
+           localPos.y >= 0 && localPos.y < Chunk::CHUNK_SIZE;
 }

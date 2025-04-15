@@ -1,6 +1,6 @@
 #include "graphics/chunk_map_renderer.h"
 
-void ChunkMapRenderer::setupResources(gfx::Shader* chunkShader, gfx::TextureAtlas<std::string>* textureAtlas) 
+void ChunkMapRenderer::setupResources(gfx::Shader* chunkShader, gfx::TextureAtlas<BlockType>* textureAtlas) 
 {
     m_chunkShader = chunkShader;
     m_textureAtlas = textureAtlas;
@@ -67,7 +67,7 @@ void ChunkMapRenderer::draw(const Camera& camera, bool useAO, float aoFactor)
     }
 }
 
-void ChunkMapRenderer::meshBuildThreadFunc(bool useSmoothLighting) {
+void ChunkMapRenderer::meshBuildThreadFunc(const gfx::TextureAtlas<BlockType>& atlas, bool useSmoothLighting) {
     while (true)
     {
         if (m_stopThread)
@@ -75,14 +75,14 @@ void ChunkMapRenderer::meshBuildThreadFunc(bool useSmoothLighting) {
         ChunkSnapshot snapshot;
         m_chunksToBuild.pop(snapshot);
         auto chunkMesh = std::make_shared<ChunkMesh>();
-        chunkMesh->buildMesh(snapshot, useSmoothLighting);
+        chunkMesh->buildMesh(snapshot, atlas, useSmoothLighting);
         m_chunksToSubmit.push({snapshot.center()->getPos(), chunkMesh});
     }
 }
 
 void ChunkMapRenderer::startBuildThread(bool useSmoothLighting) {
     m_stopThread = false;
-    std::thread([this, useSmoothLighting]() { meshBuildThreadFunc(useSmoothLighting); }).detach();
+    std::thread([this, useSmoothLighting]() { meshBuildThreadFunc(*m_textureAtlas, useSmoothLighting); }).detach();
 }
 
 bool ChunkMapRenderer::checkNeighborChunks(const glm::ivec3& chunkPos, bool checkSelf) const

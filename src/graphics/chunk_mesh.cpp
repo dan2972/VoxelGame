@@ -26,7 +26,7 @@ void ChunkMesh::clearMesh()
     m_indexCounter = 0;
 }
 
-void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, bool smoothLighting)
+void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas<BlockType>& atlas, bool smoothLighting)
 {
     if (!snapshot.isValid())
         return;
@@ -35,7 +35,6 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, bool smoothLighting)
     m_vertices.clear();
     m_indices.clear();
     m_indexCounter = 0;
-    auto atlas = GameApplication::getResourceManager().getTextureAtlas("chunk_atlas");
     for (int x = 0; x < Chunk::CHUNK_SIZE; ++x)
     {
         for (int z = 0; z < Chunk::CHUNK_SIZE; ++z)
@@ -43,11 +42,11 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, bool smoothLighting)
             for (int y = 0; y < Chunk::CHUNK_SIZE; ++y)
             {
                 glm::ivec3 pos{x, y, z};
-                BlockType blockType = snapshot.getBlockFromLocalPos(pos);
+                BlockType blockType = snapshot.center()->getBlock(pos);
                 if (blockType == BlockType::Air)
                     continue;
                 
-                auto [uvMin, uvMax] = atlas->get(blockTypeToString(blockType));
+                auto [uvMin, uvMax] = atlas.get(blockType);
 
                 std::array<float, 8> textureCoords = 
                 {

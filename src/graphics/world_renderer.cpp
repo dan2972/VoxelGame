@@ -17,15 +17,15 @@ void WorldRenderer::loadResources()
     checkPointers();
 
     m_resourceManager->loadShader("chunk", "res/shaders/terrain_chunk.vert", "res/shaders/terrain_chunk.frag");
-    auto atlas = m_resourceManager->addTextureAtlas("chunk_atlas", {.internalFilter = GL_NEAREST});
-    atlas->addImgFromPath("grass", "res/textures/grass.png");
-    atlas->addImgFromPath("dirt", "res/textures/dirt.png");
-    atlas->addImgFromPath("stone", "res/textures/stone.png");
-    atlas->addImgFromPath("wood_planks", "res/textures/wood_planks.png");
+    auto atlas = m_resourceManager->addTextureAtlas<BlockType>("chunk_atlas", {.internalFilter = GL_NEAREST});
+    atlas->addImgFromPath(BlockType::Grass, "res/textures/grass.png");
+    atlas->addImgFromPath(BlockType::Dirt, "res/textures/dirt.png");
+    atlas->addImgFromPath(BlockType::Stone, "res/textures/stone.png");
+    atlas->addImgFromPath(BlockType::WoodPlanks, "res/textures/wood_planks.png");
 
     m_chunkMapRenderer.setupResources(
         m_resourceManager->getShader("chunk"),
-        m_resourceManager->getTextureAtlas("chunk_atlas")
+        m_resourceManager->getTextureAtlas<BlockType>("chunk_atlas")
     );
 }
 

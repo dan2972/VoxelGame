@@ -7,6 +7,7 @@
 #include "graphics/gfx/mesh.h"
 #include "utils/direction_utils.h"
 #include "world/chunk_snapshot.h"
+#include "graphics/gfx/texture_atlas.h"
 
 class ChunkMesh
 {
@@ -27,7 +28,7 @@ public:
 
     void clearMesh();
 
-    void buildMesh(const ChunkSnapshot& snapshot, bool smoothLighting=true);
+    void buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas<BlockType>& atlas, bool smoothLighting=true);
 
     void submitBuffers();
 

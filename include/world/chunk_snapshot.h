@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "world/chunk.h"
 #include "world/chunk_map.h"
+#include <glm/glm.hpp>
 #include "world/block_data.h"
 
 class ChunkSnapshot
@@ -36,4 +37,5 @@ public:
 
 private:
     static glm::ivec3 getRelChunkPosFromLocalPos(const glm::ivec3& localPos);
+    static bool inCenterBounds(const glm::ivec3& localPos);
 };

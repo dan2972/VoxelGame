@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include <string>
 #include <memory>
+#include <typeindex>
+#include <any>
 
 #include "graphics/gfx/shader.h"
 #include "graphics/gfx/texture.h"
@@ -47,9 +49,13 @@ public:
     gfx::LineRenderer* getLineRenderer(const std::string& name) const;
     void removeLineRenderer(const std::string& name);
 
-    gfx::TextureAtlas<std::string>* addTextureAtlas(const std::string& name, const gfx::TextureAtlasParams& params);
-    gfx::TextureAtlas<std::string>* addTextureAtlas(const std::string& name, gfx::TextureAtlas<std::string>&& atlas);
-    gfx::TextureAtlas<std::string>* getTextureAtlas(const std::string& name) const;
+    template <typename T>
+    gfx::TextureAtlas<T>* addTextureAtlas(const std::string& name, const gfx::TextureAtlasParams& params);
+    template <typename T>
+    gfx::TextureAtlas<T>* addTextureAtlas(const std::string& name, gfx::TextureAtlas<T>&& atlas);
+    template <typename T>
+    gfx::TextureAtlas<T>* getTextureAtlas(const std::string& name) const;
+    template <typename T>
     void removeTextureAtlas(const std::string& name);
 private:
     std::unordered_map<std::string, std::unique_ptr<gfx::Shader>> m_shaders;
@@ -57,5 +63,88 @@ private:
     std::unordered_map<std::string, std::unique_ptr<gfx::Mesh>> m_meshes;
     std::unordered_map<std::string, std::unique_ptr<gfx::FontRenderer>> m_fontRenderers;
     std::unordered_map<std::string, std::unique_ptr<gfx::LineRenderer>> m_lineRenderers;
-    std::unordered_map<std::string, std::unique_ptr<gfx::TextureAtlas<std::string>>> m_textureAtlases;
+    // std::unordered_map<std::string, std::unique_ptr<gfx::TextureAtlas<std::string>>> m_textureAtlases;
+    std::unordered_map<std::type_index, std::any> m_textureAtlasTypeMap;
+
+    template<typename T>
+    std::unordered_map<std::string, std::shared_ptr<gfx::TextureAtlas<T>>>& getTypedMap();
+    template<typename T>
+    const std::unordered_map<std::string, std::shared_ptr<gfx::TextureAtlas<T>>>* getTypedMapPtr() const;
 };
+
+template <typename T>
+gfx::TextureAtlas<T> *ResourceManager::addTextureAtlas(const std::string &name, const gfx::TextureAtlasParams &params)
+{
+    auto& typedMap = getTypedMap<T>();
+    auto ret = typedMap.try_emplace(name, std::make_shared<gfx::TextureAtlas<T>>(params));
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("TextureAtlas with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+template <typename T>
+gfx::TextureAtlas<T> *ResourceManager::addTextureAtlas(const std::string &name, gfx::TextureAtlas<T> &&atlas)
+{
+    auto& typedMap = getTypedMap<T>();
+    auto ret = typedMap.try_emplace(name, std::make_shared<gfx::TextureAtlas<T>>(std::move(atlas)));
+    if (ret.second)
+    {
+        return ret.first->second.get();
+    }
+    else
+    {
+        spdlog::warn("TextureAtlas with name \"{}\" already exists. Skipping addition.", name);
+        return nullptr;
+    }
+}
+
+template <typename T>
+gfx::TextureAtlas<T> *ResourceManager::getTextureAtlas(const std::string &name) const
+{
+    auto typedMap = getTypedMapPtr<T>();
+    if (typedMap == nullptr)
+    {
+        spdlog::warn("TextureAtlas with name \"{}\" not found.", name);
+        return nullptr;
+    }
+    auto it = typedMap->find(name);
+    if (it != typedMap->end())
+    {
+        return it->second.get();
+    }
+    spdlog::warn("TextureAtlas with name \"{}\" not found.", name);
+    return nullptr;
+}
+
+template <typename T>
+void ResourceManager::removeTextureAtlas(const std::string &name)
+{
+    auto& typedMap = getTypedMap<T>();
+    typedMap.erase(name);
+}
+
+template<typename T>
+std::unordered_map<std::string, std::shared_ptr<gfx::TextureAtlas<T>>>& ResourceManager::getTypedMap()
+{
+    std::type_index index(typeid(T));
+    if (m_textureAtlasTypeMap.find(index) == m_textureAtlasTypeMap.end()) {
+        m_textureAtlasTypeMap[index] = std::unordered_map<std::string, std::shared_ptr<gfx::TextureAtlas<T>>>{};
+    }
+    return *std::any_cast<std::unordered_map<std::string, std::shared_ptr<gfx::TextureAtlas<T>>>>(&m_textureAtlasTypeMap[index]);
+}
+
+template<typename T>
+const std::unordered_map<std::string, std::shared_ptr<gfx::TextureAtlas<T>>>* ResourceManager::getTypedMapPtr() const
+{
+    std::type_index index(typeid(T));
+    if (m_textureAtlasTypeMap.find(index) == m_textureAtlasTypeMap.end()) {
+        return nullptr;
+    }
+    return std::any_cast<std::unordered_map<std::string, std::shared_ptr<gfx::TextureAtlas<T>>> const>(&m_textureAtlasTypeMap.at(index));
+}
