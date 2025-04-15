@@ -11,10 +11,24 @@ uniform sampler2D uTexture;
 uniform bool uAOEnabled;
 uniform float uAOIntensity;
 
+float diffuse(vec3 normal)
+{
+    if (abs(normal.y - 1.0) < 0.01)
+        return 1.0;
+    else if (abs(normal.y + 1.0) < 0.01)
+        return 0.7;
+    else if (abs(normal.x - 1.0) < 0.01 || abs(normal.x + 1.0) < 0.01)
+        return 0.9;
+    else if (abs(normal.z - 1.0) < 0.01 || abs(normal.z + 1.0) < 0.01)
+        return 0.8;
+    else
+        return 0.0;
+}
+
 void main()
 {
-    vec3 lightDir = normalize(-vec3(1.0, -1.0, 0.5));
-    float diff = max(dot(vNormal, lightDir), 0.0);
+    // vec3 lightDir = normalize(-vec3(1.0, -1.0, 0.5));
+    // float diff = max(dot(vNormal, lightDir), 0.0);
     float ambient = 0.2;
     float ambientOcclusion = 1;
     if (uAOEnabled)
@@ -22,6 +36,6 @@ void main()
 
     float light = 0.1 + 0.9 * (vLightValue / 15);
     light = clamp(light, 0.0, 1.0);
-    float multiplier = light * ambientOcclusion * (ambient + diff);
+    float multiplier = light * ambientOcclusion * (ambient + diffuse(vNormal));
     outputColor = vec4(vec3(multiplier), 1.0) * texture(uTexture, vTexCoord);
 }
