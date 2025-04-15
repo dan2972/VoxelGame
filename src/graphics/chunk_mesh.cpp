@@ -3,7 +3,7 @@
 
 void ChunkMesh::setup()
 {
-    m_mesh.populate(m_vertices, m_indices, {1, 2}, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW);
+    m_mesh.populate(m_vertices, m_indices, {1, 2});
 }
 
 void ChunkMesh::draw()

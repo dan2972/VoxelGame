@@ -16,7 +16,7 @@ void ChunkMapRenderer::updateBuildQueue(bool useSmoothLighting)
         ChunkReadyNode node;
         m_chunksToSubmit.pop(node);
         node.chunkMesh->setup();
-        node.chunkMesh->submitBuffers();
+        // node.chunkMesh->submitBuffers();
 
         m_chunkMeshes[node.chunkPos] = node.chunkMesh;
         m_chunksInBuildQueue.erase(node.chunkPos);
