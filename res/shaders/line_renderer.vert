@@ -12,11 +12,19 @@ uniform vec2 uResolution;
 
 out vec4 vColor;
 
+const float VIEW_SHRINK = 1.0 - (1.0 / 256.0);
+const mat4 VIEW_SCALE = mat4(
+    VIEW_SHRINK, 0.0, 0.0, 0.0,
+    0.0, VIEW_SHRINK, 0.0, 0.0,
+    0.0, 0.0, VIEW_SHRINK, 0.0,
+    0.0, 0.0, 0.0, 1.0
+);
+
 void main() {
     vColor = aColor;
 
-    vec4 lineStart = uProjection * uView * uModel * vec4(aPos, 1.0);
-    vec4 lineEnd = uProjection * uView * uModel * vec4(aPos + aNormal, 1.0);
+    vec4 lineStart = uProjection * VIEW_SCALE * uView * uModel * vec4(aPos, 1.0);
+    vec4 lineEnd = uProjection * VIEW_SCALE * uView * uModel * vec4(aPos + aNormal, 1.0);
 
     vec3 ndcStart = lineStart.xyz / lineStart.w;
     vec3 ndcEnd = lineEnd.xyz / lineEnd.w;
