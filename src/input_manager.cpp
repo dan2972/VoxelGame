@@ -104,19 +104,3 @@ glm::vec2 InputManager::getMousePosition() {
 glm::vec2 InputManager::getMouseDelta() {
     return m_mouseDelta;
 }
-
-// void InputManager::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-//     if (action == GLFW_PRESS) {
-//         InputManager::m_keyStates[static_cast<Key>(key)] = true;
-//     } else if (action == GLFW_RELEASE) {
-//         InputManager::m_keyStates[static_cast<Key>(key)] = false;
-//     }
-// }
-
-// void InputManager::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
-//     if (action == GLFW_PRESS) {
-//         InputManager::m_mouseButtonStates[static_cast<MouseButton>(button)] = true;
-//     } else if (action == GLFW_RELEASE) {
-//         InputManager::m_mouseButtonStates[static_cast<MouseButton>(button)] = false;
-//     }
-// }
