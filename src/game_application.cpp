@@ -174,7 +174,7 @@ void GameApplication::render()
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
             m_camera.move(CameraMovement::DOWN, deltaTime);
         if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-            m_camera.movementSpeed = 20.0f;
+            m_camera.movementSpeed = 40.0f;
         else
             m_camera.movementSpeed = Camera::DEFAULT_SPEED;
     } else {
@@ -197,9 +197,11 @@ void GameApplication::render()
     auto mousePos = m_window.getMousePosition();
     auto lookPos = m_camera.rayDirFromNDC(0, 0);
     auto node = algo::voxelRayHit(m_camera.position, lookPos, [&](const glm::ivec3& pos) {
-        return m_world.getChunkMap().getBlock(pos) != BlockType::Air;
+        BlockType block = m_world.getChunkMap().getBlock(pos);
+        return block != BlockType::Air && block != BlockType::Water;
     }, 20.0f);
-    if (m_world.getChunkMap().getBlock(node.pos) != BlockType::Air) {
+    BlockType block = m_world.getChunkMap().getBlock(node.pos);
+    if (block != BlockType::Air && block != BlockType::Water) {
         m_worldRenderer.highlightVoxels({node.pos}, m_camera, m_window);
     }
 

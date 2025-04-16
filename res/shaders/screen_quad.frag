@@ -21,10 +21,9 @@ bool curPixelInCrossHair(float lineWidth = 1.0, float size = 10.0) {
 
 void main()
 {
-    // float gamma = 2.2;
-    // vec4 color = texture(uTexture, vTexCoord);
-    // outputColor = pow(color, vec4(1.0 / gamma));
+    float gamma = 2.2;
     vec4 color = texture(uTexture, vTexCoord);
+    color = pow(color, vec4(1.0 / gamma));
     if (curPixelInCrossHair() && uShowCrosshair) {
         color = vec4(1 - color.xyz, 1);
     }

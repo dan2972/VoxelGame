@@ -11,14 +11,19 @@ enum class BlockType : uint16_t
     Dirt = 2,
     Stone = 3,
     WoodPlanks = 4,
+    Sand = 5,
+    Water = 6,
 };
 
-static const std::array<std::string, 5> blockTypeNames = {
+static const std::array<std::string, 7> blockTypeNames = {
     "air",
     "grass",
     "dirt",
     "stone",
-    "wood_planks"
+    "wood_planks",
+    "sand",
+    "water",
 };
 
 std::string blockTypeToString(BlockType type);
+bool isTransparentBlock(BlockType type);

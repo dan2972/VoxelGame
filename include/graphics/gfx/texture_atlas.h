@@ -16,7 +16,7 @@ namespace gfx
         unsigned int height = 128;
         GLuint internalFilter = GL_LINEAR;
         GLuint wrapFilter = GL_CLAMP_TO_EDGE;
-        GLuint internalFormat = GL_RGBA;
+        GLuint internalFormat = GL_SRGB_ALPHA;
         GLuint format = GL_RGBA;
     };
 
@@ -29,7 +29,7 @@ namespace gfx
             unsigned int height = 128,
             GLuint internalFilter = GL_LINEAR,
             GLuint wrapFilter = GL_CLAMP_TO_EDGE,
-            GLuint internalFormat = GL_RGBA,
+            GLuint internalFormat = GL_SRGB_ALPHA,
             GLuint format = GL_RGBA);
 
         TextureAtlas(const TextureAtlasParams& params);

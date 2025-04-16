@@ -15,5 +15,6 @@ void main()
     float t = 0.5 * (worldDir.y + 1.0);
     vec3 skyColor = mix(vec3(1.0, 1.0, 1.0), vec3(0.5, 0.7, 1.0), t);
 
+    skyColor = pow(skyColor, vec3(2.2)); // Gamma correction
     outputColor = vec4(skyColor, 1.0);
 }

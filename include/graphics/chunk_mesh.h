@@ -7,6 +7,7 @@
 #include "graphics/gfx/mesh.h"
 #include "utils/direction_utils.h"
 #include "world/chunk_snapshot.h"
+#include "world/block_data.h"
 #include "graphics/gfx/texture_atlas.h"
 
 class ChunkMesh
@@ -54,4 +55,5 @@ private:
 
     void getAOBlockPos(const glm::ivec3& cornerPos, BlockFace face, glm::ivec3* outs1, glm::ivec3* outs2, glm::ivec3* outc);
     static int vertexAO(bool side1, bool side2, bool corner);
+    bool shouldRenderFace(BlockType curBlock, BlockType neighbor);
 };

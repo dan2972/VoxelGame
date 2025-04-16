@@ -21,7 +21,7 @@ void Chunk::generateTerrain()
         for (int z = 0; z < CHUNK_SIZE; ++z)
         {
             glm::ivec3 globalPos = localToGlobalPos({x, 0, z});
-            float noise = s_terrainGenerator.getNoise(globalPos.x, globalPos.z) * 256;
+            float noise = s_terrainGenerator.getNoise(globalPos.x, globalPos.z) * 256 + 6;
             for (int y = 0; y < CHUNK_SIZE; ++y)
             {
                 auto gPos = localToGlobalPos({x, y, z});
@@ -34,8 +34,18 @@ void Chunk::generateTerrain()
                     } else {
                         m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Stone;
                     }
+                    if (gPos.y <= 2) {
+                        if (diff < 3) {
+                            m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Sand;
+                        }
+                    }
                     m_allAir = false;
-                } else
+                } 
+                else if (gPos.y <= 0) {
+                    m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Water;
+                    m_allAir = false;
+                }
+                else
                 {
                     m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Air;
                     m_allSolid = false;

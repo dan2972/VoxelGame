@@ -11,3 +11,12 @@ std::string blockTypeToString(BlockType type)
     }
     return blockTypeNames[static_cast<int>(type)];
 }
+
+bool isTransparentBlock(BlockType type)
+{
+    if (type == BlockType::Air || type == BlockType::Water)
+    {
+        return true;
+    }
+    return false;
+}

@@ -60,7 +60,7 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas
                 {
                     glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
                     BlockType bType = snapshot.getBlockFromLocalPos(pos + dir);
-                    if (bType == BlockType::Air)
+                    if (shouldRenderFace(blockType, bType))
                     {
                         auto aoValues = getAOValues(pos, static_cast<BlockFace>(i), snapshot);
                         auto lightValues = getLightValues(pos, static_cast<BlockFace>(i), snapshot, smoothLighting);
@@ -269,4 +269,9 @@ int ChunkMesh::vertexAO(bool side1, bool side2, bool corner)
     if (side1 && side2)
         return 0;
     return 3 - (side1 + side2 + corner);
+}
+
+bool ChunkMesh::shouldRenderFace(BlockType curBlock, BlockType neighbor)
+{
+    return curBlock != neighbor && isTransparentBlock(neighbor);
 }

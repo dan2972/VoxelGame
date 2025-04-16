@@ -22,6 +22,8 @@ void WorldRenderer::loadResources()
     atlas->addImgFromPath(BlockType::Dirt, "res/textures/dirt.png");
     atlas->addImgFromPath(BlockType::Stone, "res/textures/stone.png");
     atlas->addImgFromPath(BlockType::WoodPlanks, "res/textures/wood_planks.png");
+    atlas->addImgFromPath(BlockType::Sand, "res/textures/sand.png");
+    atlas->addImgFromPath(BlockType::Water, "res/textures/water.png");
 
     m_chunkMapRenderer.setupResources(
         m_resourceManager->getShader("chunk"),
