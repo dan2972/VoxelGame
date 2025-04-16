@@ -33,6 +33,7 @@ void main()
     float ambientOcclusion = 1;
     if (uAOEnabled)
         ambientOcclusion =  (1 - uAOIntensity) + ((vAOValue / 3.0) * uAOIntensity);
+    ambientOcclusion = pow(ambientOcclusion, 2.2);
 
     float light = 0.1 + 0.9 * (vLightValue / 15);
     light = clamp(light, 0.0, 1.0);

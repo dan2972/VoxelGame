@@ -11,5 +11,5 @@ struct RenderOptions
     bool showSunLightLevels = false;
     bool showBlockLightLevels = false;
     float showLightLevelRadius = Chunk::CHUNK_SIZE / 2;
-    float aoFactor = 0.65f;
+    float aoFactor = 0.5f;
 };
