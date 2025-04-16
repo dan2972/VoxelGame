@@ -45,6 +45,13 @@ public:
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_queue.size();
     }
+
+    void clear() {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        while (!m_queue.empty()) {
+            m_queue.pop();
+        }
+    }
 private:
     mutable std::mutex m_mutex;
     std::condition_variable m_condVar;

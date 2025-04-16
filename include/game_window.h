@@ -9,18 +9,6 @@ public:
     static const int DEFAULT_WIDTH = 800;
     static const int DEFAULT_HEIGHT = 600;
 
-    struct MousePosition
-    {
-        double x = 0;
-        double y = 0;
-    };
-
-    struct MouseDelta
-    {
-        double x = 0;
-        double y = 0;
-    };
-
     GameWindow();
     GameWindow(int width, int height, const char* title, int glMajorVersion=3, int glMinorVersion=3);
     ~GameWindow();
@@ -67,16 +55,6 @@ public:
         glfwGetWindowSize(m_window, &width, &height);
     }
 
-    const MousePosition& getMousePosition() const
-    {
-        return m_mousePosition;
-    }
-
-    const MouseDelta& getMouseDelta() const
-    {
-        return m_mouseDelta;
-    }
-
     bool isOpen() const;
 
     GLFWwindow* getWindow() const { return m_window; }
@@ -88,7 +66,4 @@ private:
     int m_height;
     bool m_isOpen;
     bool m_firstUpdate = true;
-
-    MousePosition m_mousePosition;
-    MouseDelta m_mouseDelta;
 };

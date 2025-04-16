@@ -117,6 +117,8 @@ void Chunk::setBlock(int x, int y, int z, BlockType type)
         return;
     }
     m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = type;
+    if (type != BlockType::Air)
+        m_allAir = false;
 }
 
 void Chunk::setBlock(const glm::ivec3 &pos, BlockType type)

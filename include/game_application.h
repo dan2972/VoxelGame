@@ -8,6 +8,7 @@
 #include "graphics/gfx/texture_atlas.h"
 #include "graphics/gfx/font_renderer.h"
 #include "world/world.h"
+#include "input_manager.h"
 #include "graphics/world_renderer.h"
 
 class GameApplication
@@ -58,6 +59,5 @@ private:
     World m_world;
     WorldRenderer m_worldRenderer{&m_world.getChunkMap(), &s_resourceManager};
 
-    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 };

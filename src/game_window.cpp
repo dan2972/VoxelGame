@@ -20,19 +20,7 @@ GameWindow::~GameWindow()
 
 void GameWindow::update()
 {
-    if (m_firstUpdate)
-    {
-        glfwGetCursorPos(m_window, &m_mousePosition.x, &m_mousePosition.y);
-        m_firstUpdate = false;
-    }
-    glfwPollEvents();
     glfwSwapBuffers(m_window);
-    double xpos, ypos;
-    glfwGetCursorPos(m_window, &xpos, &ypos);
-    m_mouseDelta.x = xpos - m_mousePosition.x;
-    m_mouseDelta.y = ypos - m_mousePosition.y;
-    m_mousePosition.x = xpos;
-    m_mousePosition.y = ypos;
 }
 
 void GameWindow::setClearColor(float r, float g, float b, float a)

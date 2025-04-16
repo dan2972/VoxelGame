@@ -52,6 +52,60 @@ void ChunkMapRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius)
     }
 }
 
+void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType blockType)
+{
+    m_chunksToBuild.clear();
+    m_chunksInBuildQueue.clear();
+    glm::ivec3 chunkPos = Chunk::globalToChunkPos(blockPos);
+    ChunkSnapshot snapshot;
+
+    // if the block type is air (removing a block), build the boundaries first
+    bool buildCenterChunkFirst = blockType != BlockType::Air;
+    if (buildCenterChunkFirst) {
+        if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos, snapshot)) {
+            m_chunksToBuild.push(snapshot);
+            m_chunksInBuildQueue.insert(chunkPos);
+        }
+    }
+
+    glm::ivec3 localPos = Chunk::globalToLocalPos(blockPos);
+    for (int dx = -1; dx <= 1; ++dx) {
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dz = -1; dz <= 1; ++dz) {
+                if (dx == 0 && dy == 0 && dz == 0) continue;
+    
+                glm::ivec3 offset = {dx, dy, dz};
+                // The boundary value we have to check
+                // -1 means no boundary check, 0 means check the first element, and Chunk::CHUNK_SIZE - 1 means check the last element.
+                glm::ivec3 boundary = {
+                    dx < 0 ? 0 : (dx > 0 ? Chunk::CHUNK_SIZE - 1 : -1),
+                    dy < 0 ? 0 : (dy > 0 ? Chunk::CHUNK_SIZE - 1 : -1),
+                    dz < 0 ? 0 : (dz > 0 ? Chunk::CHUNK_SIZE - 1 : -1)
+                };
+    
+                if ((boundary.x == -1 || localPos.x == boundary.x) &&
+                    (boundary.y == -1 || localPos.y == boundary.y) &&
+                    (boundary.z == -1 || localPos.z == boundary.z)) {
+    
+                    glm::ivec3 neighborChunkPos = chunkPos + offset;
+                    ChunkSnapshot snapshotAdj;
+                    if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, neighborChunkPos, snapshotAdj)) {
+                        m_chunksToBuild.push(snapshotAdj);
+                        m_chunksInBuildQueue.insert(neighborChunkPos);
+                    }
+                }
+            }
+        }
+    }
+
+    if (!buildCenterChunkFirst) {
+        if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos, snapshot)) {
+            m_chunksToBuild.push(snapshot);
+            m_chunksInBuildQueue.insert(chunkPos);
+        }
+    }
+}
+
 void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor)
 {
     checkPointers();

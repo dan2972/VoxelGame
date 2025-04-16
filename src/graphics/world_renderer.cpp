@@ -71,7 +71,7 @@ void WorldRenderer::drawChunkBorder(const glm::ivec3 &chunkPos, const Camera &ca
     lineRenderer->drawAA2DGrid({c1.x, c2.y, c1.z}, {c2.x, c2.y, c2.z}, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), Chunk::CHUNK_SIZE / 4, false);
     lineRenderer->drawAA2DGrid({c1.x, c1.y, c1.z}, {c2.x, c2.y, c1.z}, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), Chunk::CHUNK_SIZE / 4, false);
     lineRenderer->drawAA2DGrid({c1.x, c1.y, c2.z}, {c2.x, c2.y, c2.z}, glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), Chunk::CHUNK_SIZE / 4, false);
-    lineRenderer->drawCube(pos, glm::vec3(Chunk::CHUNK_SIZE)*0.999f, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+    lineRenderer->drawCube(pos, glm::vec3(Chunk::CHUNK_SIZE), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
     
     bool isCulled = window.isEnabled(GL_CULL_FACE);
     if (isCulled)
@@ -166,7 +166,7 @@ void WorldRenderer::highlightVoxels(const std::vector<glm::ivec3>& voxels, const
     lineRenderer->beginBatch();
     for (const auto& voxel : voxels) {
         glm::vec3 pos = glm::vec3(voxel.x, voxel.y, voxel.z) + glm::vec3(0.5f, 0.5f, 0.5f);
-        lineRenderer->drawCube(pos, glm::vec3(1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+        lineRenderer->drawCube(pos, glm::vec3(1.0f), glm::vec4(1.0f, 1.0f, 1.0f, 0.5f));
     }
     bool isCulled = window.isEnabled(GL_CULL_FACE);
     if (isCulled)

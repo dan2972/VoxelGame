@@ -64,6 +64,7 @@ void GameApplication::run()
         render();
 
         m_window.update();
+        InputManager::update();
 
         if (timer >= 1000.0)
         {
@@ -80,9 +81,9 @@ void GameApplication::run()
 bool GameApplication::load()
 {
     spdlog::set_level(spdlog::level::debug);
+    InputManager::setup(&m_window);
     m_window.setClearColor(0.47f, 0.65f, 1.0f, 1.0f);
     m_window.disableVSync();
-    m_window.setKeyCallback(keyCallback);
     m_window.setFramebufferSizeCallback(framebufferSizeCallback);
     m_window.setUserPointer(this);
 
@@ -142,8 +143,8 @@ void GameApplication::render()
     ImGui::Text("Total Time: %.3fs", m_gameTime.totalTime);
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", m_camera.position.x, m_camera.position.y, m_camera.position.z);
     if (ImGui::CollapsingHeader("Render Options")) {
-        ImGui::SliderInt("Render Distance", &m_worldRenderer.renderOptions.renderDistance, 1, 16);
         ImGui::Checkbox("Show Chunk Border", &m_worldRenderer.renderOptions.showChunkBorder);
+        ImGui::SliderInt("Render Distance", &m_worldRenderer.renderOptions.renderDistance, 1, 16);
         if (ImGui::CollapsingHeader("Light Levels")) {
             ImGui::Checkbox("Show Sun Light Levels", &m_worldRenderer.renderOptions.showSunLightLevels);
             ImGui::Checkbox("Show Block Light Levels", &m_worldRenderer.renderOptions.showBlockLightLevels);
@@ -157,24 +158,29 @@ void GameApplication::render()
 
     auto window = m_window.getWindow();
 
+    if (InputManager::isKeyJustPressed(Key::Escape)) {
+        m_focused = !m_focused;
+    }
+
     if (m_focused) {
-        m_camera.rotate(m_window.getMouseDelta().x, -m_window.getMouseDelta().y);
+        auto mouseDelta = InputManager::getMouseDelta();
+        m_camera.rotate(mouseDelta.x, -mouseDelta.y);
         m_window.disableCursor();
 
         float deltaTime = m_gameTime.deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        if (InputManager::isKeyPressed(Key::W))
             m_camera.move(CameraMovement::FORWARD, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        if (InputManager::isKeyPressed(Key::S))
             m_camera.move(CameraMovement::BACKWARD, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        if (InputManager::isKeyPressed(Key::A))
             m_camera.move(CameraMovement::LEFT, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        if (InputManager::isKeyPressed(Key::D))
             m_camera.move(CameraMovement::RIGHT, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        if (InputManager::isKeyPressed(Key::Space))
             m_camera.move(CameraMovement::UP, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        if (InputManager::isKeyPressed(Key::LeftShift))
             m_camera.move(CameraMovement::DOWN, deltaTime);
-        if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+        if (InputManager::isKeyPressed(Key::LeftControl))
             m_camera.movementSpeed = 40.0f;
         else
             m_camera.movementSpeed = Camera::DEFAULT_SPEED;
@@ -195,7 +201,7 @@ void GameApplication::render()
     m_window.enableDepthTest();
 
     m_worldRenderer.draw(m_camera, m_window);
-    auto mousePos = m_window.getMousePosition();
+    auto mousePos = InputManager::getMousePosition();
     auto lookPos = m_camera.rayDirFromNDC(0, 0);
     auto node = algo::voxelRayHit(m_camera.position, lookPos, [&](const glm::ivec3& pos) {
         BlockType block = m_world.getChunkMap().getBlock(pos);
@@ -204,6 +210,13 @@ void GameApplication::render()
     BlockType block = m_world.getChunkMap().getBlock(node.pos);
     if (block != BlockType::Air && block != BlockType::Water) {
         m_worldRenderer.highlightVoxels({node.pos}, m_camera, m_window);
+        if (InputManager::isMouseButtonJustPressed(MouseButton::Left) && m_focused) {
+            m_world.getChunkMap().setBlock(node.pos, BlockType::Air);
+            m_worldRenderer.getChunkMapRenderer().queueBlockUpdate(node.pos, BlockType::Air);
+        } else if (InputManager::isMouseButtonJustPressed(MouseButton::Right) && m_focused) {
+            m_world.getChunkMap().setBlock(node.pos + node.normal, BlockType::WoodPlanks);
+            m_worldRenderer.getChunkMapRenderer().queueBlockUpdate(node.pos + node.normal, BlockType::WoodPlanks);
+        }
     }
 
     renderTarget->useDefault();
@@ -263,21 +276,6 @@ void GameApplication::imguiEndFrame()
 {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-void GameApplication::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    if (action != GLFW_PRESS) {
-        return;
-    }
-
-    GameApplication* app = static_cast<GameApplication*>(glfwGetWindowUserPointer(window));
-    if (app == nullptr) {
-        return;
-    }
-
-    if (key == GLFW_KEY_ESCAPE) {
-        app->setFocused(!app->isFocused());
-    }
 }
 
 void GameApplication::framebufferSizeCallback(GLFWwindow *window, int width, int height)
