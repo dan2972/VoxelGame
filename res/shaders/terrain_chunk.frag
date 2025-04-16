@@ -29,14 +29,14 @@ void main()
 {
     // vec3 lightDir = normalize(-vec3(1.0, -1.0, 0.5));
     // float diff = max(dot(vNormal, lightDir), 0.0);
-    float ambient = 0.2;
+    // float ambient = 0.2;
     float ambientOcclusion = 1;
     if (uAOEnabled)
         ambientOcclusion =  (1 - uAOIntensity) + ((vAOValue / 3.0) * uAOIntensity);
-    ambientOcclusion = pow(ambientOcclusion, 2.2);
 
     float light = 0.1 + 0.9 * (vLightValue / 15);
     light = clamp(light, 0.0, 1.0);
-    float multiplier = light * ambientOcclusion * (ambient + diffuse(vNormal));
+    float multiplier = light * ambientOcclusion * diffuse(vNormal);
+    multiplier = pow(multiplier, 2.2);
     outputColor = vec4(vec3(multiplier), 1.0) * texture(uTexture, vTexCoord);
 }

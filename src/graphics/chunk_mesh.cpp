@@ -50,10 +50,10 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas
 
                 std::array<float, 8> textureCoords = 
                 {
-                    uvMin.x, uvMin.y,
-                    uvMax.x, uvMin.y,
+                    uvMin.x, uvMax.y,
                     uvMax.x, uvMax.y,
-                    uvMin.x, uvMax.y
+                    uvMax.x, uvMin.y,
+                    uvMin.x, uvMin.y
                 };
 
                 for (int i = 0; i < 6; ++i)
