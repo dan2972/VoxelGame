@@ -38,5 +38,6 @@ namespace gfx
             {2,2},
             GL_STATIC_DRAW
         );
+        m_initialized = true;
     }
 }
