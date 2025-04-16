@@ -142,6 +142,7 @@ void GameApplication::render()
     ImGui::Text("Total Time: %.3fs", m_gameTime.totalTime);
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", m_camera.position.x, m_camera.position.y, m_camera.position.z);
     if (ImGui::CollapsingHeader("Render Options")) {
+        ImGui::SliderInt("Render Distance", &m_worldRenderer.renderOptions.renderDistance, 1, 16);
         ImGui::Checkbox("Show Chunk Border", &m_worldRenderer.renderOptions.showChunkBorder);
         if (ImGui::CollapsingHeader("Light Levels")) {
             ImGui::Checkbox("Show Sun Light Levels", &m_worldRenderer.renderOptions.showSunLightLevels);

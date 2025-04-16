@@ -33,7 +33,7 @@ public:
     
     void queueChunkRadius(const glm::ivec3& chunkPos, int radius);
 
-    void draw(const Camera& camera, bool useAO, float aoFactor);
+    void draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor);
 
     void meshBuildThreadFunc(const gfx::TextureAtlas<BlockType>& atlas, bool useSmoothLighting);
 
@@ -43,6 +43,7 @@ public:
 private:
     const ChunkMap* m_chunkMap = nullptr;
     std::unordered_map<glm::ivec3, std::shared_ptr<ChunkMesh>, glm_ivec3_hash, glm_ivec3_equal> m_chunkMeshes;
+    std::unordered_map<glm::ivec3, std::shared_ptr<ChunkMesh>, glm_ivec3_hash, glm_ivec3_equal> m_activeChunkMeshes;
     BlockingQueue<ChunkSnapshot> m_chunksToBuild;
     BlockingQueue<ChunkReadyNode> m_chunksToSubmit;
     std::unordered_set<glm::ivec3, glm_ivec3_hash, glm_ivec3_equal> m_chunksInBuildQueue;

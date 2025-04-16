@@ -34,7 +34,7 @@ void WorldRenderer::loadResources()
 void WorldRenderer::draw(const Camera& camera, GameWindow& window)
 {
     checkPointers();
-    m_chunkMapRenderer.draw(camera, renderOptions.useAO, renderOptions.aoFactor);
+    m_chunkMapRenderer.draw(camera, renderOptions.renderDistance, renderOptions.useAO, renderOptions.aoFactor);
 
     if (renderOptions.showChunkBorder)
     {

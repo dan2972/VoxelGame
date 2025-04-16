@@ -19,6 +19,7 @@ void ChunkMapRenderer::updateBuildQueue(bool useSmoothLighting)
         // node.chunkMesh->submitBuffers();
 
         m_chunkMeshes[node.chunkPos] = node.chunkMesh;
+        m_activeChunkMeshes[node.chunkPos] = node.chunkMesh;
         m_chunksInBuildQueue.erase(node.chunkPos);
         meshSubmitCount++;
     }
@@ -34,8 +35,10 @@ void ChunkMapRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius)
             for (int z = -radius; z <= radius; ++z)
             {
                 glm::ivec3 pos = chunkPos + glm::ivec3(x, y, z);
-                if (m_chunkMeshes.contains(pos))
+                if (m_chunkMeshes.contains(pos)) {
+                    m_activeChunkMeshes[pos] = m_chunkMeshes[pos];
                     continue;
+                }
                 if (m_chunksInBuildQueue.contains(pos))
                     continue;
                 
@@ -49,9 +52,28 @@ void ChunkMapRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius)
     }
 }
 
-void ChunkMapRenderer::draw(const Camera& camera, bool useAO, float aoFactor)
+void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor)
 {
     checkPointers();
+
+    glm::ivec3 cameraChunkPos = Chunk::globalToChunkPos(camera.position);
+
+    std::queue<glm::ivec3> chunksToUnLoad;
+    for (auto& [chunkPos, chunkMesh] : m_activeChunkMeshes)
+    {
+        glm::ivec3 delta = chunkPos - cameraChunkPos;
+        if (abs(delta.x) > viewDistance || abs(delta.y) > viewDistance || abs(delta.z) > viewDistance)
+        {
+            chunksToUnLoad.push(chunkPos);
+        }
+    }
+    while (!chunksToUnLoad.empty())
+    {
+        glm::ivec3 chunkPos = chunksToUnLoad.front();
+        chunksToUnLoad.pop();
+        m_activeChunkMeshes.erase(chunkPos);
+    }
+
     m_textureAtlas->use();
     m_chunkShader->use();
     m_chunkShader->setMat4("uProjection", camera.getProjectionMatrix());
@@ -60,7 +82,7 @@ void ChunkMapRenderer::draw(const Camera& camera, bool useAO, float aoFactor)
     m_chunkShader->setBool("uAOEnabled", useAO);
     m_chunkShader->setFloat("uAOIntensity", aoFactor);
 
-    for (auto& [chunkPos, chunkMesh] : m_chunkMeshes)
+    for (auto& [chunkPos, chunkMesh] : m_activeChunkMeshes)
     {
         m_chunkShader->setVec3("uChunkOffset", glm::vec3(chunkPos) * float(Chunk::CHUNK_SIZE));
         chunkMesh->draw();
