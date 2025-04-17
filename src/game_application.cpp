@@ -86,12 +86,15 @@ bool GameApplication::load()
     m_window.disableVSync();
     m_window.setFramebufferSizeCallback(framebufferSizeCallback);
     m_window.setUserPointer(this);
+    m_window.getFramebufferSize(m_fbWidth, m_fbHeight);
+    m_window.setViewport(0, 0, m_fbWidth, m_fbHeight);
 
     m_window.enableBlend();
     m_window.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_window.enableCulling();
 
     m_camera.updateResolution(m_width, m_height);
+    m_camera.updateFramebufferSize(m_fbWidth, m_fbHeight);
     
     if (!imguiInit()) {
         spdlog::error("Failed to initialize ImGui.");
@@ -111,7 +114,7 @@ bool GameApplication::load()
     auto fontRendererBB = s_resourceManager.loadFontRenderer("default_billboard", "res/fonts/courier-mon.ttf", 48, true);
     fontRendererBB->preloadDefaultGlyphs();
 
-    s_resourceManager.addRenderTarget("game_target", m_width, m_height);
+    s_resourceManager.addRenderTarget("game_target", m_fbWidth, m_fbHeight);
     s_resourceManager.addScreenQuad("game_quad");
     s_resourceManager.addScreenQuad("sky_quad");
     
@@ -226,7 +229,7 @@ void GameApplication::render()
     renderTarget->getTexture().use();
     auto screenQuadShader = s_resourceManager.getShader("screen_quad");
     screenQuadShader->use();
-    screenQuadShader->setVec2("uResolution", glm::vec2(m_width, m_height));
+    screenQuadShader->setVec2("uResolution", m_camera.framebufferSize);
     screenQuadShader->setBool("uShowCrosshair", m_focused);
     s_resourceManager.getScreenQuad("game_quad")->draw();
 
@@ -287,13 +290,20 @@ void GameApplication::framebufferSizeCallback(GLFWwindow *window, int width, int
 
     spdlog::debug("Framebuffer size changed: {}x{}", width, height);
 
-    app->m_width = width;
-    app->m_height = height;
     if (width == 0 || height == 0) {
         return;
     }
-    app->m_camera.updateResolution(width, height);
+    app->m_fbWidth = width;
+    app->m_fbHeight = height;
+
     app->m_window.setViewport(0, 0, width, height);
+    app->m_camera.updateFramebufferSize(width, height);
     auto renderTarget = s_resourceManager.getRenderTarget("game_target");
     renderTarget->setup(width, height);
+
+    int windowWidth, windowHeight;
+    app->m_window.getWindowSize(windowWidth, windowHeight);
+    app->m_width = windowWidth;
+    app->m_height = windowHeight;
+    app->m_camera.updateResolution(windowWidth, windowHeight);
 }

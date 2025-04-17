@@ -26,6 +26,7 @@ public:
     float zoom;
 
     glm::ivec2 resolution{800, 600};
+    glm::ivec2 framebufferSize{800, 600};
 
     glm::vec3 position;
     glm::vec3 front;
@@ -47,6 +48,7 @@ public:
     glm::mat4 getProjectionMatrix() const;
     glm::mat4 getViewMatrix() const;
     void updateResolution(float width, float height);
+    void updateFramebufferSize(float width, float height);
     glm::vec3 rayDirFromNDC(float x, float y);
     glm::vec3 rayDirFromMouse(float mouseX, float mouseY);
 private:

@@ -9,7 +9,7 @@ uniform bool uShowCrosshair;
 
 uniform sampler2D uTexture;
 
-bool curPixelInCrossHair(float lineWidth = 1.0, float size = 10.0) {
+bool curPixelInCrossHair(float lineWidth, float size) {
     float padding = 0;
     if (int(uResolution.y) % 2 != 0)
         padding = 0.5;
@@ -24,7 +24,7 @@ void main()
     float gamma = 2.2;
     vec4 color = texture(uTexture, vTexCoord);
     color = pow(color, vec4(1.0 / gamma));
-    if (curPixelInCrossHair() && uShowCrosshair) {
+    if (curPixelInCrossHair(1, 10) && uShowCrosshair) {
         color = vec4(1 - color.xyz, 1);
     }
     outputColor = color;

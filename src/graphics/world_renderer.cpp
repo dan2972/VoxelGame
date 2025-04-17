@@ -81,7 +81,7 @@ void WorldRenderer::drawChunkBorder(const glm::ivec3 &chunkPos, const Camera &ca
     lineShader->setMat4("uView", camera.getViewMatrix());
     lineShader->setMat4("uModel", glm::mat4(1.0f));
     lineShader->setFloat("uLineWidth", 1.0f);
-    lineShader->setVec2("uResolution", camera.resolution);
+    lineShader->setVec2("uResolution", camera.framebufferSize);
     lineRenderer->draw();
     if (isCulled)
         window.enableCulling();
@@ -176,7 +176,7 @@ void WorldRenderer::highlightVoxels(const std::vector<glm::ivec3>& voxels, const
     lineShader->setMat4("uView", camera.getViewMatrix());
     lineShader->setMat4("uModel", glm::mat4(1.0f));
     lineShader->setFloat("uLineWidth", 2.0f);
-    lineShader->setVec2("uResolution", camera.resolution);
+    lineShader->setVec2("uResolution", camera.framebufferSize);
     lineRenderer->draw();
     if (isCulled)
         window.enableCulling();

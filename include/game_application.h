@@ -36,6 +36,8 @@ private:
 
     int m_width = GameWindow::DEFAULT_WIDTH;
     int m_height = GameWindow::DEFAULT_HEIGHT;
+    int m_fbWidth = GameWindow::DEFAULT_WIDTH;
+    int m_fbHeight = GameWindow::DEFAULT_HEIGHT;
 
     GameWindow m_window;
     uint32_t m_targetTPS = 30;

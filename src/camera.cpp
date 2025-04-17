@@ -74,6 +74,11 @@ void Camera::updateResolution(float width, float height)
     resolution = glm::ivec2(width, height);
 }
 
+void Camera::updateFramebufferSize(float width, float height)
+{
+    framebufferSize = glm::ivec2(width, height);
+}
+
 glm::vec3 Camera::rayDirFromNDC(float x, float y)
 {
     glm::vec4 clipCoords{x, y, -1.0f, 1.0f};

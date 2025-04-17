@@ -18,8 +18,6 @@ public:
 
     WorldRenderer(const WorldRenderer&) = delete;
     WorldRenderer& operator=(const WorldRenderer&) = delete;
-    WorldRenderer(WorldRenderer&&) = default;
-    WorldRenderer& operator=(WorldRenderer&&) = default;
 
     void update();
 
