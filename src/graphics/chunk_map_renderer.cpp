@@ -1,6 +1,6 @@
 #include "graphics/chunk_map_renderer.h"
 
-void ChunkMapRenderer::setupResources(gfx::Shader* chunkShader, gfx::TextureAtlas<BlockType>* textureAtlas) 
+void ChunkMapRenderer::setupResources(gfx::Shader* chunkShader, gfx::TextureAtlas<BlockTexture>* textureAtlas) 
 {
     m_chunkShader = chunkShader;
     m_textureAtlas = textureAtlas;
@@ -143,7 +143,7 @@ void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, 
     }
 }
 
-void ChunkMapRenderer::meshBuildThreadFunc(const gfx::TextureAtlas<BlockType>& atlas, bool useSmoothLighting) {
+void ChunkMapRenderer::meshBuildThreadFunc(const gfx::TextureAtlas<BlockTexture>& atlas, bool useSmoothLighting) {
     while (true)
     {
         if (m_stopThread)

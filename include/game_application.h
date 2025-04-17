@@ -10,6 +10,7 @@
 #include "world/world.h"
 #include "input_manager.h"
 #include "graphics/world_renderer.h"
+#include "resource_loader.h"
 
 class GameApplication
 {
@@ -43,6 +44,7 @@ private:
     uint32_t m_targetTPS = 30;
     
     static ResourceManager s_resourceManager;
+    ResourceLoader m_resourceLoader{&s_resourceManager};
 
     Camera m_camera;
 

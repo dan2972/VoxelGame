@@ -27,7 +27,7 @@ public:
     ChunkMapRenderer(const ChunkMap* chunkMap) : m_chunkMap(chunkMap) {}
     ~ChunkMapRenderer() { stopThread(); }
 
-    void setupResources(gfx::Shader* chunkShader, gfx::TextureAtlas<BlockType>* textureAtlas);
+    void setupResources(gfx::Shader* chunkShader, gfx::TextureAtlas<BlockTexture>* textureAtlas);
 
     void updateBuildQueue(bool useSmoothLighting);
     
@@ -36,7 +36,7 @@ public:
 
     void draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor);
 
-    void meshBuildThreadFunc(const gfx::TextureAtlas<BlockType>& atlas, bool useSmoothLighting);
+    void meshBuildThreadFunc(const gfx::TextureAtlas<BlockTexture>& atlas, bool useSmoothLighting);
 
     void startBuildThread(bool useSmoothLighting);
     void stopThread() { m_stopThread = true; }
@@ -51,7 +51,7 @@ private:
     std::atomic_bool m_stopThread = false;
     
     gfx::Shader* m_chunkShader = nullptr;
-    gfx::TextureAtlas<BlockType>* m_textureAtlas = nullptr;
+    gfx::TextureAtlas<BlockTexture>* m_textureAtlas = nullptr;
     
     void checkPointers() const;
     bool checkNeighborChunks(const glm::ivec3& chunkPos, bool checkSelf=false) const;

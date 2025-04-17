@@ -100,23 +100,8 @@ bool GameApplication::load()
         spdlog::error("Failed to initialize ImGui.");
         return false;
     }
-
-    s_resourceManager.loadShader("line", "res/shaders/line_renderer.vert", "res/shaders/line_renderer.frag");
-    s_resourceManager.loadShader("font", "res/shaders/font_renderer.vert", "res/shaders/font_renderer.frag");
-    s_resourceManager.loadShader("font_billboard", "res/shaders/font_renderer_billboard.vert", "res/shaders/font_renderer.frag");
-    s_resourceManager.loadShader("screen_quad", "res/shaders/screen_quad.vert", "res/shaders/screen_quad.frag");
-    s_resourceManager.loadShader("sky_color", "res/shaders/sky_color.vert", "res/shaders/sky_color.frag");
-
-    s_resourceManager.addLineRenderer("default");
-
-    auto fontRenderer = s_resourceManager.loadFontRenderer("default", "res/fonts/arial.ttf", 48);
-    fontRenderer->preloadDefaultGlyphs();
-    auto fontRendererBB = s_resourceManager.loadFontRenderer("default_billboard", "res/fonts/courier-mon.ttf", 48, true);
-    fontRendererBB->preloadDefaultGlyphs();
-
-    s_resourceManager.addRenderTarget("game_target", m_fbWidth, m_fbHeight);
-    s_resourceManager.addScreenQuad("game_quad");
-    s_resourceManager.addScreenQuad("sky_quad");
+    
+    m_resourceLoader.load({m_fbWidth, m_fbHeight});
     
     m_worldRenderer.loadResources();
     m_worldRenderer.getChunkMapRenderer().startBuildThread(true);

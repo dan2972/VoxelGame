@@ -26,7 +26,7 @@ void ChunkMesh::clearMesh()
     m_indexCounter = 0;
 }
 
-void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas<BlockType>& atlas, bool smoothLighting)
+void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas<BlockTexture>& atlas, bool smoothLighting)
 {
     if (!snapshot.isValid())
         return;
@@ -46,18 +46,37 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas
                 if (blockType == BlockType::Air)
                     continue;
                 
-                auto [uvMin, uvMax] = atlas.get(blockType);
+                BlockTexture blockTexture;
+                std::array<float, 8> textureCoords;
+                bool texureFaceAllSame = BlockData::getBlockTextureData(blockType).allSame();
+                if (texureFaceAllSame) {
+                    blockTexture = BlockData::getBlockTexture(blockType, BlockFace::Top);
+                    auto [uvMin, uvMax] = atlas.get(blockTexture);
 
-                std::array<float, 8> textureCoords = 
-                {
-                    uvMin.x, uvMax.y,
-                    uvMax.x, uvMax.y,
-                    uvMax.x, uvMin.y,
-                    uvMin.x, uvMin.y
-                };
+                    textureCoords = 
+                    {
+                        uvMin.x, uvMax.y,
+                        uvMax.x, uvMax.y,
+                        uvMax.x, uvMin.y,
+                        uvMin.x, uvMin.y
+                    };
+                }
 
                 for (int i = 0; i < 6; ++i)
                 {
+                    if (!texureFaceAllSame) {
+                        blockTexture = BlockData::getBlockTexture(blockType, static_cast<BlockFace>(i));
+                        auto [uvMin, uvMax] = atlas.get(blockTexture);
+
+                        textureCoords = 
+                        {
+                            uvMin.x, uvMax.y,
+                            uvMax.x, uvMax.y,
+                            uvMax.x, uvMin.y,
+                            uvMin.x, uvMin.y
+                        };
+                    }
+
                     glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
                     BlockType bType = snapshot.getBlockFromLocalPos(pos + dir);
                     if (shouldRenderFace(blockType, bType))
@@ -135,17 +154,17 @@ std::array<int, 12> ChunkMesh::getFaceCoords(BlockFace face)
 {
     switch(face)
     {
-        case BlockFace::FRONT:
+        case BlockFace::Front:
             return {0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1};
-        case BlockFace::BACK:
+        case BlockFace::Back:
             return {1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0};
-        case BlockFace::LEFT:
+        case BlockFace::Left:
             return {0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0};
-        case BlockFace::RIGHT:
+        case BlockFace::Right:
             return {1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1};
-        case BlockFace::TOP:
+        case BlockFace::Top:
             return {0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0};
-        case BlockFace::BOTTOM:
+        case BlockFace::Bottom:
             return {0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1};
         default:
             return {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -233,7 +252,7 @@ bool ChunkMesh::shouldFlipQuad(std::array<int, 4> aoValues)
 void ChunkMesh::getAOBlockPos(const glm::ivec3 &cornerPos, BlockFace face, glm::ivec3 *outs1, glm::ivec3 *outs2, glm::ivec3 *outc)
 {
     glm::ivec3 s1, s2, c;
-    if (face == BlockFace::LEFT || face == BlockFace::RIGHT)
+    if (face == BlockFace::Left || face == BlockFace::Right)
         s1.x = cornerPos.x == 0 ? -1 : 1;
     else
         s1.x = 0;
@@ -241,12 +260,12 @@ void ChunkMesh::getAOBlockPos(const glm::ivec3 &cornerPos, BlockFace face, glm::
     s2.x = cornerPos.x == 0 ? -1 : 1;
     
     
-    if (face == BlockFace::LEFT || face == BlockFace::RIGHT)
+    if (face == BlockFace::Left || face == BlockFace::Right)
         s1.y = 0;
     else
         s1.y = cornerPos.y == 0 ? -1 : 1;
     c.y = cornerPos.y == 0 ? -1 : 1;
-    if (face == BlockFace::FRONT || face == BlockFace::BACK)
+    if (face == BlockFace::Front || face == BlockFace::Back)
         s2.y = 0;
     else
         s2.y = cornerPos.y == 0 ? -1 : 1;
@@ -254,7 +273,7 @@ void ChunkMesh::getAOBlockPos(const glm::ivec3 &cornerPos, BlockFace face, glm::
     
     s1.z = cornerPos.z == 0 ? -1 : 1;
     c.z = cornerPos.z == 0 ? -1 : 1;
-    if (face == BlockFace::FRONT || face == BlockFace::BACK)
+    if (face == BlockFace::Front || face == BlockFace::Back)
         s2.z = cornerPos.z == 0 ? -1 : 1;
     else
         s2.z = 0;
@@ -273,5 +292,5 @@ int ChunkMesh::vertexAO(bool side1, bool side2, bool corner)
 
 bool ChunkMesh::shouldRenderFace(BlockType curBlock, BlockType neighbor)
 {
-    return curBlock != neighbor && isTransparentBlock(neighbor);
+    return curBlock != neighbor && BlockData::isTransparentBlock(neighbor);
 }

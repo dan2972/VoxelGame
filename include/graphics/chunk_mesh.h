@@ -29,7 +29,7 @@ public:
 
     void clearMesh();
 
-    void buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas<BlockType>& atlas, bool smoothLighting=true);
+    void buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas<BlockTexture>& atlas, bool smoothLighting=true);
 
     void submitBuffers();
 

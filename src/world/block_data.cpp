@@ -1,22 +1,14 @@
 #include "world/block_data.h"
-#include <stdexcept>
-#include <spdlog/spdlog.h>
 
-std::string blockTypeToString(BlockType type)
+std::unordered_map<int, BlockTextureData> BlockData::s_blockTextureMap;
+std::unordered_map<int, BlockProperties> BlockData::s_blockDataMap;
+std::unordered_map<std::string, BlockTexture> BlockData::stringToBlockTexture = 
 {
-    if (static_cast<int>(type) < 0 || static_cast<int>(type) >= blockTypeNames.size())
-    {
-        spdlog::error("BlockType out of range: {}", static_cast<int>(type));
-        throw std::out_of_range("BlockType out of range");
-    }
-    return blockTypeNames[static_cast<int>(type)];
-}
-
-bool isTransparentBlock(BlockType type)
-{
-    if (type == BlockType::Air || type == BlockType::Water)
-    {
-        return true;
-    }
-    return false;
-}
+    {"grass_top", BlockTexture::GrassTop},
+    {"grass_side", BlockTexture::GrassSide},
+    {"dirt", BlockTexture::Dirt},
+    {"stone", BlockTexture::Stone},
+    {"wood_planks", BlockTexture::WoodPlanks},
+    {"sand", BlockTexture::Sand},
+    {"water", BlockTexture::Water}
+};
