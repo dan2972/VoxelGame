@@ -144,12 +144,13 @@ void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, 
 }
 
 void ChunkMapRenderer::meshBuildThreadFunc(const gfx::TextureAtlas<BlockTexture>& atlas, bool useSmoothLighting) {
-    while (true)
+    while (!m_stopThread)
     {
-        if (m_stopThread)
-            break;
         ChunkSnapshot snapshot;
-        m_chunksToBuild.pop(snapshot);
+        if (!m_chunksToBuild.popNoWait(snapshot)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            continue;
+        }
         auto chunkMesh = std::make_shared<ChunkMesh>();
         chunkMesh->buildMesh(snapshot, atlas, useSmoothLighting);
         m_chunksToSubmit.push({snapshot.center()->getPos(), chunkMesh});

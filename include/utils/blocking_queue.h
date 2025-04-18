@@ -36,6 +36,16 @@ public:
         return true;
     }
 
+    bool popNoWait(T& item) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_queue.empty())
+            return false;
+        
+        item = m_queue.front();
+        m_queue.pop();
+        return true;
+    }
+
     bool empty() const {
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_queue.empty();
