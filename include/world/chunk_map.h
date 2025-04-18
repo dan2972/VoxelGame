@@ -4,11 +4,13 @@
 #include <unordered_map>
 #include <memory>
 #include <queue>
+#include <unordered_set>
 #include <cstdint>
 #include "block_data.h"
 #include "chunk.h"
 #include "utils/glm_hash.h"
 #include "world/chunk_queue_node.h"
+#include "utils/blocking_queue.h"
 
 class ChunkMap
 {
@@ -17,6 +19,10 @@ public:
     ~ChunkMap() = default;
 
     void update();
+
+    void startBuildThread();
+    void chunkBuildThreadFunc();
+    void stopThread() { m_stopThread = true; }
 
     void addChunkRadius(const glm::ivec3& chunkPos, int radius);
 
@@ -48,7 +54,10 @@ public:
     std::vector<std::shared_ptr<const Chunk>> getChunksInRadius(const glm::ivec3& chunkPos, int radius) const;
 private:
     std::unordered_map<glm::ivec3, std::shared_ptr<Chunk>, glm_ivec3_hash, glm_ivec3_equal> m_chunks;
-    std::priority_queue<ChunkQueueNode> m_chunkUpdateQueue;
+    BlockingQueue<glm::ivec3> m_chunksToBuild;
+    BlockingQueue<std::shared_ptr<Chunk>> m_chunksToSubmit;
+    std::unordered_set<glm::ivec3, glm_ivec3_hash, glm_ivec3_equal> m_chunksInBuildQueue;
+    std::atomic_bool m_stopThread = false;
 
     std::shared_ptr<Chunk> getChunkInternal(const glm::ivec3& pos) const;
     std::shared_ptr<Chunk> checkCopy2Write(const std::shared_ptr<Chunk>& chunk);

@@ -26,7 +26,8 @@ public:
 
 private:
     bool load();
-    void update();
+    void fixedUpdate();
+    void unfixedUpdate();
     void render();
     void cleanup();
 

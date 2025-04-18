@@ -1,4 +1,5 @@
 #include "graphics/chunk_map_renderer.h"
+#include "utils/algorithms.h"
 
 void ChunkMapRenderer::setupResources(gfx::Shader* chunkShader, gfx::TextureAtlas<BlockTexture>* textureAtlas) 
 {
@@ -28,27 +29,21 @@ void ChunkMapRenderer::updateBuildQueue(bool useSmoothLighting)
 
 void ChunkMapRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius) 
 {
-    for (int x = -radius; x <= radius; ++x)
+    std::vector<glm::ivec3> chunksToAdd = algo::getPosFromCenter(chunkPos, radius);
+    for (const auto& pos : chunksToAdd)
     {
-        for (int y = -radius; y <= radius; ++y)
-        {
-            for (int z = -radius; z <= radius; ++z)
-            {
-                glm::ivec3 pos = chunkPos + glm::ivec3(x, y, z);
-                if (m_chunkMeshes.contains(pos)) {
-                    m_activeChunkMeshes[pos] = m_chunkMeshes[pos];
-                    continue;
-                }
-                if (m_chunksInBuildQueue.contains(pos))
-                    continue;
-                
-                ChunkSnapshot snapshot;
-                if (!ChunkSnapshot::CreateSnapshot(*m_chunkMap, pos, snapshot))
-                    continue;
-                m_chunksInBuildQueue.insert(pos);
-                m_chunksToBuild.push(snapshot);
-            }
+        if (m_chunkMeshes.contains(pos)) {
+            m_activeChunkMeshes[pos] = m_chunkMeshes[pos];
+            continue;
         }
+        if (m_chunksInBuildQueue.contains(pos))
+            continue;
+        
+        ChunkSnapshot snapshot;
+        if (!ChunkSnapshot::CreateSnapshot(*m_chunkMap, pos, snapshot))
+            continue;
+        m_chunksInBuildQueue.insert(pos);
+        m_chunksToBuild.push(snapshot);
     }
 }
 

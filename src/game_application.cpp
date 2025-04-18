@@ -55,10 +55,11 @@ void GameApplication::run()
         {
             --delta;
             ++ticks;
-            update();
+            fixedUpdate();
         }
         ++frames;
 
+        unfixedUpdate();
         m_window.clear();
         m_gameTime.interpFraction = delta;
         render();
@@ -93,6 +94,7 @@ bool GameApplication::load()
     m_window.setBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     m_window.enableCulling();
 
+    m_camera.position = {0.0f, 10.0f, 0.0f};
     m_camera.updateResolution(m_width, m_height);
     m_camera.updateFramebufferSize(m_fbWidth, m_fbHeight);
     
@@ -106,12 +108,17 @@ bool GameApplication::load()
     m_worldRenderer.loadResources();
     m_worldRenderer.getChunkMapRenderer().startBuildThread(true);
 
+    m_world.getChunkMap().startBuildThread();
     m_world.getChunkMap().addChunkRadius({0, 0, 0}, 5);
 
     return true;
 }
 
-void GameApplication::update()
+void GameApplication::fixedUpdate()
+{
+}
+
+void GameApplication::unfixedUpdate()
 {
     m_world.update();
     m_worldRenderer.update();
@@ -132,7 +139,7 @@ void GameApplication::render()
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", m_camera.position.x, m_camera.position.y, m_camera.position.z);
     if (ImGui::CollapsingHeader("Render Options")) {
         ImGui::Checkbox("Show Chunk Border", &m_worldRenderer.renderOptions.showChunkBorder);
-        ImGui::SliderInt("Render Distance", &m_worldRenderer.renderOptions.renderDistance, 1, 16);
+        ImGui::SliderInt("Render Distance", &m_worldRenderer.renderOptions.renderDistance, 1, 32);
         if (ImGui::CollapsingHeader("Light Levels")) {
             ImGui::Checkbox("Show Sun Light Levels", &m_worldRenderer.renderOptions.showSunLightLevels);
             ImGui::Checkbox("Show Block Light Levels", &m_worldRenderer.renderOptions.showBlockLightLevels);

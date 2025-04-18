@@ -1,4 +1,5 @@
 #include "world/chunk_map.h"
+#include "utils/algorithms.h"
 
 ChunkMap::ChunkMap()
 {
@@ -6,35 +7,49 @@ ChunkMap::ChunkMap()
 
 void ChunkMap::update()
 {
-    int meshBuildCount = 0;
-    while (!m_chunkUpdateQueue.empty())
+    while (!m_chunksToSubmit.empty())
     {
-        auto chunkPos = m_chunkUpdateQueue.top().chunkPos;
-        m_chunkUpdateQueue.pop();
-        if (meshBuildCount < 16 && addChunk(chunkPos)) {
-            meshBuildCount++;
+        std::shared_ptr<Chunk> chunk;
+        m_chunksToSubmit.pop(chunk);
+        auto it = m_chunks.find(chunk->getPos());
+        if (it != m_chunks.end()) {
+            it->second = chunk;
+        } else {
+            m_chunks.emplace(chunk->getPos(), chunk);
         }
+        m_chunksInBuildQueue.erase(chunk->getPos());
     }
+}
+
+void ChunkMap::chunkBuildThreadFunc()
+{
+    while (!m_stopThread)
+    {
+        glm::ivec3 chunkPos;
+        if (!m_chunksToBuild.popNoWait(chunkPos)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            continue;
+        }
+        auto chunk = std::make_shared<Chunk>(chunkPos);
+        m_chunksToSubmit.push(chunk);
+    }
+}
+
+void ChunkMap::startBuildThread()
+{
+    m_stopThread = false;
+    std::thread([this]() { chunkBuildThreadFunc(); }).detach();
 }
 
 void ChunkMap::addChunkRadius(const glm::ivec3& chunkPos, int radius) 
 {
-    for (int x = -radius; x <= radius; ++x)
+    std::vector<glm::ivec3> chunksToAdd = algo::getPosFromCenter(chunkPos, radius);
+    for (const auto& pos : chunksToAdd)
     {
-        for (int y = -radius; y <= radius; ++y)
+        if (!m_chunks.contains(pos) && !m_chunksInBuildQueue.contains(pos))
         {
-            for (int z = -radius; z <= radius; ++z)
-            {
-                int dx = x - chunkPos.x;
-                int dy = y - chunkPos.y;
-                int dz = z - chunkPos.z;
-                int distance = dx * dx + dy * dy + dz * dz;
-                glm::ivec3 pos = chunkPos + glm::ivec3(x, y, z);
-                if (!m_chunks.contains(pos))
-                {
-                    m_chunkUpdateQueue.push(ChunkQueueNode{pos, distance});
-                }
-            }
+            m_chunksToBuild.push(pos);
+            m_chunksInBuildQueue.insert(pos);
         }
     }
 }

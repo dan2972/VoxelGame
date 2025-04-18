@@ -3,6 +3,8 @@
 
 void ChunkMesh::setup()
 {
+    if (m_indexCounter == 0)
+        return;
     m_mesh.populate(m_vertices, m_indices, {1, 2});
 }
 

@@ -28,26 +28,26 @@ void Chunk::generateTerrain()
                 if (gPos.y < noise) {
                     int diff = noise - gPos.y;
                     if (diff < 1) {
-                        m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Grass;
+                        m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = BlockType::Grass;
                     } else if (diff < 3) {
-                        m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Dirt;
+                        m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = BlockType::Dirt;
                     } else {
-                        m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Stone;
+                        m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = BlockType::Stone;
                     }
                     if (gPos.y <= 2) {
                         if (diff < 3) {
-                            m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Sand;
+                            m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = BlockType::Sand;
                         }
                     }
                     m_allAir = false;
                 } 
                 else if (gPos.y <= 0) {
-                    m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Water;
+                    m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = BlockType::Water;
                     m_allAir = false;
                 }
                 else
                 {
-                    m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = BlockType::Air;
+                    m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = BlockType::Air;
                     m_allSolid = false;
                 }
                 
@@ -64,7 +64,7 @@ BlockType Chunk::getBlock(int x, int y, int z) const
     {
         return BlockType::Air;
     }
-    return m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE];
+    return m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y];
 }
 
 BlockType Chunk::getBlock(const glm::ivec3 &pos) const
@@ -78,7 +78,7 @@ uint16_t Chunk::getSunLight(int x, int y, int z) const
     {
         return 15;
     }
-    return (m_lightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] >> 12) & 0xF;
+    return (m_lightMap[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] >> 12) & 0xF;
 }
 
 uint16_t Chunk::getSunLight(const glm::ivec3 &pos) const
@@ -92,7 +92,7 @@ uint16_t Chunk::getBlockLight(int x, int y, int z) const
     {
         return 0;
     }
-    return (m_lightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] >> 8) & 0xF;
+    return (m_lightMap[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] >> 8) & 0xF;
 }
 
 uint16_t Chunk::getBlockLight(const glm::ivec3 &pos) const
@@ -116,7 +116,7 @@ void Chunk::setBlock(int x, int y, int z, BlockType type)
     {
         return;
     }
-    m_blocks[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE] = type;
+    m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = type;
     if (type != BlockType::Air)
         m_allAir = false;
 }
@@ -132,7 +132,7 @@ void Chunk::setSunLight(int x, int y, int z, uint8_t lightLevel)
     {
         return;
     }
-    uint16_t &light = m_lightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE];
+    uint16_t &light = m_lightMap[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y];
     light &= ~(0xF << 12);
     light |= ((lightLevel & 0xF) << 12);
 }
@@ -148,7 +148,7 @@ void Chunk::setBlockLight(int x, int y, int z, uint8_t lightLevel)
     {
         return;
     }
-    uint16_t &light = m_lightMap[x + z * CHUNK_SIZE + y * CHUNK_SIZE * CHUNK_SIZE];
+    uint16_t &light = m_lightMap[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y];
     light &= ~(0xF << 8);
     light |= ((lightLevel & 0xF) << 8);
 }
