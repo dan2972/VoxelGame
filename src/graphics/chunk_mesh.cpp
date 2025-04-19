@@ -49,10 +49,11 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas
                     continue;
                 
                 BlockTexture blockTexture;
+                BlockTextureData blockTextureData = BlockData::getBlockTextureData(blockType);
                 std::array<float, 8> textureCoords;
-                bool texureFaceAllSame = BlockData::getBlockTextureData(blockType).allSame();
+                bool texureFaceAllSame = blockTextureData.allSame();
                 if (texureFaceAllSame) {
-                    blockTexture = BlockData::getBlockTexture(blockType, BlockFace::Top);
+                    blockTexture = blockTextureData.getTexture(BlockFace::Top);
                     auto [uvMin, uvMax] = atlas.get(blockTexture);
 
                     textureCoords = 
@@ -67,7 +68,7 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas
                 for (int i = 0; i < 6; ++i)
                 {
                     if (!texureFaceAllSame) {
-                        blockTexture = BlockData::getBlockTexture(blockType, static_cast<BlockFace>(i));
+                        blockTexture = blockTextureData.getTexture(static_cast<BlockFace>(i));
                         auto [uvMin, uvMax] = atlas.get(blockTexture);
 
                         textureCoords = 

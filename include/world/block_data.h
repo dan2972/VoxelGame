@@ -50,6 +50,21 @@ struct BlockTextureData
     BlockTexture right;
 
     bool allSame () const { return top == bottom && top == front && top == back && top == left && top == right; }
+    BlockTexture& getTexture(BlockFace face)
+    {
+        switch (face)
+        {
+            case BlockFace::Front: return front;
+            case BlockFace::Back: return back;
+            case BlockFace::Left: return left;
+            case BlockFace::Right: return right;
+            case BlockFace::Top: return top;
+            case BlockFace::Bottom: return bottom;
+            default:
+                spdlog::error("Invalid block face: {}", static_cast<int>(face));
+                throw std::invalid_argument("Invalid block face.");
+        }
+    }
 
     BlockTextureData()
         : top(BlockTexture::GrassTop), bottom(BlockTexture::GrassTop),
@@ -95,18 +110,7 @@ public:
         auto it = s_blockTextureMap.find(static_cast<int>(type));
         if (it != s_blockTextureMap.end())
         {
-            switch (face)
-            {
-                case BlockFace::Front: return it->second.front;
-                case BlockFace::Back: return it->second.back;
-                case BlockFace::Left: return it->second.left;
-                case BlockFace::Right: return it->second.right;
-                case BlockFace::Top: return it->second.top;
-                case BlockFace::Bottom: return it->second.bottom;
-                default:
-                    spdlog::error("Invalid block face: {}", static_cast<int>(face));
-                    throw std::invalid_argument("Invalid block face.");
-            }
+            return it->second.getTexture(face);
         }
         spdlog::error("Block type not found in texture map: {}", static_cast<int>(type));
         throw std::runtime_error("Block type not found in texture map.");

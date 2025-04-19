@@ -4,7 +4,7 @@
 
 struct RenderOptions
 {
-    int renderDistance = 5;
+    int renderDistance = 8;
     bool useAO = true;
     bool useSmoothLighting = true;
     bool showChunkBorder = false;

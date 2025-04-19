@@ -123,8 +123,8 @@ void GameApplication::unfixedUpdate()
     m_world.update();
     m_worldRenderer.update();
     glm::ivec3 camChunkPos = Chunk::globalToChunkPos(m_camera.position);
-    m_world.getChunkMap().addChunkRadius(camChunkPos, 6);
-    m_worldRenderer.getChunkMapRenderer().queueChunkRadius(camChunkPos, 5);
+    m_world.getChunkMap().addChunkRadius(camChunkPos, m_worldRenderer.renderOptions.renderDistance + 1);
+    m_worldRenderer.getChunkMapRenderer().queueChunkRadius(camChunkPos, m_worldRenderer.renderOptions.renderDistance);
 }
 
 void GameApplication::render()
