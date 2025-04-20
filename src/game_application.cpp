@@ -195,7 +195,6 @@ void GameApplication::render()
     s_resourceManager.getScreenQuad("sky_quad")->draw();
     m_window.enableDepthTest();
 
-    m_worldRenderer.draw(m_camera, m_window);
     auto mousePos = InputManager::getMousePosition();
     auto lookPos = m_camera.rayDirFromNDC(0, 0);
     auto node = algo::voxelRayHit(m_camera.position, lookPos, [&](const glm::ivec3& pos) {
@@ -213,6 +212,7 @@ void GameApplication::render()
             m_worldRenderer.getChunkMapRenderer().queueBlockUpdate(node.pos + node.normal, BlockType::WoodPlanks);
         }
     }
+    m_worldRenderer.draw(m_camera, m_window);
 
     renderTarget->useDefault();
     m_window.clear(GL_COLOR_BUFFER_BIT);

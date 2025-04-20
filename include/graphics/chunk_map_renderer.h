@@ -13,6 +13,7 @@
 #include "graphics/gfx/texture_atlas.h"
 #include "graphics/gfx/shader.h"
 #include "utils/blocking_queue.h"
+#include "utils/blocking_deque.h"
 
 struct ChunkReadyNode
 {
@@ -45,7 +46,7 @@ private:
     const ChunkMap* m_chunkMap = nullptr;
     std::unordered_map<glm::ivec3, std::shared_ptr<ChunkMesh>, glm_ivec3_hash, glm_ivec3_equal> m_chunkMeshes;
     std::unordered_map<glm::ivec3, std::shared_ptr<ChunkMesh>, glm_ivec3_hash, glm_ivec3_equal> m_activeChunkMeshes;
-    BlockingQueue<ChunkSnapshot> m_chunksToBuild;
+    BlockingDeque<ChunkSnapshot> m_chunksToBuild;
     BlockingQueue<ChunkReadyNode> m_chunksToSubmit;
     std::unordered_set<glm::ivec3, glm_ivec3_hash, glm_ivec3_equal> m_chunksInBuildQueue;
     std::atomic_bool m_stopThread = false;

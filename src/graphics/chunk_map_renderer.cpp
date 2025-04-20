@@ -43,22 +43,20 @@ void ChunkMapRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius)
         if (!ChunkSnapshot::CreateSnapshot(*m_chunkMap, pos, snapshot))
             continue;
         m_chunksInBuildQueue.insert(pos);
-        m_chunksToBuild.push(snapshot);
+        m_chunksToBuild.pushBack(snapshot);
     }
 }
 
 void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType blockType)
 {
-    m_chunksToBuild.clear();
-    m_chunksInBuildQueue.clear();
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(blockPos);
     ChunkSnapshot snapshot;
 
     // if the block type is air (removing a block), build the boundaries first
     bool buildCenterChunkFirst = blockType != BlockType::Air;
-    if (buildCenterChunkFirst) {
+    if (!buildCenterChunkFirst) {
         if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos, snapshot)) {
-            m_chunksToBuild.push(snapshot);
+            m_chunksToBuild.pushFront(snapshot);
             m_chunksInBuildQueue.insert(chunkPos);
         }
     }
@@ -85,7 +83,7 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
                     glm::ivec3 neighborChunkPos = chunkPos + offset;
                     ChunkSnapshot snapshotAdj;
                     if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, neighborChunkPos, snapshotAdj)) {
-                        m_chunksToBuild.push(snapshotAdj);
+                        m_chunksToBuild.pushFront(snapshotAdj);
                         m_chunksInBuildQueue.insert(neighborChunkPos);
                     }
                 }
@@ -93,9 +91,9 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
         }
     }
 
-    if (!buildCenterChunkFirst) {
+    if (buildCenterChunkFirst) {
         if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos, snapshot)) {
-            m_chunksToBuild.push(snapshot);
+            m_chunksToBuild.pushFront(snapshot);
             m_chunksInBuildQueue.insert(chunkPos);
         }
     }
@@ -142,7 +140,7 @@ void ChunkMapRenderer::meshBuildThreadFunc(const gfx::TextureAtlas<BlockTexture>
     while (!m_stopThread)
     {
         ChunkSnapshot snapshot;
-        if (!m_chunksToBuild.popNoWait(snapshot)) {
+        if (!m_chunksToBuild.popFrontNoWait(snapshot)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
