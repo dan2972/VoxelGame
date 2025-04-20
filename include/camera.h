@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "utils/geometry.h"
 
 enum CameraMovement
 {
@@ -36,6 +37,8 @@ public:
 
     float yaw, pitch;
 
+    bool freezeFrustum = false;
+
     Camera(
         const glm::vec3& position=glm::vec3(0.0f, 0.0f, 0.0f), 
         const glm::vec3& up=glm::vec3(0.0f, 1.0f, 0.0f), 
@@ -51,7 +54,9 @@ public:
     void updateFramebufferSize(float width, float height);
     glm::vec3 rayDirFromNDC(float x, float y);
     glm::vec3 rayDirFromMouse(float mouseX, float mouseY);
+    Frustum getFrustum() const;
 private:
+    Frustum m_frustum;
     void updateCameraVectors();
     glm::vec2 getNormalizedDeviceCoords(float mouseX, float mouseY);
     glm::vec4 toEyeCoords(const glm::vec4& clipCoords);

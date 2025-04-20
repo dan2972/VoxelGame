@@ -24,6 +24,7 @@ public:
     void chunkBuildThreadFunc();
     void stopThread() { m_stopThread = true; }
 
+    void queueChunk(const glm::ivec3& chunkPos);
     void addChunkRadius(const glm::ivec3& chunkPos, int radius);
 
     bool addChunk(int x, int y, int z);

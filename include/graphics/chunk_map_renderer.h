@@ -14,6 +14,7 @@
 #include "graphics/gfx/shader.h"
 #include "utils/blocking_queue.h"
 #include "utils/blocking_deque.h"
+#include "utils/geometry.h"
 
 struct ChunkReadyNode
 {
@@ -25,13 +26,14 @@ class ChunkMapRenderer
 {
 public:
     ChunkMapRenderer() = default;
-    ChunkMapRenderer(const ChunkMap* chunkMap) : m_chunkMap(chunkMap) {}
+    ChunkMapRenderer(ChunkMap* chunkMap) : m_chunkMap(chunkMap) {}
     ~ChunkMapRenderer() { stopThread(); }
 
     void setupResources(gfx::Shader* chunkShader, gfx::TextureAtlas<BlockTexture>* textureAtlas);
 
     void updateBuildQueue(bool useSmoothLighting);
     
+    void queueFrustum(const Frustum& frustum, const glm::ivec3& chunkPos, int radius);
     void queueChunkRadius(const glm::ivec3& chunkPos, int radius);
     void queueBlockUpdate(const glm::ivec3& blockPos, BlockType blockType);
 
@@ -43,7 +45,7 @@ public:
     void stopThread() { m_stopThread = true; }
 
 private:
-    const ChunkMap* m_chunkMap = nullptr;
+    ChunkMap* m_chunkMap = nullptr;
     std::unordered_map<glm::ivec3, std::shared_ptr<ChunkMesh>, glm_ivec3_hash, glm_ivec3_equal> m_chunkMeshes;
     std::unordered_map<glm::ivec3, std::shared_ptr<ChunkMesh>, glm_ivec3_hash, glm_ivec3_equal> m_activeChunkMeshes;
     BlockingDeque<ChunkSnapshot> m_chunksToBuild;

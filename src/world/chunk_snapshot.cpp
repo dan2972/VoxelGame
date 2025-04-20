@@ -19,19 +19,41 @@ ChunkSnapshot::ChunkSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerC
     }
 }
 
-bool ChunkSnapshot::CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot& snapshot) {
+bool ChunkSnapshot::CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot) {
     auto centerChunk = chunkMap.getChunk(centerChunkPos);
     if (!centerChunk)
         return false;
 
-    snapshot.chunks[13] = centerChunk;
+    snapshot->chunks[13] = centerChunk;
     for (const auto& dir : getRequiredChunkDirs()) {
         auto chunk = chunkMap.getChunk(centerChunkPos + dir);
         if (!chunk) 
             return false;
-        snapshot.chunks[(dir.x + 1) * 9 + (dir.y + 1) * 3 + (dir.z + 1)] = chunk;
+        snapshot->chunks[(dir.x + 1) * 9 + (dir.y + 1) * 3 + (dir.z + 1)] = chunk;
     }
     return true;
+}
+
+bool ChunkSnapshot::CreateSnapshot(const ChunkMap &chunkMap, const glm::ivec3 &centerChunkPos, ChunkSnapshot* snapshot, std::vector<glm::ivec3>* missingChunks)
+{
+    bool allChunksLoaded = true;
+    auto centerChunk = chunkMap.getChunk(centerChunkPos);
+    if (!centerChunk) {
+        missingChunks->push_back(centerChunkPos);
+        allChunksLoaded = false;
+    }
+
+    snapshot->chunks[13] = centerChunk;
+    for (const auto& dir : getRequiredChunkDirs()) {
+        auto chunk = chunkMap.getChunk(centerChunkPos + dir);
+        if (!chunk) {
+            missingChunks->push_back(centerChunkPos + dir);
+            allChunksLoaded = false;
+            continue;
+        }
+        snapshot->chunks[(dir.x + 1) * 9 + (dir.y + 1) * 3 + (dir.z + 1)] = chunk;
+    }
+    return allChunksLoaded;
 }
 
 std::shared_ptr<const Chunk> ChunkSnapshot::center() const {

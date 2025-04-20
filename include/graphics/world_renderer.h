@@ -13,7 +13,7 @@ public:
     RenderOptions renderOptions;
 
     WorldRenderer() = default;
-    WorldRenderer(const ChunkMap* chunkMap, ResourceManager* resourceManager);
+    WorldRenderer(ChunkMap* chunkMap, ResourceManager* resourceManager);
     ~WorldRenderer() = default;
 
     WorldRenderer(const WorldRenderer&) = delete;
@@ -26,11 +26,11 @@ public:
     void draw(const Camera& camera, GameWindow& window);
 
     void highlightVoxels(const std::vector<glm::ivec3>& voxels, const Camera &camera, GameWindow& window);
-    void showViewFrustum(const glm::mat4& mat, const Camera& camera, GameWindow& window);
+    void showFrustum(const glm::mat4& mat, const Camera& camera, GameWindow& window);
 
     ChunkMapRenderer& getChunkMapRenderer() { return m_chunkMapRenderer; }
 private:
-    const ChunkMap* m_chunkMap = nullptr;
+    ChunkMap* m_chunkMap = nullptr;
     ResourceManager* m_resourceManager = nullptr;
     ChunkMapRenderer m_chunkMapRenderer;
 

@@ -20,5 +20,5 @@ public:
     Frustum() = default;
     Frustum(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix);
 
-    bool AABBInFrustum(const glm::vec3& min, const glm::vec3& max) const;
+    bool intersectsAABB(const glm::vec3& min, const glm::vec3& max) const;
 };

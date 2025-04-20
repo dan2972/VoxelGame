@@ -27,6 +27,61 @@ void ChunkMapRenderer::updateBuildQueue(bool useSmoothLighting)
 
 }
 
+void ChunkMapRenderer::queueFrustum(const Frustum& frustum, const glm::ivec3& chunkPos, int radius) 
+{
+    std::queue<glm::ivec3> nodes;
+    std::unordered_set<glm::ivec3, glm_ivec3_hash, glm_ivec3_equal> visited;
+    nodes.push(chunkPos);
+    visited.insert(chunkPos);
+    int queueCount = 0;
+    while(!nodes.empty())
+    {
+        glm::ivec3 node = nodes.front();
+        nodes.pop();
+
+        if (m_chunkMeshes.contains(node)) {
+            m_activeChunkMeshes[node] = m_chunkMeshes[node];
+        } else if (!m_chunksInBuildQueue.contains(node)) {
+            ChunkSnapshot snapshot;
+            std::vector<glm::ivec3> failedChunks;
+            if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, node, &snapshot, &failedChunks)) {
+                glm::vec3 chunkMin = glm::vec3(node) * float(Chunk::CHUNK_SIZE);
+                glm::vec3 chunkMax = chunkMin + glm::vec3(Chunk::CHUNK_SIZE);
+                if (frustum.intersectsAABB(chunkMin, chunkMax) && !snapshot.center()->isAllAir()) {
+                    m_chunksInBuildQueue.insert(node);
+                    m_chunksToBuild.pushBack(snapshot);
+                    queueCount++;
+                }
+            } else {
+                for (const auto& failedChunk : failedChunks) {
+                    m_chunkMap->queueChunk(failedChunk);
+                }
+                continue;
+            }
+        }
+        
+        for (int dx = -1; dx <= 1; ++dx) {
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dz = -1; dz <= 1; ++dz) {
+                    if (dx == 0 && dy == 0 && dz == 0) continue;
+                    glm::ivec3 neighborPos = node + glm::ivec3(dx, dy, dz);
+                    glm::vec3 dOrigin = neighborPos - chunkPos;
+                    float distance2 = dOrigin.x * dOrigin.x + dOrigin.y * dOrigin.y + dOrigin.z * dOrigin.z;
+                    
+                    if (distance2 > radius * radius) continue;
+                    if (visited.contains(neighborPos)) continue;
+                    
+                    glm::vec3 chunkMin = glm::vec3(neighborPos) * float(Chunk::CHUNK_SIZE);
+                    glm::vec3 chunkMax = chunkMin + glm::vec3(Chunk::CHUNK_SIZE);
+                    if (!frustum.intersectsAABB(chunkMin, chunkMax)) continue;
+                    nodes.push(neighborPos);
+                    visited.insert(neighborPos);
+                }
+            }
+        }
+    }
+}
+
 void ChunkMapRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius) 
 {
     std::vector<glm::ivec3> chunksToAdd = algo::getPosFromCenter(chunkPos, radius);
@@ -40,7 +95,7 @@ void ChunkMapRenderer::queueChunkRadius(const glm::ivec3& chunkPos, int radius)
             continue;
         
         ChunkSnapshot snapshot;
-        if (!ChunkSnapshot::CreateSnapshot(*m_chunkMap, pos, snapshot))
+        if (!ChunkSnapshot::CreateSnapshot(*m_chunkMap, pos, &snapshot))
             continue;
         m_chunksInBuildQueue.insert(pos);
         m_chunksToBuild.pushBack(snapshot);
@@ -55,7 +110,7 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
     // if the block type is air (removing a block), build the boundaries first
     bool buildCenterChunkFirst = blockType != BlockType::Air;
     if (!buildCenterChunkFirst) {
-        if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos, snapshot)) {
+        if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos, &snapshot)) {
             m_chunksToBuild.pushFront(snapshot);
             m_chunksInBuildQueue.insert(chunkPos);
         }
@@ -82,7 +137,7 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
     
                     glm::ivec3 neighborChunkPos = chunkPos + offset;
                     ChunkSnapshot snapshotAdj;
-                    if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, neighborChunkPos, snapshotAdj)) {
+                    if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, neighborChunkPos, &snapshotAdj)) {
                         m_chunksToBuild.pushFront(snapshotAdj);
                         m_chunksInBuildQueue.insert(neighborChunkPos);
                     }
@@ -92,7 +147,7 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
     }
 
     if (buildCenterChunkFirst) {
-        if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos, snapshot)) {
+        if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos, &snapshot)) {
             m_chunksToBuild.pushFront(snapshot);
             m_chunksInBuildQueue.insert(chunkPos);
         }
@@ -104,14 +159,21 @@ void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, 
     checkPointers();
 
     glm::ivec3 cameraChunkPos = Chunk::globalToChunkPos(camera.position);
-
+    Frustum frustum = camera.getFrustum();
     std::queue<glm::ivec3> chunksToUnLoad;
     for (auto& [chunkPos, chunkMesh] : m_activeChunkMeshes)
     {
         glm::ivec3 delta = chunkPos - cameraChunkPos;
-        if (abs(delta.x) > viewDistance || abs(delta.y) > viewDistance || abs(delta.z) > viewDistance)
-        {
+        float distance2 = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+        if (distance2 > viewDistance * viewDistance) {
             chunksToUnLoad.push(chunkPos);
+            continue;
+        }
+        glm::vec3 chunkMin = glm::vec3(chunkPos) * float(Chunk::CHUNK_SIZE);
+        glm::vec3 chunkMax = chunkMin + glm::vec3(Chunk::CHUNK_SIZE);
+        if (!frustum.intersectsAABB(chunkMin, chunkMax)) {
+            chunksToUnLoad.push(chunkPos);
+            continue;
         }
     }
     while (!chunksToUnLoad.empty())

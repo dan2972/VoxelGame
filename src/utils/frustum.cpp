@@ -21,11 +21,15 @@ Frustum::Frustum(const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix)
     planes[5].d = clipMatrix[3][3] - clipMatrix[3][2];
 
     for (auto& plane : planes) {
-        plane.normal = glm::normalize(plane.normal);
+        float length = glm::length(plane.normal);
+        if (length > 0) {
+            plane.normal /= length;
+            plane.d /= length;
+        }
     }
 }
 
-bool Frustum::AABBInFrustum(const glm::vec3& min, const glm::vec3& max) const {
+bool Frustum::intersectsAABB(const glm::vec3& min, const glm::vec3& max) const {
     for (const auto& plane : planes) {
         glm::vec3 positiveVertex = min;
         if (plane.normal.x >= 0) positiveVertex.x = max.x;

@@ -1,7 +1,7 @@
 #include "graphics/world_renderer.h"
 #include "game_application.h"
 
-WorldRenderer::WorldRenderer(const ChunkMap* chunkMap, ResourceManager* resourceManager)
+WorldRenderer::WorldRenderer(ChunkMap* chunkMap, ResourceManager* resourceManager)
     : m_chunkMap(chunkMap), 
     m_resourceManager(resourceManager),
     m_chunkMapRenderer(chunkMap) 
@@ -173,7 +173,7 @@ void WorldRenderer::highlightVoxels(const std::vector<glm::ivec3>& voxels, const
         window.enableCulling();
 }
 
-void WorldRenderer::showViewFrustum(const glm::mat4& mat, const Camera& camera, GameWindow& window)
+void WorldRenderer::showFrustum(const glm::mat4& mat, const Camera& camera, GameWindow& window)
 {
     checkPointers();
     auto lineRenderer = m_resourceManager->getLineRenderer("default");

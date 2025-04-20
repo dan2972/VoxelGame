@@ -19,7 +19,8 @@ public:
     ChunkSnapshot(const std::array<std::shared_ptr<const Chunk>, 27>& chunks);
     ChunkSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos);
 
-    static bool CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot& snapshot);
+    static bool CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot);
+    static bool CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot, std::vector<glm::ivec3>* missingChunks);
 
     std::shared_ptr<const Chunk> center() const;
 

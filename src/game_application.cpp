@@ -13,6 +13,7 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "utils/algorithms.h"
+#include "utils/geometry.h"
 
 ResourceManager GameApplication::s_resourceManager;
 
@@ -109,7 +110,6 @@ bool GameApplication::load()
     m_worldRenderer.getChunkMapRenderer().startBuildThread(true);
 
     m_world.getChunkMap().startBuildThread();
-    m_world.getChunkMap().addChunkRadius({0, 0, 0}, 5);
 
     return true;
 }
@@ -123,8 +123,7 @@ void GameApplication::unfixedUpdate()
     m_world.update();
     m_worldRenderer.update();
     glm::ivec3 camChunkPos = Chunk::globalToChunkPos(m_camera.position);
-    m_world.getChunkMap().addChunkRadius(camChunkPos, m_worldRenderer.renderOptions.renderDistance + 1);
-    m_worldRenderer.getChunkMapRenderer().queueChunkRadius(camChunkPos, m_worldRenderer.renderOptions.renderDistance);
+    m_worldRenderer.getChunkMapRenderer().queueFrustum(m_camera.getFrustum(), camChunkPos, m_worldRenderer.renderOptions.renderDistance);
 }
 
 void GameApplication::render()
@@ -145,6 +144,7 @@ void GameApplication::render()
             ImGui::Checkbox("Show Block Light Levels", &m_worldRenderer.renderOptions.showBlockLightLevels);
             ImGui::SliderFloat("Radius", &m_worldRenderer.renderOptions.showLightLevelRadius, 1.0f, Chunk::CHUNK_SIZE * 2.0f);
         }
+        ImGui::Checkbox("Freeze Frustum", &m_camera.freezeFrustum);
         ImGui::Checkbox("Use AO", &m_worldRenderer.renderOptions.useAO);
         ImGui::Checkbox("Use Smooth Lighting", &m_worldRenderer.renderOptions.useSmoothLighting);
         ImGui::SliderFloat("AO Factor", &m_worldRenderer.renderOptions.aoFactor, 0.0f, 1.0f);

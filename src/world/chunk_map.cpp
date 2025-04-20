@@ -41,6 +41,15 @@ void ChunkMap::startBuildThread()
     std::thread([this]() { chunkBuildThreadFunc(); }).detach();
 }
 
+void ChunkMap::queueChunk(const glm::ivec3& chunkPos)
+{
+    if (!m_chunks.contains(chunkPos) && !m_chunksInBuildQueue.contains(chunkPos))
+    {
+        m_chunksToBuild.push(chunkPos);
+        m_chunksInBuildQueue.insert(chunkPos);
+    }
+}
+
 void ChunkMap::addChunkRadius(const glm::ivec3& chunkPos, int radius) 
 {
     std::vector<glm::ivec3> chunksToAdd = algo::getPosFromCenter(chunkPos, radius);

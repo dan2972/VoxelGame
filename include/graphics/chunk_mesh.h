@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <array>
+#include <atomic>
 #include "world/chunk.h"
 #include "world/world.h"
 #include "graphics/gfx/mesh.h"
@@ -13,8 +15,6 @@
 class ChunkMesh
 {
 public:
-    bool waitingGeneration = false;
-
     ChunkMesh() = default;
     ~ChunkMesh() = default;
 

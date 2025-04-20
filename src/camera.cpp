@@ -56,6 +56,8 @@ void Camera::rotate(float xoffset, float yoffset, bool constrainPitch)
             pitch = -89.0f;
     }
 
+    if (!freezeFrustum)
+        m_frustum = Frustum(getProjectionMatrix(), getViewMatrix());
     updateCameraVectors();
 }
 
@@ -94,6 +96,11 @@ glm::vec3 Camera::rayDirFromMouse(float mouseX, float mouseY)
     glm::vec4 eyeCoords = toEyeCoords(clipCoords);
     glm::vec3 worldRay = toWorldCoords(eyeCoords);
     return worldRay;
+}
+
+Frustum Camera::getFrustum() const
+{
+    return m_frustum;
 }
 
 void Camera::updateCameraVectors()
