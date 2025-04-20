@@ -14,6 +14,7 @@ created using C++ and OpenGL.
 - Custom OpenGL abstraction
 - Infinite editable chunk-based terrain (including infinite height)
 - Multithreaded chunk generation
+- Smooth ambient occlusion
 - Frustum Culling
 - Batched Font Rendering
 - Dynamic texture atlas packing/creation (resizes atlas automatically)
@@ -21,6 +22,9 @@ created using C++ and OpenGL.
 - Separation of logic and rendering timesteps
 
 ![voxel_game_terrain_screenshot](https://github.com/user-attachments/assets/81f8ee39-7b4f-46d6-8187-3aadaafbd89e)
+
+![Screenshot 2025-04-17 165830](https://github.com/user-attachments/assets/e62f3363-33b8-4cf8-8b3f-f32e224f417e)*an example using Minecraft's textures*
+
 
 ## Build
 This project uses VCPKG and CMake.
