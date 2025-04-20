@@ -12,9 +12,12 @@ created using C++ and OpenGL.
 
 ## Features
 - Custom OpenGL abstraction
-- Infinite chunk-based terrain generation
+- Infinite editable chunk-based terrain (including infinite height)
+- Multithreaded chunk generation
+- Frustum Culling
 - Batched Font Rendering
-- Dynamic texture atlas packing/creation (resizes automatically)
+- Dynamic texture atlas packing/creation (resizes atlas automatically)
+- Custom 3D line renderer
 - Separation of logic and rendering timesteps
 
 ![voxel_game_terrain_screenshot](https://github.com/user-attachments/assets/81f8ee39-7b4f-46d6-8187-3aadaafbd89e)
