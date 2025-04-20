@@ -172,3 +172,52 @@ void WorldRenderer::highlightVoxels(const std::vector<glm::ivec3>& voxels, const
     if (isCulled)
         window.enableCulling();
 }
+
+void WorldRenderer::showViewFrustum(const glm::mat4& mat, const Camera& camera, GameWindow& window)
+{
+    checkPointers();
+    auto lineRenderer = m_resourceManager->getLineRenderer("default");
+    auto lineShader = m_resourceManager->getShader("line");
+
+    static std::array<glm::vec4, 8> ndcCorners = {
+        glm::vec4{-1, -1, -1, 1}, // near bottom left
+        glm::vec4{1, -1, -1, 1},  // near bottom right
+        glm::vec4{1, 1, -1, 1},   // near top right
+        glm::vec4{-1, 1, -1, 1},  // near top left
+    
+        glm::vec4{-1, -1, 1, 1},  // far bottom left
+        glm::vec4{1, -1, 1, 1},   // far bottom right
+        glm::vec4{1, 1, 1, 1},    // far top right
+        glm::vec4{-1, 1, 1, 1},   // far top left
+    };
+
+    std::array<glm::vec3, 8> worldCorners;
+    for (int i = 0; i < 8; ++i) {
+        glm::vec4 world = mat * ndcCorners[i];
+        world /= world.w;
+        worldCorners[i] = glm::vec3(world);
+    }
+
+    auto drawLine = [&](int i, int j) {
+        lineRenderer->drawLine(worldCorners[i], worldCorners[j], glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+    };
+
+    // Draw the frustum lines
+    lineRenderer->beginBatch();
+    drawLine(0, 1); drawLine(1, 2); drawLine(2, 3); drawLine(3, 0); // near plane
+    drawLine(4, 5); drawLine(5, 6); drawLine(6, 7); drawLine(7, 4); // far plane
+    drawLine(0, 4); drawLine(1, 5); drawLine(2, 6); drawLine(3, 7); // connecting lines
+
+    bool isCulled = window.isEnabled(GL_CULL_FACE);
+    if (isCulled)
+        window.disableCulling();
+    lineShader->use();
+    lineShader->setMat4("uProjection", camera.getProjectionMatrix());
+    lineShader->setMat4("uView", camera.getViewMatrix());
+    lineShader->setMat4("uModel", glm::mat4(1.0f));
+    lineShader->setFloat("uLineWidth", 2.0f);
+    lineShader->setVec2("uResolution", camera.framebufferSize);
+    lineRenderer->draw();
+    if (isCulled)
+        window.enableCulling();
+}
