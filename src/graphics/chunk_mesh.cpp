@@ -3,16 +3,33 @@
 
 void ChunkMesh::setup()
 {
-    if (m_indexCounter == 0)
-        return;
-    m_mesh.populate(m_vertices, m_indices, {1, 2});
+    if (m_indexCounter != 0)
+        m_mesh.populate(m_vertices, m_indices, {1, 2});
+    if (m_indexCounterTranslucent != 0)
+        m_meshTranslucent.populate(m_verticesTranslucent, m_indicesTranslucent, {1, 2});
+    if (m_indexCounterTransparent != 0)
+        m_meshTransparent.populate(m_verticesTransparent, m_indicesTransparent, {1, 2});
 }
 
-void ChunkMesh::draw()
+void ChunkMesh::draw(RenderLayer layer)
 {
-    if (m_indexCounter == 0)
-        return;
-    m_mesh.draw();
+    switch (layer)
+    {
+        case RenderLayer::Opaque:
+            if (m_indexCounter != 0)
+                m_mesh.draw();
+            break;
+        case RenderLayer::Translucent:
+            if (m_indexCounterTranslucent != 0)
+                m_meshTranslucent.draw();
+            break;
+        case RenderLayer::Transparent:
+            if (m_indexCounterTransparent != 0)
+                m_meshTransparent.draw();
+            break;
+        default:
+            return; // Invalid layer
+    }
 }
 
 bool inBounds(const glm::ivec3& pos) {
@@ -26,6 +43,14 @@ void ChunkMesh::clearMesh()
     m_vertices.clear();
     m_indices.clear();
     m_indexCounter = 0;
+
+    m_verticesTranslucent.clear();
+    m_indicesTranslucent.clear();
+    m_indexCounterTranslucent = 0;
+
+    m_verticesTransparent.clear();
+    m_indicesTransparent.clear();
+    m_indexCounterTransparent = 0;
 }
 
 void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas<BlockTexture>& atlas, bool smoothLighting)
@@ -34,9 +59,7 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas
         return;
     if (snapshot.center()->isAllAir())
         return;
-    m_vertices.clear();
-    m_indices.clear();
-    m_indexCounter = 0;
+    clearMesh();
     for (int x = 0; x < Chunk::CHUNK_SIZE; ++x)
     {
         for (int z = 0; z < Chunk::CHUNK_SIZE; ++z)
@@ -65,6 +88,8 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas
                     };
                 }
 
+                RenderLayer layer = getRenderLayer(blockType);
+
                 for (int i = 0; i < 6; ++i)
                 {
                     if (!texureFaceAllSame) {
@@ -87,7 +112,7 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas
                         auto aoValues = getAOValues(pos, static_cast<BlockFace>(i), snapshot);
                         auto lightValues = getLightValues(pos, static_cast<BlockFace>(i), snapshot, smoothLighting);
                         bool flipQuad = shouldFlipQuad(aoValues);
-                        addFace(pos, static_cast<BlockFace>(i), textureCoords, aoValues, lightValues, flipQuad);
+                        addFace(pos, static_cast<BlockFace>(i), textureCoords, aoValues, lightValues, layer, flipQuad);
                     }
                 }
             }
@@ -97,7 +122,12 @@ void ChunkMesh::buildMesh(const ChunkSnapshot& snapshot, const gfx::TextureAtlas
 
 void ChunkMesh::submitBuffers()
 {
-    m_mesh.updateBuffers(m_vertices, m_indices);
+    if (m_indexCounter != 0)
+        m_mesh.updateBuffers(m_vertices, m_indices);
+    if (m_indexCounterTranslucent != 0)
+        m_meshTranslucent.updateBuffers(m_verticesTranslucent, m_indicesTranslucent);
+    if (m_indexCounterTransparent != 0)
+        m_meshTransparent.updateBuffers(m_verticesTransparent, m_indicesTransparent);
 }
 
 void ChunkMesh::addFace
@@ -107,9 +137,34 @@ void ChunkMesh::addFace
     std::array<float, 8> texCoords, 
     std::array<int, 4> aoValues, 
     std::array<float, 4> lightLevels, 
+    RenderLayer layer,
     bool flipQuad
 )
 {
+    std::vector<float>* vertices;
+    std::vector<unsigned int>* indices;
+    unsigned int* indexCounter;
+    switch (layer)
+    {
+        case RenderLayer::Opaque:
+            vertices = &m_vertices;
+            indices = &m_indices;
+            indexCounter = &m_indexCounter;
+            break;
+        case RenderLayer::Translucent:
+            vertices = &m_verticesTranslucent;
+            indices = &m_indicesTranslucent;
+            indexCounter = &m_indexCounterTranslucent;
+            break;
+        case RenderLayer::Transparent:
+            vertices = &m_verticesTransparent;
+            indices = &m_indicesTransparent;
+            indexCounter = &m_indexCounterTransparent;
+            break;
+        default:
+            return; // Invalid layer
+    }
+
     auto faceCoords = getFaceCoords(face);
     for (int i = 0, vertIndex = 0, texIndex = 0; i < 4; ++i)
     {
@@ -123,34 +178,34 @@ void ChunkMesh::addFace
         vPacked = (vPacked << 2) + static_cast<uint32_t>(aoValues[i]);
         // 4 bits for the light level (0-15)
         vPacked = (vPacked << 4) + static_cast<uint32_t>(lightLevels[i]);
-        m_vertices.push_back(std::bit_cast<float>(vPacked));
+        vertices->push_back(std::bit_cast<float>(vPacked));
 
-        m_vertices.push_back(texCoords[texIndex++]);
-        m_vertices.push_back(texCoords[texIndex++]);
+        vertices->push_back(texCoords[texIndex++]);
+        vertices->push_back(texCoords[texIndex++]);
     }
 
     if (flipQuad)
     {
-        m_indices.push_back(m_indexCounter + 3);
-        m_indices.push_back(m_indexCounter + 0);
-        m_indices.push_back(m_indexCounter + 1);
+        indices->push_back(*indexCounter + 3);
+        indices->push_back(*indexCounter + 0);
+        indices->push_back(*indexCounter + 1);
 
-        m_indices.push_back(m_indexCounter + 1);
-        m_indices.push_back(m_indexCounter + 2);
-        m_indices.push_back(m_indexCounter + 3);
+        indices->push_back(*indexCounter + 1);
+        indices->push_back(*indexCounter + 2);
+        indices->push_back(*indexCounter + 3);
     }
     else
     {
-        m_indices.push_back(m_indexCounter + 0);
-        m_indices.push_back(m_indexCounter + 1);
-        m_indices.push_back(m_indexCounter + 2);
+        indices->push_back(*indexCounter + 0);
+        indices->push_back(*indexCounter + 1);
+        indices->push_back(*indexCounter + 2);
 
-        m_indices.push_back(m_indexCounter + 2);
-        m_indices.push_back(m_indexCounter + 3);
-        m_indices.push_back(m_indexCounter + 0);
+        indices->push_back(*indexCounter + 2);
+        indices->push_back(*indexCounter + 3);
+        indices->push_back(*indexCounter + 0);
     }
 
-    m_indexCounter += 4;
+    (*indexCounter) += 4;
 }
 
 std::array<int, 12> ChunkMesh::getFaceCoords(BlockFace face)
@@ -295,5 +350,15 @@ int ChunkMesh::vertexAO(bool side1, bool side2, bool corner)
 
 bool ChunkMesh::shouldRenderFace(BlockType curBlock, BlockType neighbor)
 {
-    return curBlock != neighbor && BlockData::isTransparentBlock(neighbor);
+    return curBlock != neighbor && (BlockData::isTransparentBlock(neighbor) || BlockData::isTranslucentBlock(neighbor));
+}
+
+RenderLayer ChunkMesh::getRenderLayer(BlockType blockType)
+{
+    auto blockData = BlockData::getBlockData(blockType);
+    if (blockData.isTranslucent)
+        return RenderLayer::Translucent;
+    if (blockData.isTransparent)
+        return RenderLayer::Transparent;
+    return RenderLayer::Opaque;
 }

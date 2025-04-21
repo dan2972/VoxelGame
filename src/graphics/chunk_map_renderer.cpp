@@ -194,7 +194,13 @@ void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, 
     for (auto& [chunkPos, chunkMesh] : m_activeChunkMeshes)
     {
         m_chunkShader->setVec3("uChunkOffset", glm::vec3(chunkPos) * float(Chunk::CHUNK_SIZE));
-        chunkMesh->draw();
+        chunkMesh->draw(RenderLayer::Opaque);
+    }
+
+    for (auto& [chunkPos, chunkMesh] : m_activeChunkMeshes)
+    {
+        m_chunkShader->setVec3("uChunkOffset", glm::vec3(chunkPos) * float(Chunk::CHUNK_SIZE));
+        chunkMesh->draw(RenderLayer::Translucent);
     }
 }
 

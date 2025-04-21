@@ -81,6 +81,7 @@ struct BlockTextureData
 struct BlockProperties
 {
     bool isTransparent = false;
+    bool isTranslucent = false;
     bool isLiquid = false;
     bool isCube = true;
 };
@@ -144,6 +145,17 @@ public:
         if (it != s_blockDataMap.end())
         {
             return it->second.isTransparent;
+        }
+        spdlog::error("Block type not found in data map: {}", static_cast<int>(type));
+        throw std::runtime_error("Block type not found in data map.");
+    }
+
+    static const bool isTranslucentBlock(BlockType type)
+    {
+        auto it = s_blockDataMap.find(static_cast<int>(type));
+        if (it != s_blockDataMap.end())
+        {
+            return it->second.isTranslucent;
         }
         spdlog::error("Block type not found in data map: {}", static_cast<int>(type));
         throw std::runtime_error("Block type not found in data map.");

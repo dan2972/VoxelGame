@@ -44,7 +44,7 @@ void ResourceLoader::load(const glm::ivec2& frameBufferSize)
     BlockData::submitBlockData(BlockType::Stone);
     BlockData::submitBlockData(BlockType::WoodPlanks);
     BlockData::submitBlockData(BlockType::Sand);
-    BlockData::submitBlockData(BlockType::Water, { .isTransparent = true, .isLiquid = true, .isCube = false });
+    BlockData::submitBlockData(BlockType::Water, { .isTranslucent = true, .isLiquid = true, .isCube = false });
     BlockData::submitBlockTextureData(BlockType::Grass, BlockTextureData(BlockTexture::GrassTop, BlockTexture::Dirt, BlockTexture::GrassSide, BlockTexture::GrassSide, BlockTexture::GrassSide, BlockTexture::GrassSide));
     BlockData::submitBlockTextureData(BlockType::Dirt, BlockTextureData(BlockTexture::Dirt));
     BlockData::submitBlockTextureData(BlockType::Stone, BlockTextureData(BlockTexture::Stone));

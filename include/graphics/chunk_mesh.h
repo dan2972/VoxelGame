@@ -12,6 +12,13 @@
 #include "world/block_data.h"
 #include "graphics/gfx/texture_atlas.h"
 
+enum class RenderLayer
+{
+    Opaque = 0,
+    Translucent = 1,
+    Transparent = 2
+};
+
 class ChunkMesh
 {
 public:
@@ -25,7 +32,7 @@ public:
 
     void setup();
 
-    void draw();
+    void draw(RenderLayer layer=RenderLayer::Opaque);
 
     void clearMesh();
 
@@ -39,12 +46,23 @@ private:
     std::vector<unsigned int> m_indices;
     unsigned int m_indexCounter = 0;
 
+    gfx::Mesh m_meshTranslucent;
+    std::vector<float> m_verticesTranslucent;
+    std::vector<unsigned int> m_indicesTranslucent;
+    unsigned int m_indexCounterTranslucent = 0;
+
+    gfx::Mesh m_meshTransparent;
+    std::vector<float> m_verticesTransparent;
+    std::vector<unsigned int> m_indicesTransparent;
+    unsigned int m_indexCounterTransparent = 0;
+
     void addFace(
         const glm::ivec3 &pos, 
         BlockFace face, 
         std::array<float, 8> texCoords, 
         std::array<int, 4> aoValues, 
         std::array<float, 4> lightLevels, 
+        RenderLayer layer,
         bool flipQuad
     );
 
@@ -56,4 +74,6 @@ private:
     void getAOBlockPos(const glm::ivec3& cornerPos, BlockFace face, glm::ivec3* outs1, glm::ivec3* outs2, glm::ivec3* outc);
     static int vertexAO(bool side1, bool side2, bool corner);
     bool shouldRenderFace(BlockType curBlock, BlockType neighbor);
+
+    RenderLayer getRenderLayer(BlockType blockType);
 };
