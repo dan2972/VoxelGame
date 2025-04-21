@@ -33,9 +33,10 @@ void ResourceLoader::load(const glm::ivec2& frameBufferSize)
     m_resourceManager->addLineRenderer("default");
 
     // Setup Atlas
-    auto atlas = m_resourceManager->addTextureAtlas<BlockTexture>("chunk_atlas", { .internalFilter = GL_NEAREST });
+    auto atlas = m_resourceManager->addTextureAtlas<BlockTexture>("chunk_atlas", { .internalFilterMin = GL_NEAREST_MIPMAP_LINEAR, .internalFilterMag = GL_NEAREST });
 
     setupChunkAtlas();
+    atlas->generateMipmaps(4);
 
     // setup BlockData
     BlockData::submitBlockData(BlockType::Air, { .isTransparent = true, .isLiquid = false, .isCube = false });

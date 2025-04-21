@@ -73,7 +73,7 @@ namespace gfx
     {
         load(fontPath, fontSize);
         m_textureAtlas = TextureAtlas<wchar_t>(
-            {.internalFilter = GL_NEAREST, .internalFormat = GL_RED, .format = GL_RED}
+            {.internalFilterMin = GL_NEAREST, .internalFilterMag = GL_NEAREST, .internalFormat = GL_RED, .format = GL_RED}
         );
     }
 

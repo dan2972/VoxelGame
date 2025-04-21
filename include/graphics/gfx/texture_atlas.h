@@ -14,7 +14,8 @@ namespace gfx
     {
         unsigned int width = 128;
         unsigned int height = 128;
-        GLuint internalFilter = GL_LINEAR;
+        GLuint internalFilterMin = GL_LINEAR;
+        GLuint internalFilterMag = GL_LINEAR;
         GLuint wrapFilter = GL_CLAMP_TO_EDGE;
         GLuint internalFormat = GL_SRGB_ALPHA;
         GLuint format = GL_RGBA;
@@ -27,7 +28,8 @@ namespace gfx
         TextureAtlas(
             unsigned int width = 128,
             unsigned int height = 128,
-            GLuint internalFilter = GL_LINEAR,
+            GLuint internalFilterMin = GL_LINEAR,
+            GLuint internalFilterMag = GL_LINEAR,
             GLuint wrapFilter = GL_CLAMP_TO_EDGE,
             GLuint internalFormat = GL_SRGB_ALPHA,
             GLuint format = GL_RGBA);
@@ -48,6 +50,8 @@ namespace gfx
         std::pair<glm::vec2, glm::vec2> add(const T& key, unsigned char* data, unsigned int width, unsigned int height);
         std::pair<glm::vec2, glm::vec2> get(const T& key) const;
 
+        void generateMipmaps(int maxLevel = 4);
+
         bool expandAtlas();
 
         bool has(const T& key) const;
@@ -63,7 +67,8 @@ namespace gfx
         int m_width;
         int m_height;
         bool m_initialized = false;
-        GLuint m_internalFilter;
+        GLuint m_internalFilterMin;
+        GLuint m_internalFilterMag;
         GLuint m_wrapFilter;
         GLuint m_internalFormat;
         GLenum m_format;
@@ -89,18 +94,25 @@ namespace gfx
     TextureAtlas<T>::TextureAtlas(
         unsigned int width,
         unsigned int height,
-        GLuint internalFilter,
+        GLuint internalFilterMin,
+        GLuint internalFilterMag,
         GLuint wrapFilter,
         GLuint internalFormat,
         GLuint format)
-        : m_width(width), m_height(height), m_internalFilter(internalFilter), m_wrapFilter(wrapFilter), m_internalFormat(internalFormat), m_format(format)
+        : m_width(width), m_height(height), m_internalFilterMin(internalFilterMin), m_internalFilterMag(internalFilterMag), m_wrapFilter(wrapFilter), m_internalFormat(internalFormat), m_format(format)
     {
         checkMaxTextureSize();
     }
 
     template<typename T>
     TextureAtlas<T>::TextureAtlas(const TextureAtlasParams& params)
-        : m_width(params.width), m_height(params.height), m_internalFilter(params.internalFilter), m_wrapFilter(params.wrapFilter), m_internalFormat(params.internalFormat), m_format(params.format)
+        : m_width(params.width), 
+        m_height(params.height), 
+        m_internalFilterMin(params.internalFilterMin), 
+        m_internalFilterMag(params.internalFilterMag), 
+        m_wrapFilter(params.wrapFilter), 
+        m_internalFormat(params.internalFormat), 
+        m_format(params.format)
     {
         checkMaxTextureSize();
     }
@@ -119,7 +131,8 @@ namespace gfx
         m_width = other.m_width;
         m_height = other.m_height;
         m_skyline = std::move(other.m_skyline);
-        m_internalFilter = other.m_internalFilter;
+        m_internalFilterMin = other.m_internalFilterMin;
+        m_internalFilterMag = other.m_internalFilterMag;
         m_wrapFilter = other.m_wrapFilter;
         m_internalFormat = other.m_internalFormat;
         m_format = other.m_format;
@@ -138,7 +151,8 @@ namespace gfx
             m_width = other.m_width;
             m_height = other.m_height;
             m_skyline = std::move(other.m_skyline);
-            m_internalFilter = other.m_internalFilter;
+            m_internalFilterMin = other.m_internalFilterMin;
+            m_internalFilterMag = other.m_internalFilterMag;
             m_wrapFilter = other.m_wrapFilter;
             m_internalFormat = other.m_internalFormat;
             m_format = other.m_format;
@@ -236,6 +250,26 @@ namespace gfx
         return { glm::vec2(0), glm::vec2(0) };
     }
 
+    template <typename T>
+    void TextureAtlas<T>::generateMipmaps(int maxLevel)
+    {
+        if (m_id == 0) {
+            spdlog::warn("TextureAtlas: Texture atlas not initialized.");
+            return;
+        }
+        if (m_internalFilterMin != GL_LINEAR_MIPMAP_LINEAR &&
+            m_internalFilterMin != GL_NEAREST_MIPMAP_LINEAR &&
+            m_internalFilterMin != GL_LINEAR_MIPMAP_NEAREST &&
+            m_internalFilterMin != GL_NEAREST_MIPMAP_NEAREST) {
+            spdlog::warn("TextureAtlas: Mipmaps can only be generated with linear or nearest mipmap filters.");
+            return;
+        }
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, maxLevel);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+
     template<typename T>
     bool TextureAtlas<T>::expandAtlas() {
         int newWidth = m_width * 2;
@@ -250,8 +284,8 @@ namespace gfx
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, newID);
         glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, newWidth, newHeight, 0, m_format, GL_UNSIGNED_BYTE, nullptr);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_internalFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_internalFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_internalFilterMin);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_internalFilterMag);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_wrapFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_wrapFilter);
 
@@ -340,8 +374,8 @@ namespace gfx
         
         glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width, m_height, 0, m_format, GL_UNSIGNED_BYTE, nullptr);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_internalFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_internalFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_internalFilterMin);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_internalFilterMag);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_wrapFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_wrapFilter);
 
