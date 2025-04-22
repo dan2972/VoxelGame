@@ -25,6 +25,12 @@ struct ChunkReadyNode
 class ChunkMapRenderer
 {
 public:
+    // Chunks queued due to block updates are always added to the front of the queue
+    // and may cause the queue exceed this size.
+    // This value is primarily used to limit the number of chunks queued from the frustum
+    // to allow for a more responsive frustum queueing.
+    static const int MAX_BUILD_QUEUE_SIZE = 16;
+
     ChunkMapRenderer() = default;
     ChunkMapRenderer(ChunkMap* chunkMap) : m_chunkMap(chunkMap) {}
     ~ChunkMapRenderer() { stopThread(); }

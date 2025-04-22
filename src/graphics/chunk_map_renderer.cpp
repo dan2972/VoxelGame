@@ -33,7 +33,6 @@ void ChunkMapRenderer::queueFrustum(const Frustum& frustum, const glm::ivec3& ch
     std::unordered_set<glm::ivec3, glm_ivec3_hash, glm_ivec3_equal> visited;
     nodes.push(chunkPos);
     visited.insert(chunkPos);
-    int queueCount = 0;
     while(!nodes.empty())
     {
         glm::ivec3 node = nodes.front();
@@ -47,10 +46,9 @@ void ChunkMapRenderer::queueFrustum(const Frustum& frustum, const glm::ivec3& ch
             if (ChunkSnapshot::CreateSnapshot(*m_chunkMap, node, &snapshot, &failedChunks)) {
                 glm::vec3 chunkMin = glm::vec3(node) * float(Chunk::CHUNK_SIZE);
                 glm::vec3 chunkMax = chunkMin + glm::vec3(Chunk::CHUNK_SIZE);
-                if (frustum.intersectsAABB(chunkMin, chunkMax) && !snapshot.center()->isAllAir()) {
+                if (frustum.intersectsAABB(chunkMin, chunkMax) && !snapshot.center()->isAllAir() && m_chunksToBuild.size() < MAX_BUILD_QUEUE_SIZE) {
                     m_chunksInBuildQueue.insert(node);
                     m_chunksToBuild.pushBack(snapshot);
-                    queueCount++;
                 }
             } else {
                 for (const auto& failedChunk : failedChunks) {
