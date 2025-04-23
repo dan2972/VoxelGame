@@ -49,8 +49,8 @@ void Chunk::generateTerrain()
                     m_allSolid = false;
                 }
                 
-                // setSunLight(x, y, z, 15);
-                // setBlockLight(x, y, z, 0);
+                setSunLight(x, y, z, 15);
+                setBlockLight(x, y, z, 0);
             }
         }
     }

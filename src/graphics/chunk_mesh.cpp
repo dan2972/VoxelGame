@@ -247,9 +247,9 @@ std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace 
         s1B = snapshot.getBlockFromLocalPos(blockPos + s1);
         s2B = snapshot.getBlockFromLocalPos(blockPos + s2);
         cB = snapshot.getBlockFromLocalPos(blockPos + c);
-        bool side1 = s1B != BlockType::Air;
-        bool side2 = s2B != BlockType::Air;
-        bool cornerBlock = cB != BlockType::Air;
+        bool side1 = !(BlockData::isTransparentBlock(s1B) || BlockData::isTranslucentBlock(s1B));
+        bool side2 = !(BlockData::isTransparentBlock(s2B) || BlockData::isTranslucentBlock(s2B));
+        bool cornerBlock = !(BlockData::isTransparentBlock(cB) || BlockData::isTranslucentBlock(cB));
         aoValues[i] = vertexAO(side1, side2, cornerBlock);
     }
     return aoValues;

@@ -34,6 +34,9 @@ public:
     void setSunLight(int x, int y, int z, uint8_t lightLevel);
     void setSunLight(const glm::ivec3& pos, uint8_t lightLevel);
 
+    void fillSunLight(std::shared_ptr<Chunk> chunk);
+    void floodFillLightAt(const glm::ivec3& pos, bool isBlockLight = false);
+
     BlockType getBlock(int x, int y, int z) const;
     BlockType getBlock(const glm::ivec3& pos) const;
 
