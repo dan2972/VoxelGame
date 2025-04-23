@@ -5,6 +5,7 @@
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <optional>
 #include "world/chunk.h"
 #include "world/chunk_map.h"
 #include <glm/glm.hpp>
@@ -16,11 +17,11 @@ public:
     std::array<std::shared_ptr<const Chunk>, 27> chunks;
 
     ChunkSnapshot();
-    ChunkSnapshot(const std::array<std::shared_ptr<const Chunk>, 27>& chunks);
-    ChunkSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos);
+    // ChunkSnapshot(const std::array<std::shared_ptr<const Chunk>, 27>& chunks);
+    // ChunkSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos);
 
-    static bool CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot, ChunkGenerationState minState = ChunkGenerationState::Complete);
-    static bool CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState = ChunkGenerationState::Complete);
+    static std::optional<ChunkSnapshot> CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkGenerationState minState = ChunkGenerationState::Complete);
+    static std::optional<ChunkSnapshot> CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState = ChunkGenerationState::Complete);
 
     std::shared_ptr<const Chunk> center() const;
 
