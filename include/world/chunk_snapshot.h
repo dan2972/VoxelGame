@@ -17,8 +17,6 @@ public:
     std::array<std::shared_ptr<const Chunk>, 27> chunks;
 
     ChunkSnapshot();
-    // ChunkSnapshot(const std::array<std::shared_ptr<const Chunk>, 27>& chunks);
-    // ChunkSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos);
 
     static std::optional<ChunkSnapshot> CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkGenerationState minState = ChunkGenerationState::Complete);
     static std::optional<ChunkSnapshot> CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState = ChunkGenerationState::Complete);

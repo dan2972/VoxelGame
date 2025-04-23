@@ -62,6 +62,8 @@ void ChunkMap::setBlock(int x, int y, int z, BlockType type)
     auto localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunkInternal(chunkPos);
     chunk = checkCopy2Write(chunk);
+    if (chunk->getGenerationState() < ChunkGenerationState::Complete)
+        return;
     if (chunk)
     {
         chunk->setBlock(localPos.x, localPos.y, localPos.z, type);
@@ -80,6 +82,8 @@ void ChunkMap::setBlockLight(int x, int y, int z, uint8_t lightLevel)
     auto localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunkInternal(chunkPos);
     chunk = checkCopy2Write(chunk);
+    if (chunk->getGenerationState() < ChunkGenerationState::Complete)
+        return;
     if (chunk)
     {
         chunk->setBlockLight(localPos.x, localPos.y, localPos.z, lightLevel);
@@ -98,6 +102,8 @@ void ChunkMap::setSunLight(int x, int y, int z, uint8_t lightLevel)
     auto localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunkInternal(chunkPos);
     chunk = checkCopy2Write(chunk);
+    if (chunk->getGenerationState() < ChunkGenerationState::Complete)
+        return;
     if (chunk)
     {
         chunk->setSunLight(localPos.x, localPos.y, localPos.z, lightLevel);
