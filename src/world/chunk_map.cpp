@@ -11,13 +11,15 @@ void ChunkMap::update()
     {
         std::shared_ptr<Chunk> chunk;
         m_chunksToSubmit.pop(chunk);
-        auto it = m_chunks.find(chunk->getPos());
-        if (it != m_chunks.end()) {
-            it->second = chunk;
-        } else {
-            m_chunks.emplace(chunk->getPos(), chunk);
+        switch (chunk->getGenerationState())
+        {
+            case ChunkGenerationState::None:
+                chunk->m_generationState = ChunkGenerationState::Light;
+                break;
+            default:
+                break;
         }
-        m_chunksInBuildQueue.erase(chunk->getPos());
+        chunk->m_inBuildQueue = false;
     }
 }
 
@@ -25,12 +27,12 @@ void ChunkMap::chunkBuildThreadFunc()
 {
     while (!m_stopThread)
     {
-        glm::ivec3 chunkPos;
-        if (!m_chunksToBuild.popNoWait(chunkPos)) {
+        std::shared_ptr<Chunk> chunk;
+        if (!m_chunksToBuild.popNoWait(chunk)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
-        auto chunk = std::make_shared<Chunk>(chunkPos);
+        chunk->generateTerrain();
         m_chunksToSubmit.push(chunk);
     }
 }
@@ -43,40 +45,14 @@ void ChunkMap::startBuildThread()
 
 void ChunkMap::queueChunk(const glm::ivec3& chunkPos)
 {
-    if (!m_chunks.contains(chunkPos) && !m_chunksInBuildQueue.contains(chunkPos))
+    auto chunk = getChunkInternal(chunkPos);
+    if (!chunk || (chunk->getGenerationState() == ChunkGenerationState::None && !chunk->m_inBuildQueue))
     {
-        m_chunksToBuild.push(chunkPos);
-        m_chunksInBuildQueue.insert(chunkPos);
+        auto chunk = std::make_shared<Chunk>(chunkPos);
+        chunk->m_inBuildQueue = true;
+        m_chunksToBuild.push(chunk);
+        m_chunks[chunkPos] = chunk;
     }
-}
-
-void ChunkMap::addChunkRadius(const glm::ivec3& chunkPos, int radius) 
-{
-    std::vector<glm::ivec3> chunksToAdd = algo::getPosFromCenter(chunkPos, radius);
-    for (const auto& pos : chunksToAdd)
-    {
-        if (!m_chunks.contains(pos) && !m_chunksInBuildQueue.contains(pos))
-        {
-            m_chunksToBuild.push(pos);
-            m_chunksInBuildQueue.insert(pos);
-        }
-    }
-}
-
-bool ChunkMap::addChunk(int x, int y, int z)
-{
-    glm::ivec3 pos(x, y, z);
-    if (m_chunks.find(pos) == m_chunks.end())
-    {
-        m_chunks.emplace(pos, std::make_unique<Chunk>(pos));
-        return true;
-    }
-    return false;
-}
-
-bool ChunkMap::addChunk(const glm::ivec3& position)
-{
-    return addChunk(position.x, position.y, position.z);
 }
 
 void ChunkMap::setBlock(int x, int y, int z, BlockType type)

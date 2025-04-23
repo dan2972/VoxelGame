@@ -7,9 +7,20 @@
 #include "terrain_generator.h"
 #include "block_data.h"
 
+class ChunkSnapshot;
+
+enum class ChunkGenerationState
+{
+    None = 0,
+    Blocks = 1,
+    Light = 2,
+    Complete = 2
+};
+
 class Chunk
 {
 public:
+    friend class ChunkMap;
     const static int CHUNK_SIZE = 32;
 
     Chunk();
@@ -17,8 +28,11 @@ public:
     ~Chunk() = default;
 
     void generateTerrain();
+    void generateLightMap(const ChunkSnapshot& snapshot);
 
     glm::ivec3 getPos() const { return m_position; }
+
+    ChunkGenerationState getGenerationState() const { return m_generationState; }
 
     BlockType getBlock(int x, int y, int z) const;
     BlockType getBlock(const glm::ivec3& pos) const;
@@ -58,4 +72,6 @@ private:
 
     bool m_allAir = true;
     bool m_allSolid = true;
+    bool m_inBuildQueue = false;
+    ChunkGenerationState m_generationState = ChunkGenerationState::None;
 };

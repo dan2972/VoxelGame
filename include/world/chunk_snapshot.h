@@ -19,8 +19,8 @@ public:
     ChunkSnapshot(const std::array<std::shared_ptr<const Chunk>, 27>& chunks);
     ChunkSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos);
 
-    static bool CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot);
-    static bool CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot, std::vector<glm::ivec3>* missingChunks);
+    static bool CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot, ChunkGenerationState minState = ChunkGenerationState::Complete);
+    static bool CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState = ChunkGenerationState::Complete);
 
     std::shared_ptr<const Chunk> center() const;
 
@@ -34,7 +34,7 @@ public:
     uint16_t getBlockLightFromLocalPos(const glm::ivec3& localPos) const;
     uint16_t getLightLevelFromLocalPos(const glm::ivec3& localPos) const;
 
-    bool isValid() const;
+    bool isValid(ChunkGenerationState minState = ChunkGenerationState::Complete) const;
 
 private:
     static glm::ivec3 getRelChunkPosFromLocalPos(const glm::ivec3& localPos);

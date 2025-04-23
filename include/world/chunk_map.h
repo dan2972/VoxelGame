@@ -25,10 +25,6 @@ public:
     void stopThread() { m_stopThread = true; }
 
     void queueChunk(const glm::ivec3& chunkPos);
-    void addChunkRadius(const glm::ivec3& chunkPos, int radius);
-
-    bool addChunk(int x, int y, int z);
-    bool addChunk(const glm::ivec3& position);
 
     void setBlock(int x, int y, int z, BlockType type);
     void setBlock(const glm::ivec3& pos, BlockType type);
@@ -55,9 +51,8 @@ public:
     std::vector<std::shared_ptr<const Chunk>> getChunksInRadius(const glm::ivec3& chunkPos, int radius) const;
 private:
     std::unordered_map<glm::ivec3, std::shared_ptr<Chunk>, glm_ivec3_hash, glm_ivec3_equal> m_chunks;
-    BlockingQueue<glm::ivec3> m_chunksToBuild;
+    BlockingQueue<std::shared_ptr<Chunk>> m_chunksToBuild;
     BlockingQueue<std::shared_ptr<Chunk>> m_chunksToSubmit;
-    std::unordered_set<glm::ivec3, glm_ivec3_hash, glm_ivec3_equal> m_chunksInBuildQueue;
     std::atomic_bool m_stopThread = false;
 
     std::shared_ptr<Chunk> getChunkInternal(const glm::ivec3& pos) const;

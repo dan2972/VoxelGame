@@ -5,13 +5,11 @@ TerrainGenerator Chunk::s_terrainGenerator;
 Chunk::Chunk()
     : m_position(0, 0, 0)
 {
-    generateTerrain();
 }
 
 Chunk::Chunk(const glm::ivec3 &position)
     : m_position(position)
 {
-    generateTerrain();
 }
 
 void Chunk::generateTerrain()
@@ -51,6 +49,21 @@ void Chunk::generateTerrain()
                     m_allSolid = false;
                 }
                 
+                // setSunLight(x, y, z, 15);
+                // setBlockLight(x, y, z, 0);
+            }
+        }
+    }
+}
+
+void Chunk::generateLightMap(const ChunkSnapshot& snapshot)
+{
+    for (int x = 0; x < CHUNK_SIZE; ++x)
+    {
+        for (int z = 0; z < CHUNK_SIZE; ++z)
+        {
+            for (int y = 0; y < CHUNK_SIZE; ++y)
+            {
                 setSunLight(x, y, z, 15);
                 setBlockLight(x, y, z, 0);
             }
@@ -213,5 +226,7 @@ std::shared_ptr<Chunk> Chunk::clone() const
     chunk->m_lightMap = m_lightMap;
     chunk->m_allAir = m_allAir;
     chunk->m_allSolid = m_allSolid;
+    chunk->m_generationState = m_generationState;
+    chunk->m_inBuildQueue = m_inBuildQueue;
     return chunk;
 }

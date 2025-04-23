@@ -19,26 +19,26 @@ ChunkSnapshot::ChunkSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerC
     }
 }
 
-bool ChunkSnapshot::CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot) {
+bool ChunkSnapshot::CreateSnapshot(const ChunkMap& chunkMap, const glm::ivec3& centerChunkPos, ChunkSnapshot* snapshot, ChunkGenerationState minState) {
     auto centerChunk = chunkMap.getChunk(centerChunkPos);
-    if (!centerChunk)
+    if (!centerChunk || centerChunk->getGenerationState() < minState)
         return false;
 
     snapshot->chunks[13] = centerChunk;
     for (const auto& dir : getRequiredChunkDirs()) {
         auto chunk = chunkMap.getChunk(centerChunkPos + dir);
-        if (!chunk) 
+        if (!chunk || centerChunk->getGenerationState() < minState)
             return false;
         snapshot->chunks[(dir.x + 1) * 9 + (dir.y + 1) * 3 + (dir.z + 1)] = chunk;
     }
     return true;
 }
 
-bool ChunkSnapshot::CreateSnapshot(const ChunkMap &chunkMap, const glm::ivec3 &centerChunkPos, ChunkSnapshot* snapshot, std::vector<glm::ivec3>* missingChunks)
+bool ChunkSnapshot::CreateSnapshot(const ChunkMap &chunkMap, const glm::ivec3 &centerChunkPos, ChunkSnapshot* snapshot, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState)
 {
     bool allChunksLoaded = true;
     auto centerChunk = chunkMap.getChunk(centerChunkPos);
-    if (!centerChunk) {
+    if (!centerChunk || centerChunk->getGenerationState() < minState) {
         missingChunks->push_back(centerChunkPos);
         allChunksLoaded = false;
     }
@@ -46,7 +46,7 @@ bool ChunkSnapshot::CreateSnapshot(const ChunkMap &chunkMap, const glm::ivec3 &c
     snapshot->chunks[13] = centerChunk;
     for (const auto& dir : getRequiredChunkDirs()) {
         auto chunk = chunkMap.getChunk(centerChunkPos + dir);
-        if (!chunk) {
+        if (!chunk || centerChunk->getGenerationState() < minState) {
             missingChunks->push_back(centerChunkPos + dir);
             allChunksLoaded = false;
             continue;
@@ -129,8 +129,8 @@ uint16_t ChunkSnapshot::getLightLevelFromLocalPos(const glm::ivec3& localPos) co
     return 15;
 }
 
-bool ChunkSnapshot::isValid() const {
-    return std::all_of(chunks.begin(), chunks.end(), [](const auto& chunk) { return chunk != nullptr; });
+bool ChunkSnapshot::isValid(ChunkGenerationState minState) const {
+    return std::all_of(chunks.begin(), chunks.end(), [&](const auto& chunk) { return chunk != nullptr && chunk->getGenerationState() >= minState; });
 }
 
 glm::ivec3 ChunkSnapshot::getRelChunkPosFromLocalPos(const glm::ivec3& localPos) {
