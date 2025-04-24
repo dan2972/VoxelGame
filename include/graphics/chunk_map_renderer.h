@@ -43,7 +43,7 @@ public:
     void queueChunkRadius(const glm::ivec3& chunkPos, int radius);
     void queueBlockUpdate(const glm::ivec3& blockPos, BlockType blockType);
 
-    void draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor);
+    void draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor, float dayNightFrac);
 
     void meshBuildThreadFunc(const gfx::TextureAtlas<BlockTexture>& atlas, bool useSmoothLighting);
 

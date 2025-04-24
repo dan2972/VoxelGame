@@ -10,6 +10,7 @@ in float vLightValue;
 uniform sampler2D uTexture;
 uniform bool uAOEnabled;
 uniform float uAOIntensity;
+uniform float uDayNightFrac;
 
 float diffuse(vec3 normal)
 {
@@ -25,6 +26,15 @@ float diffuse(vec3 normal)
         return 0.0;
 }
 
+float stepPlateau(float x) {
+    float k = 40.0;
+    float a = 0.25;
+    float b = 0.75;
+    float rise = 1.0 / (1.0 + exp(-k * (x - a)));
+    float fall = 1.0 / (1.0 + exp(-k * (x - b)));
+    return rise * (1.0 - fall);
+}
+
 void main()
 {
     // vec3 lightDir = normalize(-vec3(1.0, -1.0, 0.5));
@@ -34,7 +44,7 @@ void main()
     if (uAOEnabled)
         ambientOcclusion =  (1 - uAOIntensity) + ((vAOValue / 3.0) * uAOIntensity);
 
-    float light = 0.1 + 0.9 * (vLightValue / 15);
+    float light = 0.1 + 0.9 * (vLightValue * stepPlateau(uDayNightFrac) / 15);
     light = clamp(light, 0.0, 1.0);
     float multiplier = light * ambientOcclusion * diffuse(vNormal);
     multiplier = pow(multiplier, 2.2);

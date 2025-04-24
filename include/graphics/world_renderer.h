@@ -23,7 +23,7 @@ public:
 
     void loadResources();
 
-    void draw(const Camera& camera, GameWindow& window);
+    void draw(const Camera& camera, GameWindow& window, float dayNightFrac);
 
     void highlightVoxels(const std::vector<glm::ivec3>& voxels, const Camera &camera, GameWindow& window);
     void showFrustum(const glm::mat4& mat, const Camera& camera, GameWindow& window);

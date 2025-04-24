@@ -152,7 +152,7 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
     }
 }
 
-void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor)
+void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor, float dayNightFrac)
 {
     checkPointers();
 
@@ -196,6 +196,7 @@ void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, 
     m_chunkShader->setMat4("uModel", glm::mat4(1.0f));
     m_chunkShader->setBool("uAOEnabled", useAO);
     m_chunkShader->setFloat("uAOIntensity", aoFactor);
+    m_chunkShader->setFloat("uDayNightFrac", dayNightFrac);
 
     for (auto& [chunkPos, chunkMesh] : m_activeChunkMeshes)
     {

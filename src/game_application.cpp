@@ -136,6 +136,7 @@ void GameApplication::render()
     ImGui::Text("TPS: %i", m_gameTime.tps);
     ImGui::Text("Total Time: %.3fs", m_gameTime.totalTime);
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", m_camera.position.x, m_camera.position.y, m_camera.position.z);
+    ImGui::SliderFloat("Day/Night Fraction", &m_dayNightFrac, 0.0f, 1.0f);
     if (ImGui::CollapsingHeader("Render Options")) {
         ImGui::Checkbox("Show Chunk Border", &m_worldRenderer.renderOptions.showChunkBorder);
         ImGui::SliderInt("Render Distance", &m_worldRenderer.renderOptions.renderDistance, 1, 32);
@@ -192,6 +193,7 @@ void GameApplication::render()
     skyShader->use();
     glm::mat4 viewProj = m_camera.getProjectionMatrix() * m_camera.getViewMatrix();
     skyShader->setMat4("uInvViewProj", glm::inverse(viewProj));
+    skyShader->setFloat("uDayNightFrac", m_dayNightFrac);
     s_resourceManager.getScreenQuad("sky_quad")->draw();
     m_window.enableDepthTest();
 
@@ -212,7 +214,7 @@ void GameApplication::render()
             m_worldRenderer.getChunkMapRenderer().queueBlockUpdate(node.pos + node.normal, BlockType::WoodPlanks);
         }
     }
-    m_worldRenderer.draw(m_camera, m_window);
+    m_worldRenderer.draw(m_camera, m_window, m_dayNightFrac);
 
     renderTarget->useDefault();
     m_window.clear(GL_COLOR_BUFFER_BIT);
