@@ -22,6 +22,7 @@ void Chunk::generateTerrain()
             float noise = s_terrainGenerator.getNoise(globalPos.x, globalPos.z) * 256 + 6;
             for (int y = 0; y < CHUNK_SIZE; ++y)
             {
+                setSunLight(x, y, z, 0);
                 auto gPos = localToGlobalPos({x, y, z});
                 if (gPos.y < noise) {
                     int diff = noise - gPos.y;
@@ -40,16 +41,17 @@ void Chunk::generateTerrain()
                     m_allAir = false;
                 } 
                 else if (gPos.y <= 0) {
+                    setSunLight(x, y, z, 15);
                     m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = BlockType::Water;
                     m_allAir = false;
                 }
                 else
                 {
+                    setSunLight(x, y, z, 15);
                     m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = BlockType::Air;
                     m_allSolid = false;
                 }
-                
-                setSunLight(x, y, z, 15);
+
                 setBlockLight(x, y, z, 0);
             }
         }
@@ -132,6 +134,8 @@ void Chunk::setBlock(int x, int y, int z, BlockType type)
     m_blocks[x * CHUNK_SIZE * CHUNK_SIZE + z * CHUNK_SIZE + y] = type;
     if (type != BlockType::Air)
         m_allAir = false;
+    else
+        m_allSolid = false;
 }
 
 void Chunk::setBlock(const glm::ivec3 &pos, BlockType type)
@@ -226,7 +230,7 @@ std::shared_ptr<Chunk> Chunk::clone() const
     chunk->m_lightMap = m_lightMap;
     chunk->m_allAir = m_allAir;
     chunk->m_allSolid = m_allSolid;
-    chunk->m_generationState = m_generationState;
-    chunk->m_inBuildQueue = m_inBuildQueue;
+    chunk->m_generationState = m_generationState.load();
+    chunk->m_inBuildQueue = m_inBuildQueue.load();
     return chunk;
 }

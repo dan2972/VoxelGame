@@ -1,4 +1,6 @@
 #include "world/chunk_snapshot.h"
+#include "world/chunk_map.h"
+#include "utils/direction_utils.h"
 
 ChunkSnapshot::ChunkSnapshot() {
     std::fill(chunks.begin(), chunks.end(), nullptr);
@@ -12,7 +14,7 @@ std::optional<ChunkSnapshot> ChunkSnapshot::CreateSnapshot(const ChunkMap& chunk
     snapshot.chunks[13] = centerChunk;
     for (const auto& dir : getRequiredChunkDirs()) {
         auto chunk = chunkMap.getChunk(centerChunkPos + dir);
-        if (!chunk || centerChunk->getGenerationState() < minState)
+        if (!chunk || chunk->getGenerationState() < minState)
             return std::nullopt;
         snapshot.chunks[(dir.x + 1) * 9 + (dir.y + 1) * 3 + (dir.z + 1)] = chunk;
     }
@@ -32,7 +34,7 @@ std::optional<ChunkSnapshot> ChunkSnapshot::CreateSnapshot(const ChunkMap &chunk
     snapshot.chunks[13] = centerChunk;
     for (const auto& dir : getRequiredChunkDirs()) {
         auto chunk = chunkMap.getChunk(centerChunkPos + dir);
-        if (!chunk || centerChunk->getGenerationState() < minState) {
+        if (!chunk || chunk->getGenerationState() < minState) {
             missingChunks->push_back(centerChunkPos + dir);
             allChunksLoaded = false;
             continue;
@@ -131,4 +133,142 @@ bool ChunkSnapshot::inCenterBounds(const glm::ivec3& localPos) {
     return localPos.x >= 0 && localPos.x < Chunk::CHUNK_SIZE &&
            localPos.z >= 0 && localPos.z < Chunk::CHUNK_SIZE &&
            localPos.y >= 0 && localPos.y < Chunk::CHUNK_SIZE;
+}
+
+// chunk snapshot modifiable version
+
+std::shared_ptr<Chunk> ChunkSnapshotM::getChunkFromLocalPos(const glm::ivec3& localPos) {
+    glm::ivec3 chunkPos = ChunkSnapshot::getRelChunkPosFromLocalPos(localPos);
+    int index = (chunkPos.x + 1) * 9 + (chunkPos.y + 1) * 3 + (chunkPos.z + 1);
+    return chunks[index];
+}
+
+std::shared_ptr<const Chunk> ChunkSnapshotM::getChunkFromLocalPos(const glm::ivec3& localPos) const {
+    glm::ivec3 chunkPos = ChunkSnapshot::getRelChunkPosFromLocalPos(localPos);
+    int index = (chunkPos.x + 1) * 9 + (chunkPos.y + 1) * 3 + (chunkPos.z + 1);
+    return chunks[index];
+}
+
+BlockType ChunkSnapshotM::getBlockFromLocalPos(const glm::ivec3& localPos) const {
+    if (ChunkSnapshot::inCenterBounds(localPos)) {
+        return center()->getBlock(localPos);
+    }
+    auto chunk = getChunkFromLocalPos(localPos);
+    if (chunk) {
+        glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
+        return chunk->getBlock(innerLocalPos);
+    }
+    return BlockType::Air;
+}
+
+uint16_t ChunkSnapshotM::getSunLightFromLocalPos(const glm::ivec3& localPos) const {
+    if (ChunkSnapshot::inCenterBounds(localPos)) {
+        return center()->getSunLight(localPos);
+    }
+    auto chunk = getChunkFromLocalPos(localPos);
+    if (chunk) {
+        glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
+        return chunk->getSunLight(innerLocalPos);
+    }
+    return 0;
+}
+
+uint16_t ChunkSnapshotM::getBlockLightFromLocalPos(const glm::ivec3& localPos) const {
+    if (ChunkSnapshot::inCenterBounds(localPos)) {
+        return center()->getBlockLight(localPos);
+    }
+    auto chunk = getChunkFromLocalPos(localPos);
+    if (chunk) {
+        glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
+        return chunk->getBlockLight(innerLocalPos);
+    }
+    return 0;
+}
+
+uint16_t ChunkSnapshotM::getLightLevelFromLocalPos(const glm::ivec3& localPos) const {
+    if (ChunkSnapshot::inCenterBounds(localPos)) {
+        return center()->getLightLevel(localPos);
+    }
+    auto chunk = getChunkFromLocalPos(localPos);
+    if (chunk) {
+        glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
+        return chunk->getLightLevel(innerLocalPos);
+    }
+    return 15;
+}
+
+uint16_t ChunkSnapshotM::getNearbySkyLight(const glm::ivec3 &localPos) const
+{
+    uint16_t maxLight = 0;
+    for (int i = 0; i < 6; ++i) {
+        glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
+        glm::ivec3 neighborPos = localPos + dir;
+        if (neighborPos.x < -Chunk::CHUNK_SIZE || neighborPos.x >= Chunk::CHUNK_SIZE * 2 ||
+            neighborPos.y < -Chunk::CHUNK_SIZE || neighborPos.y >= Chunk::CHUNK_SIZE * 2 ||
+            neighborPos.z < -Chunk::CHUNK_SIZE || neighborPos.z >= Chunk::CHUNK_SIZE * 2) {
+            continue; // Skip out of bounds neighbors
+        }
+        auto block = getBlockFromLocalPos(neighborPos);
+        if (BlockData::isTranslucentBlock(block) || BlockData::isTransparentBlock(block)) {
+            auto light = getSunLightFromLocalPos(neighborPos);
+            maxLight = std::max(maxLight, light);
+        }
+    }
+    return maxLight;
+}
+
+uint16_t ChunkSnapshotM::getNearbyBlockLight(const glm::ivec3 &localPos) const
+{
+    uint16_t maxLight = 0;
+    for (int i = 0; i < 6; ++i) {
+        glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
+        glm::ivec3 neighborPos = localPos + dir;
+        if (neighborPos.x < -Chunk::CHUNK_SIZE || neighborPos.x >= Chunk::CHUNK_SIZE * 2 ||
+            neighborPos.y < -Chunk::CHUNK_SIZE || neighborPos.y >= Chunk::CHUNK_SIZE * 2 ||
+            neighborPos.z < -Chunk::CHUNK_SIZE || neighborPos.z >= Chunk::CHUNK_SIZE * 2) {
+            continue; // Skip out of bounds neighbors
+        }
+        auto block = getBlockFromLocalPos(neighborPos);
+        if (BlockData::isTranslucentBlock(block) || BlockData::isTransparentBlock(block)) {
+            auto light = getBlockLightFromLocalPos(neighborPos);
+            maxLight = std::max(maxLight, light);
+        }
+    }
+    return maxLight;
+}
+
+void ChunkSnapshotM::setBlockFromLocalPos(const glm::ivec3& localPos, BlockType type) {
+    if (ChunkSnapshot::inCenterBounds(localPos)) {
+        center()->setBlock(localPos, type);
+    } else {
+        auto chunk = getChunkFromLocalPos(localPos);
+        if (chunk) {
+            glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
+            chunk->setBlock(innerLocalPos, type);
+        }
+    }
+}
+
+void ChunkSnapshotM::setSunLightFromLocalPos(const glm::ivec3& localPos, uint8_t lightLevel) {
+    if (ChunkSnapshot::inCenterBounds(localPos)) {
+        center()->setSunLight(localPos, lightLevel);
+    } else {
+        auto chunk = getChunkFromLocalPos(localPos);
+        if (chunk) {
+            glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
+            chunk->setSunLight(innerLocalPos, lightLevel);
+        }
+    }
+}
+
+void ChunkSnapshotM::setBlockLightFromLocalPos(const glm::ivec3& localPos, uint8_t lightLevel) {
+    if (ChunkSnapshot::inCenterBounds(localPos)) {
+        center()->setBlockLight(localPos, lightLevel);
+    } else {
+        auto chunk = getChunkFromLocalPos(localPos);
+        if (chunk) {
+            glm::ivec3 innerLocalPos = (localPos + Chunk::CHUNK_SIZE) % Chunk::CHUNK_SIZE;
+            chunk->setBlockLight(innerLocalPos, lightLevel);
+        }
+    }
 }

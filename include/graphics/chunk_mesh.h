@@ -40,6 +40,9 @@ public:
 
     void submitBuffers();
 
+    void setDirty(bool dirty) { m_dirty.store(dirty); }
+    bool isDirty() const { return m_dirty.load(); }
+    
 private:
     gfx::Mesh m_mesh;
     std::vector<float> m_vertices;
@@ -55,6 +58,8 @@ private:
     std::vector<float> m_verticesTransparent;
     std::vector<unsigned int> m_indicesTransparent;
     unsigned int m_indexCounterTransparent = 0;
+
+    std::atomic<bool> m_dirty = false;
 
     void addFace(
         const glm::ivec3 &pos, 

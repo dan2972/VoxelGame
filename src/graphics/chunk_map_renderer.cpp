@@ -17,7 +17,7 @@ void ChunkMapRenderer::updateBuildQueue(bool useSmoothLighting)
         ChunkReadyNode node;
         m_chunksToSubmit.pop(node);
         node.chunkMesh->setup();
-        // node.chunkMesh->submitBuffers();
+        node.chunkMesh->setDirty(false);
 
         m_chunkMeshes[node.chunkPos] = node.chunkMesh;
         m_activeChunkMeshes[node.chunkPos] = node.chunkMesh;
@@ -107,10 +107,10 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
     // if the block type is air (removing a block), build the boundaries first
     bool buildCenterChunkFirst = blockType != BlockType::Air;
     if (!buildCenterChunkFirst) {
-        auto snapshot = ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos);
-        if (snapshot) {
-            m_chunksToBuild.pushFront(snapshot.value());
-            m_chunksInBuildQueue.insert(chunkPos);
+        m_chunkMap->updateSunLight(chunkPos);
+        auto it = m_chunkMeshes.find(chunkPos);
+        if (it != m_chunkMeshes.end()) {
+            it->second->setDirty(true);
         }
     }
 
@@ -134,10 +134,9 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
                     (boundary.z == -1 || localPos.z == boundary.z)) {
     
                     glm::ivec3 neighborChunkPos = chunkPos + offset;
-                    auto snapshotAdj = ChunkSnapshot::CreateSnapshot(*m_chunkMap, neighborChunkPos);
-                    if (snapshotAdj) {
-                        m_chunksToBuild.pushFront(snapshotAdj.value());
-                        m_chunksInBuildQueue.insert(neighborChunkPos);
+                    auto it = m_chunkMeshes.find(neighborChunkPos);
+                    if (it != m_chunkMeshes.end()) {
+                        it->second->setDirty(true);
                     }
                 }
             }
@@ -145,10 +144,10 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
     }
 
     if (buildCenterChunkFirst) {
-        auto snapshot = ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos);
-        if (snapshot) {
-            m_chunksToBuild.pushFront(snapshot.value());
-            m_chunksInBuildQueue.insert(chunkPos);
+        m_chunkMap->updateSunLight(chunkPos);
+        auto it = m_chunkMeshes.find(chunkPos);
+        if (it != m_chunkMeshes.end()) {
+            it->second->setDirty(true);
         }
     }
 }
@@ -162,6 +161,14 @@ void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, 
     std::queue<glm::ivec3> chunksToUnLoad;
     for (auto& [chunkPos, chunkMesh] : m_activeChunkMeshes)
     {
+        if (chunkMesh->isDirty() && !m_chunksInBuildQueue.contains(chunkPos)) {
+            auto snapshot = ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos);
+            if (snapshot) {
+                m_chunksToBuild.pushBack(snapshot.value());
+                m_chunksInBuildQueue.insert(chunkPos);
+            }
+        }
+
         glm::ivec3 delta = chunkPos - cameraChunkPos;
         float distance2 = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
         if (distance2 > viewDistance * viewDistance) {

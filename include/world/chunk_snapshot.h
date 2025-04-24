@@ -7,9 +7,10 @@
 #include <algorithm>
 #include <optional>
 #include "world/chunk.h"
-#include "world/chunk_map.h"
 #include <glm/glm.hpp>
 #include "world/block_data.h"
+
+class ChunkMap;
 
 class ChunkSnapshot
 {
@@ -35,7 +36,32 @@ public:
 
     bool isValid(ChunkGenerationState minState = ChunkGenerationState::Complete) const;
 
-private:
     static glm::ivec3 getRelChunkPosFromLocalPos(const glm::ivec3& localPos);
     static bool inCenterBounds(const glm::ivec3& localPos);
+};
+
+// A modifiable version of ChunkSnapshot (holds shared pointers to non const Chunks)
+class ChunkSnapshotM
+{
+public:
+    std::array<std::shared_ptr<Chunk>, 27> chunks;
+
+    ChunkSnapshotM() = default;
+
+    ChunkSnapshotM(std::array<std::shared_ptr<Chunk>, 27> chunks) : chunks(chunks) {}
+
+    std::shared_ptr<Chunk> getChunkFromLocalPos(const glm::ivec3& localPos);
+    std::shared_ptr<const Chunk> getChunkFromLocalPos(const glm::ivec3& localPos) const;
+    BlockType getBlockFromLocalPos(const glm::ivec3& localPos) const;
+    uint16_t getSunLightFromLocalPos(const glm::ivec3& localPos) const;
+    uint16_t getBlockLightFromLocalPos(const glm::ivec3& localPos) const;
+    uint16_t getLightLevelFromLocalPos(const glm::ivec3& localPos) const;
+    uint16_t getNearbySkyLight(const glm::ivec3& localPos) const;
+    uint16_t getNearbyBlockLight(const glm::ivec3& localPos) const;
+
+    void setBlockFromLocalPos(const glm::ivec3& localPos, BlockType type);
+    void setSunLightFromLocalPos(const glm::ivec3& localPos, uint8_t lightLevel);
+    void setBlockLightFromLocalPos(const glm::ivec3& localPos, uint8_t lightLevel);
+
+    std::shared_ptr<Chunk> center() const { return chunks[13]; }
 };

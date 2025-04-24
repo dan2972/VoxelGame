@@ -6,11 +6,17 @@
 #include <queue>
 #include <unordered_set>
 #include <cstdint>
+#include <thread>
+#include <atomic>
+#include <array>
+#include <vector>
 #include "block_data.h"
 #include "chunk.h"
 #include "utils/glm_hash.h"
 #include "world/chunk_queue_node.h"
 #include "utils/blocking_queue.h"
+#include "utils/blocking_deque.h"
+#include "world/chunk_snapshot.h"
 
 class ChunkMap
 {
@@ -22,9 +28,11 @@ public:
 
     void startBuildThread();
     void chunkBuildThreadFunc();
+    void chunkLightThreadFunc();
     void stopThread() { m_stopThread = true; }
 
     void queueChunk(const glm::ivec3& chunkPos);
+    void queueChunkRadius(const glm::ivec3& chunkPos, int radius);
 
     void setBlock(int x, int y, int z, BlockType type);
     void setBlock(const glm::ivec3& pos, BlockType type);
@@ -34,8 +42,8 @@ public:
     void setSunLight(int x, int y, int z, uint8_t lightLevel);
     void setSunLight(const glm::ivec3& pos, uint8_t lightLevel);
 
-    void fillSunLight(std::shared_ptr<Chunk> chunk);
-    void floodFillLightAt(const glm::ivec3& pos, bool isBlockLight = false);
+    void updateSunLight(const glm::ivec3& chunkPos);
+    void fillSunLight(ChunkSnapshotM& snapshot);
 
     BlockType getBlock(int x, int y, int z) const;
     BlockType getBlock(const glm::ivec3& pos) const;
@@ -54,10 +62,19 @@ public:
     std::vector<std::shared_ptr<const Chunk>> getChunksInRadius(const glm::ivec3& chunkPos, int radius) const;
 private:
     std::unordered_map<glm::ivec3, std::shared_ptr<Chunk>, glm_ivec3_hash, glm_ivec3_equal> m_chunks;
-    BlockingQueue<std::shared_ptr<Chunk>> m_chunksToBuild;
-    BlockingQueue<std::shared_ptr<Chunk>> m_chunksToSubmit;
+    BlockingDeque<std::shared_ptr<Chunk>> m_chunksToBuild;
+    BlockingDeque<ChunkSnapshotM> m_chunksToFillLight;
     std::atomic_bool m_stopThread = false;
 
     std::shared_ptr<Chunk> getChunkInternal(const glm::ivec3& pos) const;
     std::shared_ptr<Chunk> checkCopy2Write(const std::shared_ptr<Chunk>& chunk);
+
+    void floodFillLightAt(ChunkSnapshotM& snapshot, const glm::ivec3& pos, uint16_t value, bool isBlockLight = true);
+    std::optional<ChunkSnapshotM> createSnapshotM(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks=nullptr, ChunkGenerationState minState = ChunkGenerationState::Complete);
+
+    struct LightQueueNode
+    {
+        glm::ivec3 pos;
+        uint16_t value;
+    };
 };
