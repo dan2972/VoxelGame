@@ -16,14 +16,15 @@ void ChunkMap::chunkLightThreadFunc()
 {
     while (!m_stopThread)
     {
-        ChunkSnapshotM snapshot;
+        ChunkSnapshot snapshot;
         if (!m_chunksToFillLight.popFrontNoWait(snapshot)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
-        fillSunLight(snapshot);
-        snapshot.center()->m_generationState.store(ChunkGenerationState::Light);
-        snapshot.center()->m_inBuildQueue.store(false);
+        auto center = getChunkInternal(snapshot.center()->getPos());
+        center->generateLightMap(snapshot);
+        center->m_generationState.store(ChunkGenerationState::Light);
+        center->m_inBuildQueue.store(false);
     }
 }
 
@@ -66,7 +67,7 @@ void ChunkMap::queueChunk(const glm::ivec3& chunkPos)
         m_chunksToBuild.pushBack(chunk);
     } else if (chunk->getGenerationState() == ChunkGenerationState::Blocks && !chunk->m_inBuildQueue.load()) {
         std::vector<glm::ivec3> missingChunks;
-        auto snapshot = createSnapshotM(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
+        auto snapshot = ChunkSnapshot::CreateSnapshot(*this, chunkPos, &missingChunks, ChunkGenerationState::Blocks);
         if (snapshot) {
             chunk->m_inBuildQueue.store(true);
             m_chunksToFillLight.pushBack(snapshot.value());
@@ -155,79 +156,15 @@ void ChunkMap::setSunLight(const glm::ivec3& pos, uint8_t lightLevel)
 void ChunkMap::updateLighting(const glm::ivec3& chunkPos)
 {
     std::vector<glm::ivec3> missingChunks;
-    auto snapshot = createSnapshotM(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
+    auto snapshot = ChunkSnapshot::CreateSnapshot(*this, chunkPos, &missingChunks, ChunkGenerationState::Blocks);
     if (snapshot) {
-        snapshot->center()->m_inBuildQueue.store(true);
-        snapshot->center()->m_generationState.store(ChunkGenerationState::Blocks);
+        auto center = getChunkInternal(chunkPos);
+        center->m_inBuildQueue.store(true);
+        center->m_generationState.store(ChunkGenerationState::Blocks);
         m_chunksToFillLight.pushFront(snapshot.value());
     } else {
         for (const auto& missingChunk : missingChunks) {
             queueChunk(missingChunk);
-        }
-    }
-}
-
-void ChunkMap::fillSunLight(ChunkSnapshotM& snapshot) 
-{
-    auto center = snapshot.center();
-
-    std::array<int, Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE> sunHeightMap;
-
-    for (int x = 0; x < Chunk::CHUNK_SIZE; ++x)
-    {
-        for (int z = 0; z < Chunk::CHUNK_SIZE; ++z)
-        {
-            bool propagateSky = true;
-            sunHeightMap[x * Chunk::CHUNK_SIZE + z] = 0;
-            for (int y = Chunk::CHUNK_SIZE - 1; y >= 0; --y)
-            {
-                auto localPos = glm::ivec3(x, y, z);
-                BlockType block = snapshot.getBlockFromLocalPos(localPos);
-
-                if (!(BlockData::isTranslucentBlock(block) || BlockData::isTransparentBlock(block)) && propagateSky) {
-                    propagateSky = false;
-                    sunHeightMap[x * Chunk::CHUNK_SIZE + z] = y;
-                }
-                
-                if (propagateSky) {
-                    snapshot.setSunLightFromLocalPos(localPos, 15);
-                } else {
-                    snapshot.setSunLightFromLocalPos(localPos, 0);
-                }
-                snapshot.setBlockLightFromLocalPos(localPos, 0);
-            }
-        }
-    }
-    
-    for (int x = 0; x < Chunk::CHUNK_SIZE; ++x)
-    {
-        for (int z = 0; z < Chunk::CHUNK_SIZE; ++z)
-        {
-            int height = sunHeightMap[x * Chunk::CHUNK_SIZE + z];
-            for (int y = Chunk::CHUNK_SIZE - 1; y >= 0; --y)
-            {
-                auto localPos = glm::ivec3(x, y, z);
-                if (x == 0 || z == 0 || x == Chunk::CHUNK_SIZE - 1 || z == Chunk::CHUNK_SIZE - 1) {
-                    auto nbLight = snapshot.getNearbyBlockLight(localPos);
-                    if (nbLight > 1)
-                        floodFillLightAt(snapshot, localPos, nbLight-1, true);
-                }
-                
-                if (y <= height) {
-                    BlockType block = snapshot.getBlockFromLocalPos(localPos);
-                    if (!BlockData::isTranslucentBlock(block) && !BlockData::isTransparentBlock(block)) {
-                        auto luminosity = BlockData::getLuminosity(block);
-                        if (luminosity > 1)
-                            floodFillLightAt(snapshot, localPos, luminosity, true);
-                        continue;
-                    }
-                    auto light = snapshot.getNearbySkyLight(localPos);
-                    if (light <= 1)
-                        continue;
-                    
-                    floodFillLightAt(snapshot, localPos, light - 1, false);
-                }
-            }
         }
     }
 }
@@ -364,75 +301,4 @@ std::shared_ptr<Chunk> ChunkMap::checkCopy2Write(const std::shared_ptr<Chunk>& c
         return clone;
     }
     return chunk;
-}
-
-void ChunkMap::floodFillLightAt(ChunkSnapshotM& snapshot, const glm::ivec3& pos, uint16_t value, bool isBlockLight)
-{
-    auto curLight = isBlockLight ? snapshot.getBlockLightFromLocalPos(pos) :
-                                snapshot.getSunLightFromLocalPos(pos);
-    if (curLight > value)
-        return;
-    std::queue<LightQueueNode> queue;
-    std::unordered_set<glm::ivec3, glm_ivec3_hash, glm_ivec3_equal> visited;
-    queue.push({pos, value});
-    visited.insert(pos);
-    int count = 0;
-    while (!queue.empty())
-    {   
-        count++;
-        auto current = queue.front();
-        queue.pop();
-
-        if (isBlockLight)
-            snapshot.setBlockLightFromLocalPos(current.pos, current.value);
-        else
-            snapshot.setSunLightFromLocalPos(current.pos, current.value);
-        
-        if (current.value == 0)
-            continue;
-
-        for (int i = 0; i < 6; ++i)
-        {
-            glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
-            glm::ivec3 neighborPos = current.pos + dir;
-            if (!ChunkSnapshot::inCenterBounds(neighborPos))
-                continue;
-
-            auto block = snapshot.getBlockFromLocalPos(neighborPos);
-            if (!BlockData::isTranslucentBlock(block) && !BlockData::isTransparentBlock(block))
-                continue;
-            auto neighborLight = isBlockLight ? snapshot.getBlockLightFromLocalPos(neighborPos) :
-                                                snapshot.getSunLightFromLocalPos(neighborPos);
-            if (neighborLight < current.value - 1 && !visited.contains(neighborPos)) {
-                queue.push({neighborPos, static_cast<uint16_t>(current.value - 1)});
-                visited.insert(neighborPos);
-            }
-        }
-    }
-}
-
-std::optional<ChunkSnapshotM> ChunkMap::createSnapshotM(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState)
-{
-    std::array<std::shared_ptr<Chunk>, 27> chunks;
-    bool allChunksLoaded = true;
-    for (int x = -1; x <= 1; ++x)
-    {
-        for (int y = -1; y <= 1; ++y)
-        {
-            for (int z = -1; z <= 1; ++z)
-            {
-                auto chunk = getChunkInternal(centerChunkPos + glm::ivec3(x, y, z));
-                if (!chunk || chunk->getGenerationState() < minState) {
-                    if (missingChunks) {
-                        allChunksLoaded = false;
-                        missingChunks->push_back(centerChunkPos + glm::ivec3(x, y, z));
-                    } else {
-                        return std::nullopt;
-                    }
-                }
-                chunks[(x + 1) * 9 + (y + 1) * 3 + (z + 1)] = chunk;
-            }
-        }
-    }
-    return allChunksLoaded ? std::optional<ChunkSnapshotM>(chunks) : std::nullopt;
 }

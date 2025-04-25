@@ -7,16 +7,8 @@
 #include <cstdint>
 #include "terrain_generator.h"
 #include "block_data.h"
-
-class ChunkSnapshot;
-
-enum class ChunkGenerationState
-{
-    None = 0,
-    Blocks = 1,
-    Light = 2,
-    Complete = 2
-};
+#include "world/chunk_snapshot.h"
+#include "world/chunk_generation_state.h"
 
 class Chunk
 {
@@ -75,4 +67,12 @@ private:
     bool m_allSolid = true;
     std::atomic<bool> m_inBuildQueue = false;
     std::atomic<ChunkGenerationState> m_generationState = ChunkGenerationState::None;
+
+    struct LightQueueNode
+    {
+        glm::ivec3 pos;
+        uint16_t value;
+    };
+
+    void floodFillLightAt(const ChunkSnapshot& snapshot, const glm::ivec3& pos, uint16_t value, bool isBlockLight);
 };

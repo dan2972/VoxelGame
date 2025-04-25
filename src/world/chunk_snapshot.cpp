@@ -117,6 +117,40 @@ uint16_t ChunkSnapshot::getLightLevelFromLocalPos(const glm::ivec3& localPos) co
     return 15;
 }
 
+uint16_t ChunkSnapshot::getNearbySkyLight(const glm::ivec3 &localPos) const
+{
+    uint16_t maxLight = 0;
+    for (int i = 0; i < 6; ++i) {
+        glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
+        glm::ivec3 neighborPos = localPos + dir;
+        if (neighborPos.x < -Chunk::CHUNK_SIZE || neighborPos.x >= Chunk::CHUNK_SIZE * 2 ||
+            neighborPos.y < -Chunk::CHUNK_SIZE || neighborPos.y >= Chunk::CHUNK_SIZE * 2 ||
+            neighborPos.z < -Chunk::CHUNK_SIZE || neighborPos.z >= Chunk::CHUNK_SIZE * 2) {
+            continue; // Skip out of bounds neighbors
+        }
+        auto light = getSunLightFromLocalPos(neighborPos);
+        maxLight = std::max(maxLight, light);
+    }
+    return maxLight;
+}
+
+uint16_t ChunkSnapshot::getNearbyBlockLight(const glm::ivec3 &localPos) const
+{
+    uint16_t maxLight = 0;
+    for (int i = 0; i < 6; ++i) {
+        glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
+        glm::ivec3 neighborPos = localPos + dir;
+        if (neighborPos.x < -Chunk::CHUNK_SIZE || neighborPos.x >= Chunk::CHUNK_SIZE * 2 ||
+            neighborPos.y < -Chunk::CHUNK_SIZE || neighborPos.y >= Chunk::CHUNK_SIZE * 2 ||
+            neighborPos.z < -Chunk::CHUNK_SIZE || neighborPos.z >= Chunk::CHUNK_SIZE * 2) {
+            continue; // Skip out of bounds neighbors
+        }
+        auto light = getBlockLightFromLocalPos(neighborPos);
+        maxLight = std::max(maxLight, light);
+    }
+    return maxLight;
+}
+
 bool ChunkSnapshot::isValid(ChunkGenerationState minState) const {
     return std::all_of(chunks.begin(), chunks.end(), [&](const auto& chunk) { return chunk != nullptr && chunk->getGenerationState() >= minState; });
 }

@@ -6,10 +6,11 @@
 #include <vector>
 #include <algorithm>
 #include <optional>
-#include "world/chunk.h"
 #include <glm/glm.hpp>
 #include "world/block_data.h"
+#include "world/chunk_generation_state.h"
 
+class Chunk;
 class ChunkMap;
 
 class ChunkSnapshot
@@ -33,6 +34,8 @@ public:
     uint16_t getSunLightFromLocalPos(const glm::ivec3& localPos) const;
     uint16_t getBlockLightFromLocalPos(const glm::ivec3& localPos) const;
     uint16_t getLightLevelFromLocalPos(const glm::ivec3& localPos) const;
+    uint16_t getNearbySkyLight(const glm::ivec3& localPos) const;
+    uint16_t getNearbyBlockLight(const glm::ivec3& localPos) const;
 
     bool isValid(ChunkGenerationState minState = ChunkGenerationState::Complete) const;
 
