@@ -64,9 +64,9 @@ void Chunk::generateTerrain()
 
 void Chunk::generateLightMap(const ChunkSnapshot& snapshot)
 {
-    auto center = snapshot.center();
-
     std::array<int, Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE> sunHeightMap;
+    std::vector<LightQueueNode> nodes;
+    std::vector<LightQueueNode> skyNodes;
 
     for (int x = 0; x < Chunk::CHUNK_SIZE; ++x)
     {
@@ -89,6 +89,15 @@ void Chunk::generateLightMap(const ChunkSnapshot& snapshot)
                 } else {
                     setSunLight(x, y, z, 0);
                 }
+
+                if (BlockData::isLuminousBlock(block)) {
+                    nodes.push_back({localPos, BlockData::getLuminosity(block)});
+                } else if (x == 0 || z == 0 || x == Chunk::CHUNK_SIZE - 1 || z == Chunk::CHUNK_SIZE - 1) {
+                    auto nbLight = snapshot.getNearbyBlockLight(localPos);
+                    if (nbLight > 1)
+                        nodes.push_back({localPos, static_cast<uint16_t>(nbLight - 1)});
+                }
+
                 setBlockLight(x, y, z, 0);
             }
         }
@@ -99,32 +108,25 @@ void Chunk::generateLightMap(const ChunkSnapshot& snapshot)
         for (int z = 0; z < Chunk::CHUNK_SIZE; ++z)
         {
             int height = sunHeightMap[x * Chunk::CHUNK_SIZE + z];
-            for (int y = Chunk::CHUNK_SIZE - 1; y >= 0; --y)
+            for (int y = height; y >= 0; --y)
             {
+                auto block = getBlock(x, y, z);
                 auto localPos = glm::ivec3(x, y, z);
-                if (x == 0 || z == 0 || x == Chunk::CHUNK_SIZE - 1 || z == Chunk::CHUNK_SIZE - 1) {
-                    auto nbLight = snapshot.getNearbyBlockLight(localPos);
-                    if (nbLight > 1)
-                        floodFillLightAt(snapshot, localPos, nbLight-1, true);
-                }
                 
-                if (y <= height) {
-                    BlockType block = snapshot.getBlockFromLocalPos(localPos);
-                    if (!BlockData::isTranslucentBlock(block) && !BlockData::isTransparentBlock(block)) {
-                        auto luminosity = BlockData::getLuminosity(block);
-                        if (luminosity > 1)
-                            floodFillLightAt(snapshot, localPos, luminosity, true);
-                        continue;
-                    }
-                    auto light = snapshot.getNearbySkyLight(localPos);
-                    if (light <= 1)
-                        continue;
-                    
-                    floodFillLightAt(snapshot, localPos, light - 1, false);
+                if (!BlockData::isTranslucentBlock(block) && !BlockData::isTransparentBlock(block)) {
+                    continue;
                 }
+                auto light = snapshot.getNearbySkyLight(localPos);
+                if (light <= 1)
+                    continue;
+                
+                skyNodes.push_back({localPos, static_cast<uint16_t>(light - 1)});
             }
         }
     }
+
+    floodFillLightAt(snapshot, skyNodes, false);
+    floodFillLightAt(snapshot, nodes, true);
 }
 
 BlockType Chunk::getBlock(int x, int y, int z) const
@@ -289,29 +291,29 @@ std::shared_ptr<Chunk> Chunk::clone() const
     return chunk;
 }
 
-void Chunk::floodFillLightAt(const ChunkSnapshot& snapshot, const glm::ivec3& pos, uint16_t value, bool isBlockLight)
+void Chunk::floodFillLightAt(const ChunkSnapshot& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight)
 {
-    auto curLight = isBlockLight ? snapshot.getBlockLightFromLocalPos(pos) :
-                                snapshot.getSunLightFromLocalPos(pos);
-    if (curLight > value)
-        return;
     std::queue<LightQueueNode> queue;
-    std::unordered_set<glm::ivec3, glm_ivec3_hash, glm_ivec3_equal> visited;
-    queue.push({pos, value});
-    visited.insert(pos);
-    int count = 0;
+    for (const auto& node : nodes)
+    {
+        if (isBlockLight && node.value <= getBlockLight(node.pos))
+            continue;
+        queue.push(node);
+        if (isBlockLight)
+            setBlockLight(node.pos, node.value);
+        else
+            setSunLight(node.pos, node.value);
+    }
+
     while (!queue.empty())
-    {   
-        count++;
+    {
         auto current = queue.front();
         queue.pop();
-
-        if (isBlockLight)
-            setBlockLight(current.pos, current.value);
-        else
-            setSunLight(current.pos, current.value);
         
-        if (current.value == 0)
+        if (current.value <= 1)
+            continue;
+
+        if (isBlockLight && current.value < getBlockLight(current.pos))
             continue;
 
         for (int i = 0; i < 6; ++i)
@@ -324,11 +326,22 @@ void Chunk::floodFillLightAt(const ChunkSnapshot& snapshot, const glm::ivec3& po
             auto block = snapshot.getBlockFromLocalPos(neighborPos);
             if (!BlockData::isTranslucentBlock(block) && !BlockData::isTransparentBlock(block))
                 continue;
-            auto neighborLight = isBlockLight ? snapshot.getBlockLightFromLocalPos(neighborPos) :
-                                                snapshot.getSunLightFromLocalPos(neighborPos);
-            if (neighborLight < current.value - 1 && !visited.contains(neighborPos)) {
-                queue.push({neighborPos, static_cast<uint16_t>(current.value - 1)});
-                visited.insert(neighborPos);
+            
+            if (isBlockLight) {
+                auto neighborLight = snapshot.getBlockLightFromLocalPos(neighborPos);
+                if (neighborLight < current.value - 1) {
+                    queue.push({neighborPos, static_cast<uint16_t>(current.value - 1)});
+                    setBlockLight(neighborPos, current.value-1);
+                }
+            } else {
+                auto neighborLight = snapshot.getSunLightFromLocalPos(neighborPos);
+                if (current.value == 15 && BlockFace(i) == BlockFace::Bottom) {
+                    queue.push({neighborPos, static_cast<uint16_t>(current.value)});
+                    setSunLight(neighborPos, current.value);
+                } else if (neighborLight < current.value - 1) {
+                    queue.push({neighborPos, static_cast<uint16_t>(current.value - 1)});
+                    setSunLight(neighborPos, current.value-1);
+                }
             }
         }
     }

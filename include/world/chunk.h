@@ -74,5 +74,5 @@ private:
         uint16_t value;
     };
 
-    void floodFillLightAt(const ChunkSnapshot& snapshot, const glm::ivec3& pos, uint16_t value, bool isBlockLight);
+    void floodFillLightAt(const ChunkSnapshot& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight);
 };
