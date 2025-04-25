@@ -136,7 +136,7 @@ void ChunkMesh::addFace
     BlockFace face, 
     std::array<float, 8> texCoords, 
     std::array<int, 4> aoValues, 
-    std::array<float, 8> lightLevels, 
+    std::array<glm::vec4, 4> lightLevels, 
     RenderLayer layer,
     bool flipQuad
 )
@@ -177,8 +177,8 @@ void ChunkMesh::addFace
         // 2 bits for the AO value (0-3)
         vPacked = (vPacked << 2) + static_cast<uint32_t>(aoValues[i]);
         // 4 bits for the light levels (0-15)
-        vPacked = (vPacked << 4) + static_cast<uint32_t>(lightLevels[i]); // sun light
-        vPacked = (vPacked << 4) + static_cast<uint32_t>(lightLevels[i + 4]); // block light
+        vPacked = (vPacked << 4) + static_cast<uint32_t>(lightLevels[i].a); // sun light
+        vPacked = (vPacked << 4) + static_cast<uint32_t>(lightLevels[i].b); // block light
         vertices->push_back(std::bit_cast<float>(vPacked));
 
         vertices->push_back(texCoords[texIndex++]);
@@ -258,49 +258,50 @@ std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace 
 
 
 
-std::array<float, 8> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkSnapshot& snapshot, bool smoothLighting)
+std::array<glm::vec4, 4> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkSnapshot& snapshot, bool smoothLighting)
 {
-    std::array<float, 8> lightValues;
+    std::array<glm::vec4, 4> lightValues;
     auto faceCoords = getFaceCoords(face);
 
     glm::ivec3 curLightPos = blockPos + static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(face));
-    unsigned char currentLight = snapshot.getSunLightFromLocalPos(curLightPos);
 
-    for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < 4; ++i)
     {
-        if (i >= 4)
-            currentLight = snapshot.getBlockLightFromLocalPos(curLightPos);
+        glm::vec4 currentLight = glm::vec4(0,0,snapshot.getBlockLightFromLocalPos(curLightPos), snapshot.getSunLightFromLocalPos(curLightPos));
         if (!smoothLighting)
         {
-            lightValues[i%4] = currentLight;
+            lightValues[i] = currentLight;
             continue;
         }
 
         glm::ivec3 corner = glm::ivec3
         {
-            faceCoords[i%4 * 3],
-            faceCoords[i%4 * 3 + 1],
-            faceCoords[i%4 * 3 + 2]
+            faceCoords[i * 3],
+            faceCoords[i * 3 + 1],
+            faceCoords[i * 3 + 2]
         };
         glm::ivec3 s1, s2, c;
         getAOBlockPos(corner, face, &s1, &s2, &c);
 
-        unsigned char side1 = i < 4 ? snapshot.getSunLightFromLocalPos(blockPos + s1) : snapshot.getBlockLightFromLocalPos(blockPos + s1);
-        unsigned char side2 = i < 4 ? snapshot.getSunLightFromLocalPos(blockPos + s2) : snapshot.getBlockLightFromLocalPos(blockPos + s2);
-        unsigned char cornerBlock = i < 4 ? snapshot.getSunLightFromLocalPos(blockPos + c) : snapshot.getBlockLightFromLocalPos(blockPos + c);
+        glm::vec4 side1 = glm::vec4(0,0,snapshot.getBlockLightFromLocalPos(blockPos + s1),snapshot.getSunLightFromLocalPos(blockPos + s1));
+        glm::vec4 side2 = glm::vec4(0,0,snapshot.getBlockLightFromLocalPos(blockPos + s2),snapshot.getSunLightFromLocalPos(blockPos + s2));
+        glm::vec4 cornerBlock = glm::vec4(0,0,snapshot.getBlockLightFromLocalPos(blockPos + c),snapshot.getSunLightFromLocalPos(blockPos + c));
 
         bool bs1 = snapshot.getBlockFromLocalPos(blockPos + s1) == BlockType::Air;
         bool bs2 = snapshot.getBlockFromLocalPos(blockPos + s2) == BlockType::Air;
         bool bc = snapshot.getBlockFromLocalPos(blockPos + c) == BlockType::Air;
 
-        float divisor = 1 + (bs1 ? 1 : 0) + (bs2 ? 1 : 0);
-        float dividend = currentLight + (bs1 ? side1 : 0) + (bs2 ? side2 : 0);
-        if (bs1 || bs2)
+        for (int j = 0; j < 4; ++j)
         {
-            divisor += bc ? 1 : 0;
-            dividend += bc ? cornerBlock : 0;
+            float divisor = 1 + (bs1 ? 1 : 0) + (bs2 ? 1 : 0);
+            float dividend = currentLight[j] + (bs1 ? side1[j] : 0) + (bs2 ? side2[j] : 0);
+            if (bs1 || bs2)
+            {
+                divisor += bc ? 1 : 0;
+                dividend += bc ? cornerBlock[j] : 0;
+            }
+            lightValues[i][j] = dividend / divisor;
         }
-        lightValues[i] = dividend / divisor;
     }
     return lightValues;
 }
