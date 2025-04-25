@@ -5,10 +5,20 @@ created using C++ and OpenGL.
 <details>
 <summary>Table of Contents</summary>
 
+- [Gallery](#gallery)
 - [Features](#features)
 - [Build](#build)
 
 </details>
+
+## Gallery
+*An example showing the randomly generated terrain*
+![Screenshot 2025-04-24 212323](https://github.com/user-attachments/assets/55bb9691-e4bf-4a47-bf81-d8936e966c61)
+*An example showing basic flood fill lighting*
+![Screenshot 2025-04-25 122015](https://github.com/user-attachments/assets/986f947f-ba67-49d9-8a37-b5b669dc7004)
+*an example using Minecraft's textures*
+![Screenshot 2025-04-25 123119](https://github.com/user-attachments/assets/9dacb7d6-ba36-4582-80e3-07c0014536fb)
+
 
 ## Features
 - Custom OpenGL abstraction
@@ -21,11 +31,6 @@ created using C++ and OpenGL.
 - Dynamic texture atlas packing/creation (resizes atlas automatically)
 - Custom 3D line renderer
 - Separation of logic and rendering timesteps
-
-![Screenshot 2025-04-24 212323](https://github.com/user-attachments/assets/55bb9691-e4bf-4a47-bf81-d8936e966c61)
-
-![Screenshot 2025-04-17 165830](https://github.com/user-attachments/assets/e62f3363-33b8-4cf8-8b3f-f32e224f417e)*an example using Minecraft's textures*
-
 
 ## Build
 This project uses VCPKG and CMake.
