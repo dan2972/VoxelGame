@@ -43,7 +43,7 @@ public:
     static bool inCenterBounds(const glm::ivec3& localPos);
 };
 
-// A modifiable version of ChunkSnapshot (holds shared pointers to non const Chunks)
+// A mutable version of ChunkSnapshot (holds shared pointers to non const Chunks)
 class ChunkSnapshotM
 {
 public:

@@ -129,6 +129,21 @@ void Chunk::generateLightMap(const ChunkSnapshot& snapshot)
     floodFillLightAt(snapshot, nodes, true);
 }
 
+void Chunk::clearLightMap()
+{
+    for (int x = 0; x < CHUNK_SIZE; ++x)
+    {
+        for (int z = 0; z < CHUNK_SIZE; ++z)
+        {
+            for (int y = 0; y < CHUNK_SIZE; ++y)
+            {
+                setBlockLight(x, y, z, 0);
+                setSunLight(x, y, z, 0);
+            }
+        }
+    }
+}
+
 BlockType Chunk::getBlock(int x, int y, int z) const
 {
     if (x < 0 || x >= CHUNK_SIZE || y < 0 || y >= CHUNK_SIZE || z < 0 || z >= CHUNK_SIZE)

@@ -104,46 +104,60 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
 {
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(blockPos);
 
-    // bool buildCenterChunkFirst = blockType != BlockType::Air;
-    // if (!buildCenterChunkFirst) {
-    //     m_chunkMap->updateLighting(chunkPos);
-    //     setDirty(chunkPos);
+    // glm::ivec3 localPos = Chunk::globalToLocalPos(blockPos);
+    // for (int dx = -1; dx <= 1; ++dx) {
+    //     for (int dy = -1; dy <= 1; ++dy) {
+    //         for (int dz = -1; dz <= 1; ++dz) {
+    //             if (dx == 0 && dy == 0 && dz == 0) continue;
+    
+    //             glm::ivec3 offset = {dx, dy, dz};
+    //             // The boundary value we have to check
+    //             // -1 means no boundary check, 0 means check the first element, and Chunk::CHUNK_SIZE - 1 means check the last element.
+    //             glm::ivec3 boundary = {
+    //                 dx < 0 ? 0 : (dx > 0 ? Chunk::CHUNK_SIZE - 1 : -1),
+    //                 dy < 0 ? 0 : (dy > 0 ? Chunk::CHUNK_SIZE - 1 : -1),
+    //                 dz < 0 ? 0 : (dz > 0 ? Chunk::CHUNK_SIZE - 1 : -1)
+    //             };
+    
+    //             if (((boundary.x == -1 || localPos.x == boundary.x) &&
+    //                 (boundary.y == -1 || localPos.y == boundary.y) &&
+    //                 (boundary.z == -1 || localPos.z == boundary.z)) ||
+    //                 BlockData::isLuminousBlock(blockType) || blockType == BlockType::Air)
+    //             {
+    //                 glm::ivec3 neighborChunkPos = chunkPos + offset;
+    //                 m_chunkMap->updateLighting(neighborChunkPos);
+    //                 setDirty(neighborChunkPos);
+    //             }
+    //         }
+    //     }
     // }
 
-    glm::ivec3 localPos = Chunk::globalToLocalPos(blockPos);
-    for (int dx = -1; dx <= 1; ++dx) {
-        for (int dy = -1; dy <= 1; ++dy) {
-            for (int dz = -1; dz <= 1; ++dz) {
-                if (dx == 0 && dy == 0 && dz == 0) continue;
-    
-                glm::ivec3 offset = {dx, dy, dz};
-                // The boundary value we have to check
-                // -1 means no boundary check, 0 means check the first element, and Chunk::CHUNK_SIZE - 1 means check the last element.
-                glm::ivec3 boundary = {
-                    dx < 0 ? 0 : (dx > 0 ? Chunk::CHUNK_SIZE - 1 : -1),
-                    dy < 0 ? 0 : (dy > 0 ? Chunk::CHUNK_SIZE - 1 : -1),
-                    dz < 0 ? 0 : (dz > 0 ? Chunk::CHUNK_SIZE - 1 : -1)
-                };
-    
-                if (((boundary.x == -1 || localPos.x == boundary.x) &&
-                    (boundary.y == -1 || localPos.y == boundary.y) &&
-                    (boundary.z == -1 || localPos.z == boundary.z)) ||
-                    BlockData::isLuminousBlock(blockType) || blockType == BlockType::Air)
-                {
-                    glm::ivec3 neighborChunkPos = chunkPos + offset;
-                    m_chunkMap->updateLighting(neighborChunkPos);
-                    setDirty(neighborChunkPos);
-                }
-            }
-        }
+    static std::vector<glm::ivec3> poses = {
+        {-1,0,0}, {1,0,0},
+        {0,-1,0}, {0,1,0},
+        {0,0,-1}, {0,0,1},
+        {-1,1,0}, {1,1,0}, {1,-1,0}, {-1,-1,0},
+        {-1,0,1}, {1,0,1}, {1,0,-1}, {-1,0,-1},
+        {0,-1,1}, {0,1,1}, {0,1,-1}, {0,-1,-1},
+        {-1,-1,-1}, {-1,-1,1}, {-1,1,-1}, {1,-1,-1},
+        {1,-1,1}, {1,1,-1}, {-1,1,1}, {1,1,1}
+    };
+
+    for (int i = poses.size(); i >= 0; i--) {
+        glm::ivec3 neighborChunkPos = chunkPos + poses[i];
+        m_chunkMap->updateLighting(neighborChunkPos);
+        setDirty(neighborChunkPos);
     }
 
     m_chunkMap->updateLighting(chunkPos);
     setDirty(chunkPos);
-    // if (buildCenterChunkFirst) {
-    //     m_chunkMap->updateLighting(chunkPos);
-    //     setDirty(chunkPos);
-    // }
+
+    for (auto& pos : poses) {
+        glm::ivec3 neighborChunkPos = chunkPos + pos;
+        m_chunkMap->updateLighting(neighborChunkPos, true);
+    }
+
+    m_chunkMap->updateLighting(chunkPos, true);
 }
 
 void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor, float dayNightFrac)

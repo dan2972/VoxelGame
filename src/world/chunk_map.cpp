@@ -16,13 +16,17 @@ void ChunkMap::chunkLightThreadFunc()
 {
     while (!m_stopThread)
     {
-        ChunkSnapshot snapshot;
-        if (!m_chunksToFillLight.popFrontNoWait(snapshot)) {
+        ChunkLightQueueNode node;
+        if (!m_chunksToFillLight.popFrontNoWait(node)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
-        auto center = getChunkInternal(snapshot.center()->getPos());
-        center->generateLightMap(snapshot);
+        auto center = getChunkInternal(node.snapshot.center()->getPos());
+        if (node.clearLightMap) {
+            center->clearLightMap();
+        } else {
+            center->generateLightMap(node.snapshot);
+        }
         center->m_generationState.store(ChunkGenerationState::Light);
         center->m_inBuildQueue.store(false);
     }
@@ -70,7 +74,7 @@ void ChunkMap::queueChunk(const glm::ivec3& chunkPos)
         auto snapshot = ChunkSnapshot::CreateSnapshot(*this, chunkPos, &missingChunks, ChunkGenerationState::Blocks);
         if (snapshot) {
             chunk->m_inBuildQueue.store(true);
-            m_chunksToFillLight.pushBack(snapshot.value());
+            m_chunksToFillLight.pushBack({snapshot.value(), false});
         } else {
             for (const auto& missingChunk : missingChunks) {
                 queueChunk(missingChunk);
@@ -153,7 +157,7 @@ void ChunkMap::setSunLight(const glm::ivec3& pos, uint8_t lightLevel)
     setSunLight(pos.x, pos.y, pos.z, lightLevel);
 }
 
-void ChunkMap::updateLighting(const glm::ivec3& chunkPos)
+void ChunkMap::updateLighting(const glm::ivec3& chunkPos, bool clearLightMap)
 {
     std::vector<glm::ivec3> missingChunks;
     auto snapshot = ChunkSnapshot::CreateSnapshot(*this, chunkPos, &missingChunks, ChunkGenerationState::Blocks);
@@ -161,7 +165,7 @@ void ChunkMap::updateLighting(const glm::ivec3& chunkPos)
         auto center = getChunkInternal(chunkPos);
         center->m_inBuildQueue.store(true);
         center->m_generationState.store(ChunkGenerationState::Blocks);
-        m_chunksToFillLight.pushFront(snapshot.value());
+        m_chunksToFillLight.pushFront({snapshot.value(), clearLightMap});
     } else {
         for (const auto& missingChunk : missingChunks) {
             queueChunk(missingChunk);

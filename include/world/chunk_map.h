@@ -21,6 +21,7 @@
 struct ChunkLightQueueNode
 {
     ChunkSnapshot snapshot;
+    bool clearLightMap = false;
 };
 
 class ChunkMap
@@ -47,7 +48,7 @@ public:
     void setSunLight(int x, int y, int z, uint8_t lightLevel);
     void setSunLight(const glm::ivec3& pos, uint8_t lightLevel);
 
-    void updateLighting(const glm::ivec3& chunkPos);
+    void updateLighting(const glm::ivec3& chunkPos, bool clearLightMap = false);
 
     BlockType getBlock(int x, int y, int z) const;
     BlockType getBlock(const glm::ivec3& pos) const;
@@ -67,7 +68,7 @@ public:
 private:
     std::unordered_map<glm::ivec3, std::shared_ptr<Chunk>, glm_ivec3_hash, glm_ivec3_equal> m_chunks;
     BlockingDeque<std::shared_ptr<Chunk>> m_chunksToBuild;
-    BlockingDeque<ChunkSnapshot> m_chunksToFillLight;
+    BlockingDeque<ChunkLightQueueNode> m_chunksToFillLight;
     std::atomic_bool m_stopThread = false;
 
     std::shared_ptr<Chunk> getChunkInternal(const glm::ivec3& pos) const;

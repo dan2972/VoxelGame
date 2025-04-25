@@ -22,6 +22,7 @@ public:
 
     void generateTerrain();
     void generateLightMap(const ChunkSnapshot& snapshot);
+    void clearLightMap();
 
     glm::ivec3 getPos() const { return m_position; }
 
