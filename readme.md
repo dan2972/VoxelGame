@@ -8,16 +8,21 @@ created using C++ and OpenGL.
 - [Gallery](#gallery)
 - [Features](#features)
 - [Build](#build)
+- [Controls](#controls)
+- [Notes](#notes)
 
 </details>
 
 ## Gallery
-*An example showing the randomly generated terrain*
+
 ![Screenshot 2025-04-24 212323](https://github.com/user-attachments/assets/55bb9691-e4bf-4a47-bf81-d8936e966c61)
-*An example showing basic flood fill lighting*
+*An example showing the randomly generated terrain*
+
 ![Screenshot 2025-04-25 122015](https://github.com/user-attachments/assets/986f947f-ba67-49d9-8a37-b5b669dc7004)
-*an example using Minecraft's textures*
+*An example showing basic flood fill lighting*
+
 ![Screenshot 2025-04-25 123119](https://github.com/user-attachments/assets/9dacb7d6-ba36-4582-80e3-07c0014536fb)
+*an example using Minecraft's textures*
 
 
 ## Features
@@ -30,12 +35,11 @@ created using C++ and OpenGL.
 - Batched Font Rendering
 - Dynamic texture atlas packing/creation (resizes atlas automatically)
 - Custom 3D line renderer
-- Separation of logic and rendering timesteps
 
 ## Build
 This project uses VCPKG and CMake.
 
-To build, use the provided CMake Preset (vcpkg).
+To build, use the provided CMake Preset. It is highly recommended to build in release mode.
 
 ```bash
 cmake --preset=vcpkg-release
@@ -71,3 +75,28 @@ Example `CMakeUserPresets.json` file:
 ```
 
 Alternatively, you can add the variables to the CMake build command.
+
+## Controls
+
+- Use W, A, S, D and the mouse to move/look around
+- Use space to fly up, shift to fly down, and hold ctrl while moving to speed up
+- Press ESC to unlock the mouse
+- Open the debug IMGUI menu to adjust or play around with some settings
+
+## Notes
+
+***This engine was created as a way to test my knowledge and skills in creating a relatively complex
+program using OpenGL. As of the time of writing, I do not have any professional experience in working
+on such programs. Consequently, there are likely many suboptimal design choices. However, I may attempt
+to recreate this work using Vulkan. Hopefully, this experience could guide me to design a more
+scalable program. Below are some additional notes.***
+
+- Currently I use a set seed of 0. You can change this in `terrain_generator.cpp`.
+- The lighting system as of now is unoptimized and buggy around chunk borders. Building in release
+mode is highly recommended.
+- The multithreading system isn't perfect. There are some data race conditions (e.g. if we update 
+the lighting of a chunk while displaying the light levels from the debug menu). Although rare, this 
+may lead to an unexpected crash.
+- This project targets OpenGL 3.3 because I sometimes use my mac to develop. This also means no
+optimizations such as bindless rendering or vertex pulling. I may explore these if I decide to reimplement
+this project in Vulkan.
