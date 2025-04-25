@@ -137,6 +137,27 @@ void GameApplication::render()
     ImGui::Text("Total Time: %.3fs", m_gameTime.totalTime);
     ImGui::Text("Camera Position: (%.2f, %.2f, %.2f)", m_camera.position.x, m_camera.position.y, m_camera.position.z);
     ImGui::SliderFloat("Day/Night Fraction", &m_dayNightFrac, 0.0f, 1.0f);
+
+    auto atlas = s_resourceManager.getTextureAtlas<BlockTexture>("chunk_atlas");
+    for(int i = 1; i < 8; ++i) {
+        ImGui::PushID(i);
+
+        if (m_selectedBlockType == BlockType(i))
+            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(100, 200, 255, 255)); // highlight color
+        else
+            ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(255, 255, 255, 255)); // normal color
+        
+        auto [uvMin, uvMax] = atlas->get(BlockData::getBlockTextureData(static_cast<BlockType>(i)).getTexture(BlockFace::Top));
+        if (ImGui::ImageButton("Hi", (ImTextureID)(intptr_t)atlas->getID(), ImVec2(32, 32), ImVec2(uvMin.x, uvMin.y), ImVec2(uvMax.x, uvMax.y))) {
+            m_selectedBlockType = BlockType(i);
+        }
+
+        ImGui::PopStyleColor();
+        ImGui::PopID();
+        ImGui::SameLine();
+    }
+    ImGui::NewLine();
+
     if (ImGui::CollapsingHeader("Render Options")) {
         ImGui::Checkbox("Show Chunk Border", &m_worldRenderer.renderOptions.showChunkBorder);
         ImGui::SliderInt("Render Distance", &m_worldRenderer.renderOptions.renderDistance, 1, 32);
@@ -210,8 +231,8 @@ void GameApplication::render()
             m_world.getChunkMap().setBlock(node.pos, BlockType::Air);
             m_worldRenderer.getChunkMapRenderer().queueBlockUpdate(node.pos, BlockType::Air);
         } else if (InputManager::isMouseButtonJustPressed(MouseButton::Right) && m_focused) {
-            m_world.getChunkMap().setBlock(node.pos + node.normal, BlockType::WoodPlanks);
-            m_worldRenderer.getChunkMapRenderer().queueBlockUpdate(node.pos + node.normal, BlockType::WoodPlanks);
+            m_world.getChunkMap().setBlock(node.pos + node.normal, m_selectedBlockType);
+            m_worldRenderer.getChunkMapRenderer().queueBlockUpdate(node.pos + node.normal, m_selectedBlockType);
         }
     }
     m_worldRenderer.draw(m_camera, m_window, m_dayNightFrac);

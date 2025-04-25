@@ -104,15 +104,11 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
 {
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(blockPos);
 
-    // if the block type is air (removing a block), build the boundaries first
-    bool buildCenterChunkFirst = blockType != BlockType::Air;
-    if (!buildCenterChunkFirst) {
-        m_chunkMap->updateSunLight(chunkPos);
-        auto it = m_chunkMeshes.find(chunkPos);
-        if (it != m_chunkMeshes.end()) {
-            it->second->setDirty(true);
-        }
-    }
+    // bool buildCenterChunkFirst = blockType != BlockType::Air;
+    // if (!buildCenterChunkFirst) {
+    //     m_chunkMap->updateLighting(chunkPos);
+    //     setDirty(chunkPos);
+    // }
 
     glm::ivec3 localPos = Chunk::globalToLocalPos(blockPos);
     for (int dx = -1; dx <= 1; ++dx) {
@@ -129,27 +125,25 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
                     dz < 0 ? 0 : (dz > 0 ? Chunk::CHUNK_SIZE - 1 : -1)
                 };
     
-                if ((boundary.x == -1 || localPos.x == boundary.x) &&
+                if (((boundary.x == -1 || localPos.x == boundary.x) &&
                     (boundary.y == -1 || localPos.y == boundary.y) &&
-                    (boundary.z == -1 || localPos.z == boundary.z)) {
-    
+                    (boundary.z == -1 || localPos.z == boundary.z)) ||
+                    BlockData::isLuminousBlock(blockType) || blockType == BlockType::Air)
+                {
                     glm::ivec3 neighborChunkPos = chunkPos + offset;
-                    auto it = m_chunkMeshes.find(neighborChunkPos);
-                    if (it != m_chunkMeshes.end()) {
-                        it->second->setDirty(true);
-                    }
+                    m_chunkMap->updateLighting(neighborChunkPos);
+                    setDirty(neighborChunkPos);
                 }
             }
         }
     }
 
-    if (buildCenterChunkFirst) {
-        m_chunkMap->updateSunLight(chunkPos);
-        auto it = m_chunkMeshes.find(chunkPos);
-        if (it != m_chunkMeshes.end()) {
-            it->second->setDirty(true);
-        }
-    }
+    m_chunkMap->updateLighting(chunkPos);
+    setDirty(chunkPos);
+    // if (buildCenterChunkFirst) {
+    //     m_chunkMap->updateLighting(chunkPos);
+    //     setDirty(chunkPos);
+    // }
 }
 
 void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor, float dayNightFrac)
@@ -255,4 +249,12 @@ void ChunkMapRenderer::checkPointers() const
         throw std::runtime_error("ChunkMapRenderer: Shader pointer is null.");
     if (!m_textureAtlas)
         throw std::runtime_error("ChunkMapRenderer: TextureAtlas pointer is null.");
+}
+
+inline void ChunkMapRenderer::setDirty(const glm::ivec3& chunkPos)
+{
+    auto it = m_chunkMeshes.find(chunkPos);
+    if (it != m_chunkMeshes.end()) {
+        it->second->setDirty(true);
+    }
 }

@@ -6,7 +6,8 @@ layout(location = 1) in vec2 aTexCoord;
 out vec2 vTexCoord;
 out vec3 vNormal;
 out float vAOValue;
-out float vLightValue;
+out float vBlockLightValue;
+out float vSunLightValue;
 
 uniform mat4 uProjection;
 uniform mat4 uView;
@@ -36,7 +37,9 @@ vec3 getNormalFromIndex(int index) {
 void main(void)
 {
     uint vPacked = floatBitsToUint(aData);
-    uint lightLevel = vPacked & 0xFu;
+    uint blockLightLevel = vPacked & 0xFu;
+    vPacked >>= 4;
+    uint sunLightLevel = vPacked & 0xFu;
     vPacked >>= 4;
     uint aoValue = vPacked & 0x3u;
     vPacked >>= 2;
@@ -51,7 +54,8 @@ void main(void)
 
     vec3 aPosition = vec3(float(posX), float(posY), float(posZ));
     vAOValue = float(aoValue);
-    vLightValue = float(lightLevel);
+    vSunLightValue = float(sunLightLevel);
+    vBlockLightValue = float(blockLightLevel);
     vNormal = getNormalFromIndex(int(normalIndex));
     vTexCoord = aTexCoord;
     gl_Position = uProjection * uView * uModel * vec4(aPosition + uChunkOffset, 1.0);

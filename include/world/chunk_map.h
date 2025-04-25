@@ -42,7 +42,7 @@ public:
     void setSunLight(int x, int y, int z, uint8_t lightLevel);
     void setSunLight(const glm::ivec3& pos, uint8_t lightLevel);
 
-    void updateSunLight(const glm::ivec3& chunkPos);
+    void updateLighting(const glm::ivec3& chunkPos);
     void fillSunLight(ChunkSnapshotM& snapshot);
 
     BlockType getBlock(int x, int y, int z) const;

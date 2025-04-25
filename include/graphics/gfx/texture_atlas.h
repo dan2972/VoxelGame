@@ -56,6 +56,7 @@ namespace gfx
 
         bool has(const T& key) const;
 
+        unsigned int getID() const { return m_id; }
         void use() const;
         void destroy();
     private:

@@ -65,6 +65,7 @@ private:
     WorldRenderer m_worldRenderer{&m_world.getChunkMap(), &s_resourceManager};
 
     float m_dayNightFrac = 0.5f;
+    BlockType m_selectedBlockType = BlockType::Grass;
 
     static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 };

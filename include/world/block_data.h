@@ -27,6 +27,7 @@ enum class BlockType : uint16_t
     WoodPlanks = 4,
     Sand = 5,
     Water = 6,
+    Lamp = 7,
 };
 
 enum class BlockTexture : uint16_t
@@ -38,6 +39,7 @@ enum class BlockTexture : uint16_t
     WoodPlanks = 4,
     Sand = 5,
     Water = 6,
+    Lamp = 7,
 };
 
 struct BlockTextureData
@@ -50,7 +52,7 @@ struct BlockTextureData
     BlockTexture right;
 
     bool allSame () const { return top == bottom && top == front && top == back && top == left && top == right; }
-    BlockTexture& getTexture(BlockFace face)
+    const BlockTexture& getTexture(BlockFace face) const
     {
         switch (face)
         {
@@ -84,6 +86,7 @@ struct BlockProperties
     bool isTranslucent = false;
     bool isLiquid = false;
     bool isCube = true;
+    uint16_t luminosity = 0;
 };
 
 class BlockData
@@ -156,6 +159,28 @@ public:
         if (it != s_blockDataMap.end())
         {
             return it->second.isTranslucent;
+        }
+        spdlog::error("Block type not found in data map: {}", static_cast<int>(type));
+        throw std::runtime_error("Block type not found in data map.");
+    }
+
+    static const bool isLuminousBlock(BlockType type)
+    {
+        auto it = s_blockDataMap.find(static_cast<int>(type));
+        if (it != s_blockDataMap.end())
+        {
+            return it->second.luminosity > 0;
+        }
+        spdlog::error("Block type not found in data map: {}", static_cast<int>(type));
+        throw std::runtime_error("Block type not found in data map.");
+    }
+
+    static const uint16_t getLuminosity(BlockType type)
+    {
+        auto it = s_blockDataMap.find(static_cast<int>(type));
+        if (it != s_blockDataMap.end())
+        {
+            return it->second.luminosity;
         }
         spdlog::error("Block type not found in data map: {}", static_cast<int>(type));
         throw std::runtime_error("Block type not found in data map.");

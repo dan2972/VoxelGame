@@ -5,7 +5,8 @@ out vec4 outputColor;
 in vec2 vTexCoord;
 in vec3 vNormal;
 in float vAOValue;
-in float vLightValue;
+in float vBlockLightValue;
+in float vSunLightValue;
 
 uniform sampler2D uTexture;
 uniform bool uAOEnabled;
@@ -44,8 +45,9 @@ void main()
     if (uAOEnabled)
         ambientOcclusion =  (1 - uAOIntensity) + ((vAOValue / 3.0) * uAOIntensity);
 
-    float light = 0.1 + 0.9 * (vLightValue * stepPlateau(uDayNightFrac) / 15);
-    light = clamp(light, 0.0, 1.0);
+    float sLight = 0.1 + 0.9 * (vSunLightValue * stepPlateau(uDayNightFrac) / 15);
+    float bLight = 0.1 + 0.9 * (vBlockLightValue / 15);
+    float light = clamp(max(sLight, bLight), 0.0, 1.0);
     float multiplier = light * ambientOcclusion * diffuse(vNormal);
     multiplier = pow(multiplier, 2.2);
     outputColor = vec4(vec3(multiplier), 1.0) * texture(uTexture, vTexCoord);

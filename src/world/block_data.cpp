@@ -10,5 +10,6 @@ std::unordered_map<std::string, BlockTexture> BlockData::stringToBlockTexture =
     {"stone", BlockTexture::Stone},
     {"wood_planks", BlockTexture::WoodPlanks},
     {"sand", BlockTexture::Sand},
-    {"water", BlockTexture::Water}
+    {"water", BlockTexture::Water},
+    {"lamp", BlockTexture::Lamp},
 };

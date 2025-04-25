@@ -64,4 +64,5 @@ private:
     
     void checkPointers() const;
     bool checkNeighborChunks(const glm::ivec3& chunkPos, bool checkSelf=false) const;
+    void setDirty(const glm::ivec3& chunkPos);
 };

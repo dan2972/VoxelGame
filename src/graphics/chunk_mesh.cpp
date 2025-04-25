@@ -136,7 +136,7 @@ void ChunkMesh::addFace
     BlockFace face, 
     std::array<float, 8> texCoords, 
     std::array<int, 4> aoValues, 
-    std::array<float, 4> lightLevels, 
+    std::array<float, 8> lightLevels, 
     RenderLayer layer,
     bool flipQuad
 )
@@ -176,8 +176,9 @@ void ChunkMesh::addFace
         vPacked = (vPacked << 3) + static_cast<uint32_t>(face);
         // 2 bits for the AO value (0-3)
         vPacked = (vPacked << 2) + static_cast<uint32_t>(aoValues[i]);
-        // 4 bits for the light level (0-15)
-        vPacked = (vPacked << 4) + static_cast<uint32_t>(lightLevels[i]);
+        // 4 bits for the light levels (0-15)
+        vPacked = (vPacked << 4) + static_cast<uint32_t>(lightLevels[i]); // sun light
+        vPacked = (vPacked << 4) + static_cast<uint32_t>(lightLevels[i + 4]); // block light
         vertices->push_back(std::bit_cast<float>(vPacked));
 
         vertices->push_back(texCoords[texIndex++]);
@@ -257,34 +258,36 @@ std::array<int, 4> ChunkMesh::getAOValues(const glm::ivec3 &blockPos, BlockFace 
 
 
 
-std::array<float, 4> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkSnapshot& snapshot, bool smoothLighting)
+std::array<float, 8> ChunkMesh::getLightValues(const glm::ivec3 &blockPos, BlockFace face, const ChunkSnapshot& snapshot, bool smoothLighting)
 {
-    std::array<float, 4> lightValues;
+    std::array<float, 8> lightValues;
     auto faceCoords = getFaceCoords(face);
 
     glm::ivec3 curLightPos = blockPos + static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(face));
-    unsigned char currentLight = snapshot.getLightLevelFromLocalPos(curLightPos);
+    unsigned char currentLight = snapshot.getSunLightFromLocalPos(curLightPos);
 
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 8; ++i)
     {
+        if (i >= 4)
+            currentLight = snapshot.getBlockLightFromLocalPos(curLightPos);
         if (!smoothLighting)
         {
-            lightValues[i] = currentLight;
+            lightValues[i%4] = currentLight;
             continue;
         }
 
         glm::ivec3 corner = glm::ivec3
         {
-            faceCoords[i * 3],
-            faceCoords[i * 3 + 1],
-            faceCoords[i * 3 + 2]
+            faceCoords[i%4 * 3],
+            faceCoords[i%4 * 3 + 1],
+            faceCoords[i%4 * 3 + 2]
         };
         glm::ivec3 s1, s2, c;
         getAOBlockPos(corner, face, &s1, &s2, &c);
 
-        unsigned char side1 = snapshot.getLightLevelFromLocalPos(blockPos + s1);
-        unsigned char side2 = snapshot.getLightLevelFromLocalPos(blockPos + s2);
-        unsigned char cornerBlock = snapshot.getLightLevelFromLocalPos(blockPos + c);
+        unsigned char side1 = i < 4 ? snapshot.getSunLightFromLocalPos(blockPos + s1) : snapshot.getBlockLightFromLocalPos(blockPos + s1);
+        unsigned char side2 = i < 4 ? snapshot.getSunLightFromLocalPos(blockPos + s2) : snapshot.getBlockLightFromLocalPos(blockPos + s2);
+        unsigned char cornerBlock = i < 4 ? snapshot.getSunLightFromLocalPos(blockPos + c) : snapshot.getBlockLightFromLocalPos(blockPos + c);
 
         bool bs1 = snapshot.getBlockFromLocalPos(blockPos + s1) == BlockType::Air;
         bool bs2 = snapshot.getBlockFromLocalPos(blockPos + s2) == BlockType::Air;

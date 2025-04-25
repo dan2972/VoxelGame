@@ -66,14 +66,14 @@ private:
         BlockFace face, 
         std::array<float, 8> texCoords, 
         std::array<int, 4> aoValues, 
-        std::array<float, 4> lightLevels, 
+        std::array<float, 8> lightLevels, 
         RenderLayer layer,
         bool flipQuad
     );
 
     std::array<int, 12> getFaceCoords(BlockFace face);
     std::array<int, 4> getAOValues(const glm::ivec3& blockPos, BlockFace face, const ChunkSnapshot& snapshot);
-    std::array<float, 4> getLightValues(const glm::ivec3& blockPos, BlockFace face, const ChunkSnapshot& snapshot, bool smoothLighting=true);
+    std::array<float, 8> getLightValues(const glm::ivec3& blockPos, BlockFace face, const ChunkSnapshot& snapshot, bool smoothLighting=true);
     bool shouldFlipQuad(std::array<int, 4> aoValues);
 
     void getAOBlockPos(const glm::ivec3& cornerPos, BlockFace face, glm::ivec3* outs1, glm::ivec3* outs2, glm::ivec3* outc);

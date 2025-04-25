@@ -228,11 +228,8 @@ uint16_t ChunkSnapshotM::getNearbyBlockLight(const glm::ivec3 &localPos) const
             neighborPos.z < -Chunk::CHUNK_SIZE || neighborPos.z >= Chunk::CHUNK_SIZE * 2) {
             continue; // Skip out of bounds neighbors
         }
-        auto block = getBlockFromLocalPos(neighborPos);
-        if (BlockData::isTranslucentBlock(block) || BlockData::isTransparentBlock(block)) {
-            auto light = getBlockLightFromLocalPos(neighborPos);
-            maxLight = std::max(maxLight, light);
-        }
+        auto light = getBlockLightFromLocalPos(neighborPos);
+        maxLight = std::max(maxLight, light);
     }
     return maxLight;
 }
