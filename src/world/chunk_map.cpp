@@ -71,7 +71,7 @@ void ChunkMap::queueChunk(const glm::ivec3& chunkPos)
         m_chunksToBuild.pushBack(chunk);
     } else if (chunk->getGenerationState() == ChunkGenerationState::Blocks && !chunk->m_inBuildQueue.load()) {
         std::vector<glm::ivec3> missingChunks;
-        auto snapshot = ChunkSnapshot::CreateSnapshot(*this, chunkPos, &missingChunks, ChunkGenerationState::Blocks);
+        auto snapshot = createSnapshotM(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
         if (snapshot) {
             chunk->m_inBuildQueue.store(true);
             m_chunksToFillLight.pushBack({snapshot.value(), false});
@@ -160,7 +160,7 @@ void ChunkMap::setSunLight(const glm::ivec3& pos, uint8_t lightLevel)
 void ChunkMap::updateLighting(const glm::ivec3& chunkPos, bool clearLightMap)
 {
     std::vector<glm::ivec3> missingChunks;
-    auto snapshot = ChunkSnapshot::CreateSnapshot(*this, chunkPos, &missingChunks, ChunkGenerationState::Blocks);
+    auto snapshot = createSnapshotM(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
     if (snapshot) {
         auto center = getChunkInternal(chunkPos);
         center->m_inBuildQueue.store(true);
@@ -305,4 +305,27 @@ std::shared_ptr<Chunk> ChunkMap::checkCopy2Write(const std::shared_ptr<Chunk>& c
         return clone;
     }
     return chunk;
+}
+
+std::optional<ChunkSnapshotM> ChunkMap::createSnapshotM(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState) const
+{
+    bool allChunksLoaded = true;
+    auto centerChunk = getChunkInternal(centerChunkPos);
+    if (!centerChunk || centerChunk->getGenerationState() < minState) {
+        missingChunks->push_back(centerChunkPos);
+        allChunksLoaded = false;
+    }
+    
+    ChunkSnapshotM snapshot;
+    snapshot.chunks[13] = centerChunk;
+    for (const auto& dir : ChunkSnapshot::getRequiredChunkDirs()) {
+        auto chunk = getChunkInternal(centerChunkPos + dir);
+        if (!chunk || chunk->getGenerationState() < minState) {
+            missingChunks->push_back(centerChunkPos + dir);
+            allChunksLoaded = false;
+            continue;
+        }
+        snapshot.chunks[(dir.x + 1) * 9 + (dir.y + 1) * 3 + (dir.z + 1)] = chunk;
+    }
+    return allChunksLoaded ? std::optional<ChunkSnapshotM>(snapshot) : std::nullopt;
 }

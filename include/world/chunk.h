@@ -21,7 +21,7 @@ public:
     ~Chunk() = default;
 
     void generateTerrain();
-    void generateLightMap(const ChunkSnapshot& snapshot);
+    void generateLightMap(ChunkSnapshotM& snapshot);
     void clearLightMap();
 
     glm::ivec3 getPos() const { return m_position; }
@@ -75,5 +75,5 @@ private:
         uint16_t value;
     };
 
-    void floodFillLightAt(const ChunkSnapshot& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight);
+    void floodFillLightAt(ChunkSnapshotM& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight);
 };

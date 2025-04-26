@@ -20,7 +20,7 @@
 
 struct ChunkLightQueueNode
 {
-    ChunkSnapshot snapshot;
+    ChunkSnapshotM snapshot;
     bool clearLightMap = false;
 };
 
@@ -73,4 +73,5 @@ private:
 
     std::shared_ptr<Chunk> getChunkInternal(const glm::ivec3& pos) const;
     std::shared_ptr<Chunk> checkCopy2Write(const std::shared_ptr<Chunk>& chunk);
+    std::optional<ChunkSnapshotM> createSnapshotM(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState) const;
 };

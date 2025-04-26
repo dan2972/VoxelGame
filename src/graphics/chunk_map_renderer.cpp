@@ -143,21 +143,21 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
         {1,-1,1}, {1,1,-1}, {-1,1,1}, {1,1,1}
     };
 
-    for (int i = poses.size(); i >= 0; i--) {
+    for (int i = poses.size()-1; i >= 0; i--) {
         glm::ivec3 neighborChunkPos = chunkPos + poses[i];
-        m_chunkMap->updateLighting(neighborChunkPos);
+        // m_chunkMap->updateLighting(neighborChunkPos);
         setDirty(neighborChunkPos);
     }
 
     m_chunkMap->updateLighting(chunkPos);
     setDirty(chunkPos);
 
-    for (auto& pos : poses) {
-        glm::ivec3 neighborChunkPos = chunkPos + pos;
-        m_chunkMap->updateLighting(neighborChunkPos, true);
-    }
+    // for (auto& pos : poses) {
+    //     glm::ivec3 neighborChunkPos = chunkPos + pos;
+    //     m_chunkMap->updateLighting(neighborChunkPos, true);
+    // }
 
-    m_chunkMap->updateLighting(chunkPos, true);
+    // m_chunkMap->updateLighting(chunkPos, true);
 }
 
 void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor, float dayNightFrac)
