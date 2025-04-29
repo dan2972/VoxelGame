@@ -48,7 +48,8 @@ public:
     void setSunLight(int x, int y, int z, uint8_t lightLevel);
     void setSunLight(const glm::ivec3& pos, uint8_t lightLevel);
 
-    void updateLighting(const glm::ivec3& chunkPos, bool clearLightMap = false);
+    void addLights(const glm::ivec3& chunkPos, const std::vector<LightQueueNode>& nodes, bool isBlockLight);
+    void removeLights(const glm::ivec3& chunkPos, const std::vector<LightQueueNode>& nodes, bool isBlockLight);
 
     BlockType getBlock(int x, int y, int z) const;
     BlockType getBlock(const glm::ivec3& pos) const;
@@ -60,6 +61,9 @@ public:
 
     uint16_t getLightLevel(int x, int y, int z) const;
     uint16_t getLightLevel(const glm::ivec3& pos) const;
+
+    uint16_t getNearbySkyLight(const glm::ivec3& pos) const;
+    uint16_t getNearbyBlockLight(const glm::ivec3& pos) const;
 
     std::shared_ptr<const Chunk> getChunk(int x, int y, int z) const;
     std::shared_ptr<const Chunk> getChunk(const glm::ivec3& pos) const;

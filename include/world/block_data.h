@@ -10,12 +10,12 @@
 
 enum class BlockFace
 {
-    Front = 0,
-    Back = 1,
-    Left = 2,
-    Right = 3,
-    Top = 4,
-    Bottom = 5
+    Top = 0,
+    Bottom = 1,
+    Front = 2,
+    Back = 3,
+    Left = 4,
+    Right = 5,
 };
 
 enum class BlockType : uint16_t
@@ -137,6 +137,17 @@ public:
         if (it != s_blockDataMap.end())
         {
             return it->second;
+        }
+        spdlog::error("Block type not found in data map: {}", static_cast<int>(type));
+        throw std::runtime_error("Block type not found in data map.");
+    }
+
+    static const bool isOpaqueBlock(BlockType type)
+    {
+        auto it = s_blockDataMap.find(static_cast<int>(type));
+        if (it != s_blockDataMap.end())
+        {
+            return !it->second.isTransparent && !it->second.isTranslucent;
         }
         spdlog::error("Block type not found in data map: {}", static_cast<int>(type));
         throw std::runtime_error("Block type not found in data map.");

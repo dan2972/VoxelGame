@@ -79,7 +79,7 @@ void Chunk::generateLightMap(ChunkSnapshotM& snapshot)
                 auto localPos = glm::ivec3(x, y, z);
                 BlockType block = snapshot.getBlockFromLocalPos(localPos);
 
-                if (propagateSky && !(BlockData::isTranslucentBlock(block) || BlockData::isTransparentBlock(block))) {
+                if (propagateSky && BlockData::isOpaqueBlock(block)) {
                     propagateSky = false;
                     sunHeightMap[x * Chunk::CHUNK_SIZE + z] = y;
                 }
@@ -93,11 +93,6 @@ void Chunk::generateLightMap(ChunkSnapshotM& snapshot)
                 if (BlockData::isLuminousBlock(block)) {
                     nodes.push_back({localPos, BlockData::getLuminosity(block)});
                 }
-                // else if (x == 0 || z == 0 || x == Chunk::CHUNK_SIZE - 1 || z == Chunk::CHUNK_SIZE - 1) {
-                //     auto nbLight = snapshot.getNearbyBlockLight(localPos);
-                //     if (nbLight > 1)
-                //         nodes.push_back({localPos, static_cast<uint16_t>(nbLight - 1)});
-                // }
 
                 setBlockLight(x, y, z, 0);
             }
@@ -128,6 +123,125 @@ void Chunk::generateLightMap(ChunkSnapshotM& snapshot)
 
     floodFillLightAt(snapshot, skyNodes, false);
     floodFillLightAt(snapshot, nodes, true);
+}
+
+void Chunk::floodFillLightAt(ChunkSnapshotM& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight)
+{
+    std::queue<LightQueueNode> queue;
+    for (const auto& node : nodes)
+    {
+        if (isBlockLight && node.value < getBlockLight(node.pos))
+            continue;
+        queue.push(node);
+        if (isBlockLight)
+            setBlockLight(node.pos, node.value);
+        else
+            setSunLight(node.pos, node.value);
+    }
+
+    while (!queue.empty())
+    {
+        auto current = queue.front();
+        queue.pop();
+        
+        if (current.value <= 1)
+            continue;
+
+        if (isBlockLight && current.value < getBlockLight(current.pos))
+            continue;
+
+        for (int i = 0; i < 6; ++i)
+        {
+            glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
+            glm::ivec3 neighborPos = current.pos + dir;
+
+            auto block = snapshot.getBlockFromLocalPos(neighborPos);
+            if (BlockData::isOpaqueBlock(block))
+                continue;
+            
+            auto neighborLight = isBlockLight ? snapshot.getBlockLightFromLocalPos(neighborPos) : snapshot.getSunLightFromLocalPos(neighborPos);
+            if (neighborLight < current.value - 1) {
+                if (isBlockLight) {
+                    snapshot.setBlockLightFromLocalPos(neighborPos, current.value-1);
+                    queue.push({neighborPos, static_cast<uint16_t>(current.value - 1)});
+                } else if (BlockFace(i) == BlockFace::Bottom && current.value == 15) {
+                    snapshot.setSunLightFromLocalPos(neighborPos, current.value);
+                    queue.push({neighborPos, static_cast<uint16_t>(current.value)});
+                } else {
+                    snapshot.setSunLightFromLocalPos(neighborPos, current.value-1);
+                    queue.push({neighborPos, static_cast<uint16_t>(current.value - 1)});
+                }
+            }
+        }
+    }
+}
+
+std::vector<LightQueueNode> Chunk::floodRemoveLightAt(ChunkSnapshotM& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight)
+{
+    std::vector<LightQueueNode> nodesToRePropagate;
+    std::queue<LightQueueNode> queue;
+    std::unordered_map<glm::ivec3, uint8_t, glm_ivec3_hash, glm_ivec3_equal> oldVals;
+    for (const auto& node : nodes)
+    {
+        if (isBlockLight) {
+            oldVals[node.pos] = getBlockLight(node.pos);
+            queue.push({node.pos, node.value});
+            setBlockLight(node.pos, node.value);
+        } else {
+            oldVals[node.pos] = getSunLight(node.pos);
+            queue.push({node.pos, node.value});
+            setSunLight(node.pos, node.value);
+        }
+    }
+
+    while (!queue.empty())
+    {
+        auto current = queue.front();
+        queue.pop();
+        
+        for (int i = 0; i < 6; ++i)
+        {
+            glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
+            glm::ivec3 neighborPos = current.pos + dir;
+
+            auto block = snapshot.getBlockFromLocalPos(neighborPos);
+            if (isBlockLight && BlockData::isLuminousBlock(block)) {
+                nodesToRePropagate.push_back({neighborPos, BlockData::getLuminosity(block)});
+                continue;
+            }
+            if (BlockData::isOpaqueBlock(block))
+                continue;
+            
+            uint8_t neighborLight = isBlockLight ? snapshot.getBlockLightFromLocalPos(neighborPos) : snapshot.getSunLightFromLocalPos(neighborPos);
+            uint8_t oldLight = oldVals.at(current.pos);
+
+            if (neighborLight > 0 && neighborLight < oldLight) {
+                if (!oldVals.contains(neighborPos))
+                    oldVals[neighborPos] = neighborLight;
+                uint8_t newVal = current.value > 1 ? current.value - 1: 0;
+                if (isBlockLight)
+                    snapshot.setBlockLightFromLocalPos(neighborPos, newVal);
+                else
+                    snapshot.setSunLightFromLocalPos(neighborPos, newVal);
+                queue.push({neighborPos, newVal});
+            } else if (neighborLight >= oldLight) {
+                if (isBlockLight) {
+                    nodesToRePropagate.push_back({neighborPos, neighborLight});
+                } else {
+                    if ((neighborLight == 15 && BlockFace(i) == BlockFace::Bottom)) {
+                        if (!oldVals.contains(neighborPos))
+                            oldVals[neighborPos] = neighborLight;
+                        snapshot.setSunLightFromLocalPos(neighborPos, current.value);
+                        queue.push({neighborPos, current.value});
+                    } else {
+                        nodesToRePropagate.push_back({neighborPos, neighborLight});
+                    }
+                }
+            }
+        }
+    }
+
+    return nodesToRePropagate;
 }
 
 void Chunk::clearLightMap()
@@ -305,59 +419,4 @@ std::shared_ptr<Chunk> Chunk::clone() const
     chunk->m_generationState = m_generationState.load();
     chunk->m_inBuildQueue = m_inBuildQueue.load();
     return chunk;
-}
-
-void Chunk::floodFillLightAt(ChunkSnapshotM& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight)
-{
-    std::queue<LightQueueNode> queue;
-    for (const auto& node : nodes)
-    {
-        if (isBlockLight && node.value <= getBlockLight(node.pos))
-            continue;
-        queue.push(node);
-        if (isBlockLight)
-            setBlockLight(node.pos, node.value);
-        else
-            setSunLight(node.pos, node.value);
-    }
-
-    while (!queue.empty())
-    {
-        auto current = queue.front();
-        queue.pop();
-        
-        if (current.value <= 1)
-            continue;
-
-        if (isBlockLight && current.value < getBlockLight(current.pos))
-            continue;
-
-        for (int i = 0; i < 6; ++i)
-        {
-            glm::ivec3 dir = static_cast<glm::ivec3>(DirectionUtils::blockfaceDirection(static_cast<BlockFace>(i)));
-            glm::ivec3 neighborPos = current.pos + dir;
-            // if (!ChunkSnapshot::inCenterBounds(neighborPos))
-            //     continue;
-
-            auto block = snapshot.getBlockFromLocalPos(neighborPos);
-            if (!BlockData::isTranslucentBlock(block) && !BlockData::isTransparentBlock(block))
-                continue;
-            
-            auto neighborLight = isBlockLight ? snapshot.getBlockLightFromLocalPos(neighborPos) : snapshot.getSunLightFromLocalPos(neighborPos);
-            if (neighborLight < current.value - 1) {
-                queue.push({neighborPos, static_cast<uint16_t>(current.value - 1)});
-                if (ChunkSnapshot::inCenterBounds(neighborPos)) {
-                    if (isBlockLight)
-                        setBlockLight(neighborPos, current.value-1);
-                    else
-                        setSunLight(neighborPos, current.value-1);
-                } else {
-                    if (isBlockLight)
-                        snapshot.setBlockLightFromLocalPos(neighborPos, current.value-1);
-                    else
-                        snapshot.setSunLightFromLocalPos(neighborPos, current.value-1);
-                }
-            }
-        }
-    }
 }

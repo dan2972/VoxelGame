@@ -5,10 +5,24 @@
 #include <memory>
 #include <atomic>
 #include <cstdint>
+#include <vector>
 #include "terrain_generator.h"
 #include "block_data.h"
 #include "world/chunk_snapshot.h"
 #include "world/chunk_generation_state.h"
+
+struct LightQueueNode
+{
+    glm::ivec3 pos;
+    uint16_t value;
+};
+
+struct LightRemoveNode
+{
+    glm::ivec3 pos;
+    uint16_t value;
+    uint16_t prevVal;
+};
 
 class Chunk
 {
@@ -22,6 +36,8 @@ public:
 
     void generateTerrain();
     void generateLightMap(ChunkSnapshotM& snapshot);
+    void floodFillLightAt(ChunkSnapshotM& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight);
+    std::vector<LightQueueNode> floodRemoveLightAt(ChunkSnapshotM& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight);
     void clearLightMap();
 
     glm::ivec3 getPos() const { return m_position; }
@@ -68,12 +84,4 @@ private:
     bool m_allSolid = true;
     std::atomic<bool> m_inBuildQueue = false;
     std::atomic<ChunkGenerationState> m_generationState = ChunkGenerationState::None;
-
-    struct LightQueueNode
-    {
-        glm::ivec3 pos;
-        uint16_t value;
-    };
-
-    void floodFillLightAt(ChunkSnapshotM& snapshot, const std::vector<LightQueueNode>& nodes, bool isBlockLight);
 };

@@ -104,34 +104,6 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
 {
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(blockPos);
 
-    // glm::ivec3 localPos = Chunk::globalToLocalPos(blockPos);
-    // for (int dx = -1; dx <= 1; ++dx) {
-    //     for (int dy = -1; dy <= 1; ++dy) {
-    //         for (int dz = -1; dz <= 1; ++dz) {
-    //             if (dx == 0 && dy == 0 && dz == 0) continue;
-    
-    //             glm::ivec3 offset = {dx, dy, dz};
-    //             // The boundary value we have to check
-    //             // -1 means no boundary check, 0 means check the first element, and Chunk::CHUNK_SIZE - 1 means check the last element.
-    //             glm::ivec3 boundary = {
-    //                 dx < 0 ? 0 : (dx > 0 ? Chunk::CHUNK_SIZE - 1 : -1),
-    //                 dy < 0 ? 0 : (dy > 0 ? Chunk::CHUNK_SIZE - 1 : -1),
-    //                 dz < 0 ? 0 : (dz > 0 ? Chunk::CHUNK_SIZE - 1 : -1)
-    //             };
-    
-    //             if (((boundary.x == -1 || localPos.x == boundary.x) &&
-    //                 (boundary.y == -1 || localPos.y == boundary.y) &&
-    //                 (boundary.z == -1 || localPos.z == boundary.z)) ||
-    //                 BlockData::isLuminousBlock(blockType) || blockType == BlockType::Air)
-    //             {
-    //                 glm::ivec3 neighborChunkPos = chunkPos + offset;
-    //                 m_chunkMap->updateLighting(neighborChunkPos);
-    //                 setDirty(neighborChunkPos);
-    //             }
-    //         }
-    //     }
-    // }
-
     static std::vector<glm::ivec3> poses = {
         {-1,0,0}, {1,0,0},
         {0,-1,0}, {0,1,0},
@@ -145,19 +117,37 @@ void ChunkMapRenderer::queueBlockUpdate(const glm::ivec3& blockPos, BlockType bl
 
     for (int i = poses.size()-1; i >= 0; i--) {
         glm::ivec3 neighborChunkPos = chunkPos + poses[i];
-        // m_chunkMap->updateLighting(neighborChunkPos);
         setDirty(neighborChunkPos);
     }
 
-    m_chunkMap->updateLighting(chunkPos);
+    // block light calculation
+    uint8_t curLight = m_chunkMap->getBlockLight(blockPos);
+    uint8_t newLight = BlockData::getLuminosity(blockType);
+    if (newLight > curLight) {
+        m_chunkMap->addLights(chunkPos, {{blockPos, newLight}}, true);
+    } else if (newLight < curLight) {
+        m_chunkMap->removeLights(chunkPos, {{blockPos, newLight}}, true);
+
+    } else if (blockType == BlockType::Air) {
+        if (m_chunkMap->getNearbyBlockLight(blockPos) > 1) {
+            m_chunkMap->addLights(chunkPos, {{blockPos, static_cast<uint16_t>(m_chunkMap->getNearbyBlockLight(blockPos) - 1)}}, true);
+        }
+    }
+
+    // sunlight calculation
+    if (blockType == BlockType::Air) {
+        if (m_chunkMap->getSunLight({blockPos.x, blockPos.y + 1, blockPos.z}) == 15) {
+            m_chunkMap->addLights(chunkPos, {{blockPos, 15}}, false);
+        } else if (m_chunkMap->getNearbySkyLight(blockPos) > 1) {
+            m_chunkMap->addLights(chunkPos, {{blockPos, static_cast<uint16_t>(m_chunkMap->getNearbySkyLight(blockPos) - 1)}}, false);
+        }
+    } else if (BlockData::isOpaqueBlock(blockType)) {
+        if (m_chunkMap->getNearbySkyLight(blockPos) > 1) {
+            m_chunkMap->removeLights(chunkPos, {{blockPos, 0}}, false);
+        }
+    }
+    
     setDirty(chunkPos);
-
-    // for (auto& pos : poses) {
-    //     glm::ivec3 neighborChunkPos = chunkPos + pos;
-    //     m_chunkMap->updateLighting(neighborChunkPos, true);
-    // }
-
-    // m_chunkMap->updateLighting(chunkPos, true);
 }
 
 void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, float aoFactor, float dayNightFrac)
@@ -172,7 +162,7 @@ void ChunkMapRenderer::draw(const Camera& camera, int viewDistance, bool useAO, 
         if (chunkMesh->isDirty() && !m_chunksInBuildQueue.contains(chunkPos)) {
             auto snapshot = ChunkSnapshot::CreateSnapshot(*m_chunkMap, chunkPos);
             if (snapshot) {
-                m_chunksToBuild.pushBack(snapshot.value());
+                m_chunksToBuild.pushFront(snapshot.value());
                 m_chunksInBuildQueue.insert(chunkPos);
             }
         }

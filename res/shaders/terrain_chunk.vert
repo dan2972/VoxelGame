@@ -17,18 +17,18 @@ uniform vec3 uChunkOffset;
 vec3 getNormalFromIndex(int index) {
     switch(int(index))
     {
-        case 0: // front
-            return vec3(0.0, 0.0, 1.0);
-        case 1: // back
-            return vec3(0.0, 0.0, -1.0);
-        case 2: // left
-            return vec3(-1.0, 0.0, 0.0);
-        case 3: // right
-            return vec3(1.0, 0.0, 0.0);
-        case 4: // top
+        case 0: // top
             return vec3(0.0, 1.0, 0.0);
-        case 5: // bottom
+        case 1: // bottom
             return vec3(0.0, -1.0, 0.0);
+        case 2: // front
+            return vec3(0.0, 0.0, 1.0);
+        case 3: // back
+            return vec3(0.0, 0.0, -1.0);
+        case 4: // left
+            return vec3(-1.0, 0.0, 0.0);
+        case 5: // right
+            return vec3(1.0, 0.0, 0.0);
         default:
             return vec3(0.0, 0.0, 0.0);
     }

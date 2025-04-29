@@ -157,15 +157,32 @@ void ChunkMap::setSunLight(const glm::ivec3& pos, uint8_t lightLevel)
     setSunLight(pos.x, pos.y, pos.z, lightLevel);
 }
 
-void ChunkMap::updateLighting(const glm::ivec3& chunkPos, bool clearLightMap)
-{
+void ChunkMap::addLights(const glm::ivec3& chunkPos, const std::vector<LightQueueNode>& nodes, bool isBlockLight) {
     std::vector<glm::ivec3> missingChunks;
     auto snapshot = createSnapshotM(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
     if (snapshot) {
-        auto center = getChunkInternal(chunkPos);
-        center->m_inBuildQueue.store(true);
-        center->m_generationState.store(ChunkGenerationState::Blocks);
-        m_chunksToFillLight.pushFront({snapshot.value(), clearLightMap});
+        auto localNodes = nodes;
+        for (auto& node : localNodes) {
+            node.pos = Chunk::globalToLocalPos(node.pos);
+        }
+        snapshot->center()->floodFillLightAt(snapshot.value(), localNodes, isBlockLight);
+    } else {
+        for (const auto& missingChunk : missingChunks) {
+            queueChunk(missingChunk);
+        }
+    }
+}
+
+void ChunkMap::removeLights(const glm::ivec3& chunkPos, const std::vector<LightQueueNode>& nodes, bool isBlockLight) {
+    std::vector<glm::ivec3> missingChunks;
+    auto snapshot = createSnapshotM(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
+    if (snapshot) {
+        auto localNodes = nodes;
+        for (auto& node : localNodes) {
+            node.pos = Chunk::globalToLocalPos(node.pos);
+        }
+        auto toAdd = snapshot->center()->floodRemoveLightAt(snapshot.value(), localNodes, isBlockLight);
+        snapshot->center()->floodFillLightAt(snapshot.value(), toAdd, isBlockLight);
     } else {
         for (const auto& missingChunk : missingChunks) {
             queueChunk(missingChunk);
@@ -243,6 +260,24 @@ uint16_t ChunkMap::getLightLevel(int x, int y, int z) const
 uint16_t ChunkMap::getLightLevel(const glm::ivec3& pos) const
 {
     return getLightLevel(pos.x, pos.y, pos.z);
+}
+
+uint16_t ChunkMap::getNearbySkyLight(const glm::ivec3& pos) const
+{
+    auto snapshot = ChunkSnapshot::CreateSnapshot(*this, Chunk::globalToChunkPos(pos), ChunkGenerationState::Light);
+    if (snapshot) {
+        return snapshot->getNearbySkyLight(Chunk::globalToLocalPos(pos));
+    }
+    return 0;
+}
+
+uint16_t ChunkMap::getNearbyBlockLight(const glm::ivec3& pos) const
+{
+    auto snapshot = ChunkSnapshot::CreateSnapshot(*this, Chunk::globalToChunkPos(pos), ChunkGenerationState::Light);
+    if (snapshot) {
+        return snapshot->getNearbyBlockLight(Chunk::globalToLocalPos(pos));
+    }
+    return 0;
 }
 
 std::shared_ptr<const Chunk> ChunkMap::getChunk(int x, int y, int z) const
