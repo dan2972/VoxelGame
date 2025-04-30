@@ -28,9 +28,9 @@ created using C++ and OpenGL.
 ## Features
 - Custom OpenGL abstraction
 - Infinite editable chunk-based terrain (including infinite height)
-- Multithreaded chunk generation
+- Multithreaded chunk and mesh generation
 - Smooth ambient occlusion
-- Basic flood fill lighting
+- Smooth flood fill lighting
 - Frustum Culling
 - Batched Font Rendering
 - Dynamic texture atlas packing/creation (resizes atlas automatically)
@@ -51,7 +51,7 @@ If using VSCode on Windows, you may need to define the CMake
 variables: `CMAKE_C_COMPILER` and `CMAKE_CXX_COMPILER`.
 
 The recommended way to do this (especially if using vscode with the CMake extension) 
-is to create and add a file `CMakeUserPresets.json` to the root directory, and 
+is to create and add a file `CMakeUserPresets.json` to the project root directory, and 
 activate this preset instead of the one provided.
 
 Example `CMakeUserPresets.json` file:
@@ -92,11 +92,8 @@ to recreate this work using Vulkan. Hopefully, this experience could guide me to
 scalable program. Below are some additional notes.***
 
 - Currently I use a set seed of 0. You can change this in `terrain_generator.cpp`.
-- The lighting system as of now is unoptimized and buggy around chunk borders. Building in release
-mode is highly recommended.
-- The multithreading system isn't perfect. There are some data race conditions (e.g. if we update 
-the lighting of a chunk while displaying the light levels from the debug menu). Although rare, this 
-may lead to an unexpected crash.
+- The multithreading system isn't perfect. There may be some unintended data race conditions, leading to a crash.
 - This project targets OpenGL 3.3 because I sometimes use my mac to develop. This also means no
 optimizations such as bindless rendering or vertex pulling. I may explore these if I decide to reimplement
 this project in Vulkan.
+- Currently, the Use Smooth Lighting option in the debug menu does not do anything.

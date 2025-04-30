@@ -77,5 +77,7 @@ private:
 
     std::shared_ptr<Chunk> getChunkInternal(const glm::ivec3& pos) const;
     std::shared_ptr<Chunk> checkCopy2Write(const std::shared_ptr<Chunk>& chunk);
-    std::optional<ChunkSnapshotM> createSnapshotM(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState) const;
+    std::optional<ChunkSnapshotM> createSnapshotM(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState);
+    std::optional<ChunkSnapshotM> createSnapshotMCopy(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState);
+    void applySnapshotChanges(ChunkSnapshotM& snapshot);
 };

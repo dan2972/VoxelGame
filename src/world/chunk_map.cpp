@@ -21,7 +21,7 @@ void ChunkMap::chunkLightThreadFunc()
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
-        auto center = getChunkInternal(node.snapshot.center()->getPos());
+        auto center = node.snapshot.center();
         if (node.clearLightMap) {
             center->clearLightMap();
         } else {
@@ -159,13 +159,14 @@ void ChunkMap::setSunLight(const glm::ivec3& pos, uint8_t lightLevel)
 
 void ChunkMap::addLights(const glm::ivec3& chunkPos, const std::vector<LightQueueNode>& nodes, bool isBlockLight) {
     std::vector<glm::ivec3> missingChunks;
-    auto snapshot = createSnapshotM(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
+    auto snapshot = createSnapshotMCopy(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
     if (snapshot) {
         auto localNodes = nodes;
         for (auto& node : localNodes) {
             node.pos = Chunk::globalToLocalPos(node.pos);
         }
         snapshot->center()->floodFillLightAt(snapshot.value(), localNodes, isBlockLight);
+        applySnapshotChanges(snapshot.value());
     } else {
         for (const auto& missingChunk : missingChunks) {
             queueChunk(missingChunk);
@@ -175,7 +176,7 @@ void ChunkMap::addLights(const glm::ivec3& chunkPos, const std::vector<LightQueu
 
 void ChunkMap::removeLights(const glm::ivec3& chunkPos, const std::vector<LightQueueNode>& nodes, bool isBlockLight) {
     std::vector<glm::ivec3> missingChunks;
-    auto snapshot = createSnapshotM(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
+    auto snapshot = createSnapshotMCopy(chunkPos, &missingChunks, ChunkGenerationState::Blocks);
     if (snapshot) {
         auto localNodes = nodes;
         for (auto& node : localNodes) {
@@ -183,6 +184,7 @@ void ChunkMap::removeLights(const glm::ivec3& chunkPos, const std::vector<LightQ
         }
         auto toAdd = snapshot->center()->floodRemoveLightAt(snapshot.value(), localNodes, isBlockLight);
         snapshot->center()->floodFillLightAt(snapshot.value(), toAdd, isBlockLight);
+        applySnapshotChanges(snapshot.value());
     } else {
         for (const auto& missingChunk : missingChunks) {
             queueChunk(missingChunk);
@@ -196,7 +198,7 @@ BlockType ChunkMap::getBlock(int x, int y, int z) const
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(pos);
     glm::ivec3 localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
-    if (chunk)
+    if (chunk && chunk->getGenerationState() == ChunkGenerationState::Complete)
     {
         return chunk->getBlock(localPos.x, localPos.y, localPos.z);
     }
@@ -214,7 +216,7 @@ uint16_t ChunkMap::getSunLight(int x, int y, int z) const
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(pos);
     glm::ivec3 localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
-    if (chunk)
+    if (chunk && chunk->getGenerationState() == ChunkGenerationState::Complete)
     {
         return chunk->getSunLight(localPos.x, localPos.y, localPos.z);
     }
@@ -232,7 +234,7 @@ uint16_t ChunkMap::getBlockLight(int x, int y, int z) const
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(pos);
     glm::ivec3 localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
-    if (chunk)
+    if (chunk && chunk->getGenerationState() == ChunkGenerationState::Complete)
     {
         return chunk->getBlockLight(localPos.x, localPos.y, localPos.z);
     }
@@ -250,7 +252,7 @@ uint16_t ChunkMap::getLightLevel(int x, int y, int z) const
     glm::ivec3 chunkPos = Chunk::globalToChunkPos(pos);
     glm::ivec3 localPos = Chunk::globalToLocalPos(pos);
     auto chunk = getChunk(chunkPos);
-    if (chunk)
+    if (chunk && chunk->getGenerationState() == ChunkGenerationState::Complete)
     {
         return std::max(chunk->getBlockLight(localPos), chunk->getSunLight(localPos));
     }
@@ -342,7 +344,7 @@ std::shared_ptr<Chunk> ChunkMap::checkCopy2Write(const std::shared_ptr<Chunk>& c
     return chunk;
 }
 
-std::optional<ChunkSnapshotM> ChunkMap::createSnapshotM(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState) const
+std::optional<ChunkSnapshotM> ChunkMap::createSnapshotM(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState)
 {
     bool allChunksLoaded = true;
     auto centerChunk = getChunkInternal(centerChunkPos);
@@ -363,4 +365,34 @@ std::optional<ChunkSnapshotM> ChunkMap::createSnapshotM(const glm::ivec3& center
         snapshot.chunks[(dir.x + 1) * 9 + (dir.y + 1) * 3 + (dir.z + 1)] = chunk;
     }
     return allChunksLoaded ? std::optional<ChunkSnapshotM>(snapshot) : std::nullopt;
+}
+
+std::optional<ChunkSnapshotM> ChunkMap::createSnapshotMCopy(const glm::ivec3& centerChunkPos, std::vector<glm::ivec3>* missingChunks, ChunkGenerationState minState)
+{
+    bool allChunksLoaded = true;
+    auto centerChunk = getChunkInternal(centerChunkPos)->clone();
+    if (!centerChunk || centerChunk->getGenerationState() < minState) {
+        missingChunks->push_back(centerChunkPos);
+        allChunksLoaded = false;
+    }
+    
+    ChunkSnapshotM snapshot;
+    snapshot.chunks[13] = centerChunk;
+    for (const auto& dir : ChunkSnapshot::getRequiredChunkDirs()) {
+        auto chunk = getChunkInternal(centerChunkPos + dir)->clone();
+        if (!chunk || chunk->getGenerationState() < minState) {
+            missingChunks->push_back(centerChunkPos + dir);
+            allChunksLoaded = false;
+            continue;
+        }
+        snapshot.chunks[(dir.x + 1) * 9 + (dir.y + 1) * 3 + (dir.z + 1)] = chunk;
+    }
+    return allChunksLoaded ? std::optional<ChunkSnapshotM>(snapshot) : std::nullopt;
+}
+
+void ChunkMap::applySnapshotChanges(ChunkSnapshotM& snapshot)
+{
+    for (const auto& chunk : snapshot.chunks) {
+        m_chunks[chunk->getPos()] = chunk;
+    }
 }
