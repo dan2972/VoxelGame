@@ -16,13 +16,13 @@ created using C++ and OpenGL.
 ## Gallery
 
 ![Screenshot 2025-04-24 212323](https://github.com/user-attachments/assets/55bb9691-e4bf-4a47-bf81-d8936e966c61)
-*An example showing the randomly generated terrain*
+*Example showing the randomly generated terrain*
 
 ![Screenshot 2025-04-25 122015](https://github.com/user-attachments/assets/986f947f-ba67-49d9-8a37-b5b669dc7004)
-*An example showing basic flood fill lighting*
+*Example showing basic flood fill lighting*
 
 ![Screenshot 2025-04-25 123119](https://github.com/user-attachments/assets/9dacb7d6-ba36-4582-80e3-07c0014536fb)
-*an example using Minecraft's textures*
+*Example using Minecraft's textures*
 
 
 ## Features
